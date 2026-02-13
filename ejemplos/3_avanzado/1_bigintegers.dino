@@ -1,0 +1,19 @@
+# BigInt
+# - Son números enteros de precisión arbitraria (su único límite es la memoria disponible)
+# - Se crean con el sufijo 'n'
+# - Son útiles para cálculos que exceden el rango de los tipos nativos
+#
+# Requerimiento:
+# - Solo se puede operar BigInts con otros BigInts, no acepta otros tipos
+#
+# Contras:
+# - Son más lentos que un Integer nativo en cuanto a operaciones aritméticas
+
+
+
+x = 1000000000000000044400000000000000000055550000000n
+i = 0
+while i < 100
+    x += 1n
+    i++
+print x   # BigInt result

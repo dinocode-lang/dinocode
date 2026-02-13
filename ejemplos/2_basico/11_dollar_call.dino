@@ -1,0 +1,14 @@
+# Dollar call
+# Alternativa para llamar funciones y métodos
+
+::Calc
+    :suma a b
+        return a + b
+:doble x
+    return x * 2
+
+c = Calc()
+print $(c.suma 3 7)
+print $(c.suma 1 2)
+print $(doble 5)
+print $(doble 10.5)

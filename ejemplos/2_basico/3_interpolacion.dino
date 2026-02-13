@@ -1,0 +1,13 @@
+# Interpolación
+# - '$'     : Interpolación simple de variables
+# - '${}'   : Interpolación con expresión
+
+x = 10
+y = 1.33
+
+print "
+$x + $y = ${x + y}
+$x - $y = ${x - y}
+$x * $y = ${x * y}
+$x / $y = ${x / y}
+"

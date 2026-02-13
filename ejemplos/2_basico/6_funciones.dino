@@ -1,0 +1,27 @@
+# Funciones
+# - Se definen con ':'
+# - Utilizan la indentación de bloques (margen izquierdo)
+# - Retornan NONE por defecto
+
+# Procedimientos
+:caratula
+  print "--------------------------"
+  print "Bienvenido a DinoCode 🦖  "
+  print "--------------------------"
+
+:imprimir_suma a b
+  print a+b
+
+# Funciones
+:suma a b
+  return a+b
+
+##################################
+# Llamado de funciones
+caratula
+imprimir_suma 1000 100.4
+
+# Se puede usar $(func args) o func(args)
+primer_resultado = $(suma 10 20)
+segundo_resultado = suma(10 20)
+print primer_resultado " = " segundo_resultado

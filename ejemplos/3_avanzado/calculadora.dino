@@ -1,0 +1,22 @@
+# Calculadora
+
+::Calc
+    :new
+        self.historial = []
+    
+    :sumar a b
+        r = a + b
+        self.agregar "$a + $b = $r"
+        return r
+    
+    :agregar texto
+        self.historial.push texto
+    
+    :mostrar
+        for i in self.historial
+            print i
+
+c = Calc()
+c.sumar 5 3
+c.sumar 2 7
+c.mostrar

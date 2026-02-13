@@ -1,0 +1,34 @@
+# Métodos de arrays
+
+lista =
+[
+    "Manzana"
+    "Naranja"
+    "Plátano"
+]
+
+print "--------------------------"
+print "Longitud de la lista: " lista.len
+print "Primer elemento: " lista.first()
+print "Ultimo elemento: " lista.last()
+print "lista[1]: " lista.get(1)
+
+print "--------------------------"
+lista.push "Mango"
+print "Longitud de la lista: " lista.len
+print "Ultimo elemento: " lista.last()
+
+print "--------------------------"
+ultimo = lista.pop()
+print "Ultimo elemento: " ultimo
+print "Longitud de la lista: " lista.len
+
+print "--------------------------"
+lista.set(1 "Mandarina")
+print "lista[1]: " lista.get(1)
+
+print "--------------------------"
+lista.clear()
+print "Longitud de la lista: " lista.len
+if lista.is_empty
+    print "La lista esta vacia"

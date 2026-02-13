@@ -1,0 +1,31 @@
+# - Introducción a la Regla de Oro
+#   - En la práctica
+
+# Continuidad operativa
+precio_base = 1000
+iva = 0.21
+descuento = 0.10
+envio = 25
+impuestos_importacion = 50
+
+precio_final = precio_base
+            * (1 + iva)
+            - (precio_base * descuento)
+            + envio
+            + impuestos_importacion
+
+# Inferencia de intención
+factura = 
+{
+    cliente {
+        nombre "Ismael"
+        apellido "Quiroz"
+    }
+    total precio_final
+    estado "PENDIENTE"
+}
+
+nombres = "${factura.cliente.nombre} ${factura.cliente.apellido}"
+resumen = "Factura de $nombres: $${factura.total}"
+
+print resumen

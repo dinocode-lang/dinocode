@@ -1,0 +1,21 @@
+# Metodos de objetos
+
+dict = {
+    nombre "Juan"
+    edad 30
+}
+print "Longitud del diccionario: " dict.count
+print "Claves: " dict.keys
+print "Valores: " dict.values
+print "Nombre: " dict.get("nombre")
+print "Edad: " dict.get("edad")
+
+print "--------------------------"
+dict.set("apellido" "Perez")
+if dict.has("apellido")
+    print "Apellido: " dict.get("apellido")
+
+print "--------------------------"
+dict.clear()
+print "Longitud del diccionario: " dict.count
+print "Nombre: " dict.get("nombre") # None

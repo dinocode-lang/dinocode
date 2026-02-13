@@ -1,0 +1,64 @@
+# Templates
+# > captura de bloques multilinea indentados
+#   - Es una tarea de cero costo en ejecución porque la resuelve el compilador
+#   - Se basa en la indentación, similar a los bloques de control
+#   - Permite interpolación y escape de carácteres
+#   - Se integra perfectamente con el flujo del código
+#
+#  Requerimiento: 
+#   - El contenido debe tener un margen izquierdo superior al de '>'
+# 
+
+FIGURAS = []
+
+> FIGURAS[0]
+      *
+     ***
+    *****
+   *******
+  *********
+   *******
+    *****
+     ***
+      *
+
+> FIGURAS[1]
+  ⣶⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠈⠿⣿⣿⣿⣿⣷⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⢈⣻⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⣤⣤⣴⣿⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠙⠛⠛⠛⠛⢻⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠠⠐⠤⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠉⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣤⣄⡀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⠿⠟⠻⢿⣿⣿⣟⠛⠛⠛⠛⠛⠛⠻⠶⣤⡀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣷⠀⠀⠀⠙⠿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠉⠓
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢙⣿⡇⠀⠀⠀⠀⢸⣿⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⣀⣤⣤⣶⣿⣿⠀⠀⠀⢀⣠⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠉⠉⠋⠉⠀⠀⠀⠐⠺⠿⠿⠟⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+print FIGURAS[0]
+print FIGURAS[1]
+
+#####################################
+
+nombre <- "Escribe tu nombre: "
+edad <- "Escribe tu edad: "
+tipo <- "Escribe 0 o 1 para JSON o XML: "
+
+if tipo == 0
+    > TEMPLATE
+     {
+        "nombre": "$nombre"
+        "edad": $edad
+     }
+elif tipo == 1
+    > TEMPLATE
+     <persona>
+        <nombre>$nombre</nombre>
+        <edad>$edad</edad>
+     </persona>
+else
+    print "Tipo no válido"
+
+print TEMPLATE

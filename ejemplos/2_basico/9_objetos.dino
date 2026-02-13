@@ -1,0 +1,23 @@
+# Objetos
+
+persona =
+{
+    nombre "Josthin"
+    habilidades ["Trabajar" "Mimir"]
+    contacto {
+        email "jj@email.com"
+        telefono "999999999"
+    }
+}
+
+print persona.habilidades[1]        # Mimir
+print persona.contacto.email        # jj@email.com
+
+
+# Iterar sobre claves
+for clave in persona.keys
+    print clave
+
+# Iterar sobre valores
+for valor in persona.values
+    print valor

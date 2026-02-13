@@ -1,0 +1,32 @@
+# - Introducción a la Regla de Oro
+#   - Continuidad operativa
+
+parrafo =    # <--- Continuidad operativa
+
+"
+--------------------------
+Hola, ¿qué tal?
+Bienvenido a DinoCode 🦖
+--------------------------
+"
+
+x = 10
+y = 20
+r =
+[
+    x + y   # <--- Continuidad operativa
+    x - y
+    x * y
+    x / y
+]
+
+print parrafo
+print "Resultados en el array: " r
+print "Resultados por separado: ",      # <--- Continuidad operativa
+
+"
+$x + $y = ${r[0]}
+$x - $y = ${r[1]}
+$x * $y = ${r[2]}
+$x / $y = ${r[3]}
+"

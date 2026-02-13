@@ -1,0 +1,22 @@
+# Objetos definidos por el usuario
+
+::Persona
+    :new nombre
+        self.nombre = nombre
+    
+    :saludar
+        print "Hola ${self.nombre}"
+    
+    :cambiar_nombre nuevo_nombre
+        self.nombre = nuevo_nombre
+
+p = Persona("Dario")
+p.saludar
+p.cambiar_nombre "Dante"
+p.saludar
+
+# Encadenamiento
+# Por defecto los métodos devuelven 'self'
+p
+  .cambiar_nombre("Diego")    # Para evitar ambigüedad se emplean paréntesis
+  .saludar()

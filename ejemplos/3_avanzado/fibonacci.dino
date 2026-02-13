@@ -1,0 +1,13 @@
+# Fibonacci(1000) usando BigIntegers
+
+n = 1000
+fib = [0n 1n]   # El sufijo 'n' indica que es BigInteger
+i = 2
+
+print fib[0]
+print fib[1]
+
+while i <= n
+    fib[i] = fib[i - 1] + fib[i - 2]
+    print "Fib[$i] = ${fib[i]}"
+    i += 1

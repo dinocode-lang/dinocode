@@ -1,0 +1,14 @@
+# Sintaxis flexible
+
+# Puedes mantener una escritura clásica si lo deseas
+x = 5;
+y = 10;
+print(x + y);
+
+# DinoCode es insensible a mayúsculas en sus identificadores
+NOMBRE = "Ismael"
+print nombre
+
+# Se permite 'ñ' y caracteres acentuados hispanos en identificadores
+año = 2026
+print año

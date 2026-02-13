@@ -1,0 +1,15 @@
+# Aritmética básica
+
+x = 10
+y = 22.4
+
+print x + y
+print x - y
+print x * y
+print x / y
+print x % y
+
+# Los strings se cohercen a números
+# cuando se usan con operadores aritméticos
+print "5" + 5   # 10
+print 5 . 5     # 55 <--- concatenación, operador Dot

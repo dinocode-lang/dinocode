@@ -1,0 +1,21 @@
+# Control de flujo
+
+# if elif else
+edad <- "Escribe tu edad:  "        # <--- Input
+
+if edad >= 18
+    print "Eres mayor de edad"
+elif edad >= 13
+    print "Eres adolescente"
+else
+    print "Eres menor de edad"
+
+# while
+n = 0
+while n < 5
+    print n
+    n++
+
+# for
+for n in [5 6 7 8 9 10]
+    print n

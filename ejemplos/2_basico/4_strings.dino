@@ -1,0 +1,25 @@
+# Strings
+
+# Las comillas dobles permiten interpolación y escape de carácteres
+nombre = "Ismael"
+print "Hola $nombre\n¿Cómo estás?\n"
+
+# Las comillas simples son literales, no escapan ni interpolan
+ruta = 'C:\ruta\archivo.txt'
+print ruta
+
+# Tanto comillas dobles como simples pueden ser multilineas
+parrafo_1 =
+"
+--------------------------
+Hola, ¿qué tal?
+"
+
+parrafo_2 =
+'
+Bienvenido a DinoCode 🦖
+--------------------------
+'
+
+print parrafo_1
+print parrafo_2

@@ -1,0 +1,32 @@
+# La función 'main' 
+# - Es un punto de entrada especial
+# - Se ejecuta automáticamente cuando inicia el programa
+# - Puede recibir argumentos de la línea de comandos:
+#   > dinocode program.dino arg1 arg2 ...
+#
+# Requerimientos:
+# - Solo puede existir una
+# - Fuera de la función 'main' solo puede existir:
+#   - Declaraciones de funciones o clases
+#   - Variables globales estáticas (su valor no puede provenir de la ejecución de funciones o clases)
+#
+# Si se invalida alguno de esos requisitos el programa se ejecutará
+# normalmente pero no se ejecutará la función 'main'
+# el compilador asume que es un script rápido que no lo requiere.
+#
+
+nombre = "DinoCode 🦖"
+
+:caratula
+  print "--------------------------"
+  print "Bienvenido a $nombre      "
+  print "--------------------------"
+
+# Se llamará automáticamente
+:main args
+
+  caratula
+
+  print "Los argumentos de la línea de comandos son: "
+  for arg in args
+    print arg
