@@ -1,0 +1,14 @@
+# Flexible syntax
+
+# You can maintain classic writing if you wish
+x = 5;
+y = 10;
+print(x + y);
+
+# DinoCode is case-insensitive in its identifiers
+NAME = "Ismael"
+print name
+
+# 'ñ' and Spanish accented characters are allowed in identifiers
+year = 2026
+print year

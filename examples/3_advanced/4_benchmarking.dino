@@ -1,0 +1,88 @@
+# Benchmarking with Time.perf_counter
+
+:fib_recursive n
+    if n <= 1
+        return n
+    return $(fib_recursive n - 1) + $(fib_recursive n - 2)
+
+:fib_iterative n
+    if n <= 1
+        return n
+    
+    a = 0
+    b = 1
+    i = 2
+    while i <= n
+        temp = a + b
+        a = b
+        b = temp
+        i += 1
+    
+    return b
+
+:benchmark_loop
+    print "=== Benchmark: Simple Loop ==="
+    
+    start = $(Time.perf_counter)
+    
+    sum = 0
+    i = 0
+    while i < 1000000
+        sum += i
+        i += 1
+    
+    end = $(Time.perf_counter)
+    duration = end - start
+    
+    print "Final sum: " sum
+    print "Execution time: " duration
+    print ""
+
+:benchmark_algorithms
+    print "=== Benchmark: Fibonacci Algorithms ==="
+    
+    n = 35
+    
+    # Recursive Fibonacci
+    start1 = $(Time.perf_counter)
+    result1 = $(fib_recursive n)
+    end1 = $(Time.perf_counter)
+    time1 = end1 - start1
+    
+    # Iterative Fibonacci
+    start2 = $(Time.perf_counter)
+    result2 = $(fib_iterative n)
+    end2 = $(Time.perf_counter)
+    time2 = end2 - start2
+    
+    print "Fibonacci(" n ") recursive: " result1 " in " time1 " seconds"
+    print "Fibonacci(" n ") iterative: " result2 " in " time2 " seconds"
+    print "Iterative is " (time1 / time2) " times faster"
+    print ""
+
+:benchmark_arrays
+    print "=== Benchmark: Array Operations ==="
+    
+    size = 100000
+    numbers = []
+    
+    # Create array
+    start1 = $(Time.perf_counter)
+    i = 0
+    while i < size
+        numbers.push i * 2
+        i += 1
+    end1 = $(Time.perf_counter)
+    creation_time = end1 - start1
+    
+    print "Array creation (" size " elements): " creation_time " seconds"
+    print ""
+
+:main
+    print "Starting benchmark tests\n"
+    
+    benchmark_loop
+    benchmark_algorithms
+    benchmark_arrays
+    
+    print "=== Benchmark completed ==="

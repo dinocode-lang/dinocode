@@ -1,0 +1,22 @@
+# Calculator
+
+::Calc
+    :new
+        self.history = []
+    
+    :add a b
+        r = a + b
+        self.add_to_history "$a + $b = $r"
+        return r
+    
+    :add_to_history text
+        self.history.push text
+    
+    :show
+        for i in self.history
+            print i
+
+c = Calc()
+c.add 5 3
+c.add 2 7
+c.show

@@ -1,0 +1,31 @@
+# - Introduction to the Golden Rule
+#   - In practice
+
+# Operational continuity
+base_price = 1000
+vat = 0.21
+discount = 0.10
+shipping = 25
+import_taxes = 50
+
+final_price = base_price
+            * (1 + vat)
+            - (base_price * discount)
+            + shipping
+            + import_taxes
+
+# Intent inference
+invoice = 
+{
+    customer {
+        name "Ismael"
+        last_name "Quiroz"
+    }
+    total final_price
+    status "PENDING"
+}
+
+names = "${invoice.customer.name} ${invoice.customer.last_name}"
+summary = "Invoice from $names: $${invoice.total}"
+
+print summary

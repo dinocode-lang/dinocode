@@ -1,0 +1,27 @@
+# Functions
+# - Defined with ':'
+# - Use block indentation (left margin)
+# - Return NONE by default
+
+# Procedures
+:header
+  print "--------------------------"
+  print "Welcome to DinoCode 🦖  "
+  print "--------------------------"
+
+:print_sum a b
+  print a+b
+
+# Functions
+:sum a b
+  return a+b
+
+##################################
+# Function calls
+header
+print_sum 1000 100.4
+
+# You can use $(func args) or func(args)
+first_result = $(sum 10 20)
+second_result = sum(10 20)
+print first_result " = " second_result

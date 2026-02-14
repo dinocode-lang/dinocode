@@ -1,0 +1,23 @@
+# Objects
+
+person =
+{
+    name "Josthin"
+    skills ["Work" "Sleep"]
+    contact {
+        email "jj@email.com"
+        phone "999999999"
+    }
+}
+
+print person.skills[1]        # Sleep
+print person.contact.email        # jj@email.com
+
+
+# Iterate over keys
+for key in person.keys
+    print key
+
+# Iterate over values
+for value in person.values
+    print value

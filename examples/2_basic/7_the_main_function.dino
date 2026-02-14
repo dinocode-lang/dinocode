@@ -1,0 +1,32 @@
+# The 'main' function
+# - It is a special entry point
+# - It runs automatically when the program starts
+# - It can receive command line arguments:
+#   > dinocode program.dino arg1 arg2 ...
+#
+# Requirements:
+# - Only one can exist
+# - Outside the 'main' function only can exist:
+#   - Function or class declarations
+#   - Static global variables (their value cannot come from function or class execution)
+#
+# If any of these requirements are invalidated, the program will run
+# normally but the 'main' function will not execute
+# the compiler assumes it is a quick script that doesn't require it.
+#
+
+name = "DinoCode 🦖"
+
+:header
+  print "--------------------------"
+  print "Welcome to $name      "
+  print "--------------------------"
+
+# Will be called automatically
+:main args
+
+  header
+
+  print "The command line arguments are: "
+  for arg in args
+    print arg

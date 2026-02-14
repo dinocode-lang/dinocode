@@ -1,0 +1,15 @@
+# Basic arithmetic
+
+x = 10
+y = 22.4
+
+print x + y
+print x - y
+print x * y
+print x / y
+print x % y
+
+# Strings are coerced to numbers
+# when used with arithmetic operators
+print "5" + 5   # 10
+print 5 . 5     # 55 <--- concatenation, Dot operator

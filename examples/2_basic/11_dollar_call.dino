@@ -1,0 +1,14 @@
+# Dollar call
+# Alternative to call functions and methods
+
+::Calc
+    :sum a b
+        return a + b
+:double x
+    return x * 2
+
+c = Calc()
+print $(c.sum 3 7)
+print $(c.sum 1 2)
+print $(double 5)
+print $(double 10.5)

@@ -1,0 +1,64 @@
+# Templates
+# > capture of indented multiline blocks
+#   - It is a zero-cost task at runtime because the compiler solves it
+#   - It is based on indentation, similar to control blocks
+#   - Allows interpolation and character escaping
+#   - Integrates perfectly with the code flow
+#
+#  Requirement: 
+#   - The content must have a left margin greater than that of '>'
+# 
+
+FIGURES = []
+
+> FIGURES[0]
+      *
+     ***
+    *****
+   *******
+  *********
+   *******
+    *****
+     ***
+      *
+
+> FIGURES[1]
+  ⣶⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠈⠿⣿⣿⣿⣿⣷⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⢈⣻⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⣤⣤⣴⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠙⠛⠛⠛⠛⢻⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠠⠐⠤⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠉⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣤⣄⡀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⠿⠟⠻⢿⣿⣿⣟⠛⠛⠛⠛⠛⠛⠻⠶⣤⡀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣷⠀⠀⠀⠙⠿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠉⠓
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢙⣿⡇⠀⠀⠀⠀⢸⣿⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⣀⣤⣤⣶⣿⣿⠀⠀⠀⢀⣠⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠉⠉⠋⠉⠀⠀⠀⠐⠺⠿⠿⠟⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+print FIGURES[0]
+print FIGURES[1]
+
+#####################################
+
+name <- "Enter your name: "
+age <- "Enter your age: "
+type <- "Enter 0 or 1 for JSON or XML: "
+
+if type == 0
+    > TEMPLATE
+     {
+        "name": "$name"
+        "age": $age
+     }
+elif type == 1
+    > TEMPLATE
+     <person>
+        <name>$name</name>
+        <age>$age</age>
+     </person>
+else
+    print "Invalid type"
+
+print TEMPLATE

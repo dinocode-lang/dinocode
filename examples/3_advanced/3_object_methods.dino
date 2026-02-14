@@ -1,0 +1,21 @@
+# Object methods
+
+dict = {
+    name "John"
+    age 30
+}
+print "Dictionary length: " dict.count
+print "Keys: " dict.keys
+print "Values: " dict.values
+print "Name: " dict.get("name")
+print "Age: " dict.get("age")
+
+print "--------------------------"
+dict.set("last_name" "Perez")
+if dict.has("last_name")
+    print "Last name: " dict.get("last_name")
+
+print "--------------------------"
+dict.clear()
+print "Dictionary length: " dict.count
+print "Name: " dict.get("name") # None

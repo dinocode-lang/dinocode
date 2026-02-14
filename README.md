@@ -1,4 +1,7 @@
 # 🦖 DinoCode
+
+[![English](https://img.shields.io/badge/Read%20in-English-blue?style=flat-square)](./README.en.md)
+
 **DinoCode** es un lenguaje de programación basado en la **inferencia de la intención** del programador, diseñado específicamente para eliminar la fricción sintáctica mediante el paradigma de la **Regla de Oro**.
 
 > [!IMPORTANT]
@@ -57,6 +60,8 @@ Si ya probaste el lenguaje, me encantaría conocer tu experiencia. Ayúdame llen
 
 ## Otros ejemplos
 
+[![Ir a Pruebas de Benchmark](https://img.shields.io/badge/Ir%20a-Pruebas%20de%20Benchmark-green?style=flat-square)](./ejemplos/3_avanzado/4_benchmarking.dino)
+
 1. [`ejemplos/`](./ejemplos/)
    1. [`Regla de Oro`](./ejemplos/1_regla_de_oro/)
       1. [`Introducción`](./ejemplos/1_regla_de_oro/1_introduccion)
@@ -81,8 +86,9 @@ Si ya probaste el lenguaje, me encantaría conocer tu experiencia. Ayúdame llen
       1. [`BigIntegers`](./ejemplos/3_avanzado/1_bigintegers.dino)
       2. [`Métodos de Arrays`](./ejemplos/3_avanzado/2_metodos_de_arrays.dino)
       3. [`Métodos de Objetos`](./ejemplos/3_avanzado/3_metodos_de_objetos.dino)
-      4. [`Calculadora`](./ejemplos/3_avanzado/calculadora.dino)
-      5. [`Fibonacci`](./ejemplos/3_avanzado/fibonacci.dino)
+      4. [`Benchmarking`](./ejemplos/3_avanzado/4_benchmarking.dino)
+      5. [`Calculadora`](./ejemplos/3_avanzado/calculadora.dino)
+      6. [`Fibonacci`](./ejemplos/3_avanzado/fibonacci.dino)
 
 ---
 

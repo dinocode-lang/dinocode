@@ -1,0 +1,34 @@
+# Array methods
+
+list =
+[
+    "Apple"
+    "Orange"
+    "Banana"
+]
+
+print "--------------------------"
+print "List length: " list.len
+print "First element: " list.first()
+print "Last element: " list.last()
+print "list[1]: " list.get(1)
+
+print "--------------------------"
+list.push "Mango"
+print "List length: " list.len
+print "Last element: " list.last()
+
+print "--------------------------"
+last = list.pop()
+print "Last element: " last
+print "List length: " list.len
+
+print "--------------------------"
+list.set(1 "Mandarin")
+print "list[1]: " list.get(1)
+
+print "--------------------------"
+list.clear()
+print "List length: " list.len
+if list.is_empty
+    print "The list is empty"

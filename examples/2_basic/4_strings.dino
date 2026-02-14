@@ -1,0 +1,25 @@
+# Strings
+
+# Double quotes allow interpolation and character escaping
+name = "Ismael"
+print "Hello $name\nHow are you?\n"
+
+# Single quotes are literals, they don't escape or interpolate
+path = 'C:\path\file.txt'
+print path
+
+# Both double and single quotes can be multiline
+paragraph_1 =
+"
+--------------------------
+Hello, how are you?
+"
+
+paragraph_2 =
+'
+Welcome to DinoCode 🦖
+--------------------------
+'
+
+print paragraph_1
+print paragraph_2

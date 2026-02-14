@@ -1,0 +1,32 @@
+# - Introduction to the Golden Rule
+#   - Operational continuity
+
+paragraph =    # <--- Operational continuity
+
+"
+--------------------------
+Hello, how are you?
+Welcome to DinoCode 🦖
+--------------------------
+"
+
+x = 10
+y = 20
+r =
+[
+    x + y   # <--- Operational continuity
+    x - y
+    x * y
+    x / y
+]
+
+print paragraph
+print "Results in the array: " r
+print "Results separately: ",      # <--- Operational continuity
+
+"
+$x + $y = ${r[0]}
+$x - $y = ${r[1]}
+$x * $y = ${r[2]}
+$x / $y = ${r[3]}
+"

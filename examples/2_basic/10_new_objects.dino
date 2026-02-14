@@ -1,0 +1,22 @@
+# User-defined objects
+
+::Person
+    :new name
+        self.name = name
+    
+    :greet
+        print "Hello ${self.name}"
+    
+    :change_name new_name
+        self.name = new_name
+
+p = Person("Dario")
+p.greet
+p.change_name "Dante"
+p.greet
+
+# Chaining
+# By default methods return 'self'
+p
+  .change_name("Diego")    # Parentheses are used to avoid ambiguity
+  .greet()
