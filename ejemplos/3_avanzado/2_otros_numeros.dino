@@ -1,0 +1,17 @@
+# Otros tipos de números
+
+# Número hexadecimal (prefijo 0x)
+hex = 0xFF        # 255 en decimal
+print "Hexadecimal 0xFF = " hex
+
+# Número binario (prefijo 0b)
+bin = 0b1010      # 10 en decimal
+print "Binario 0b1010 = " bin
+
+# Notación científica
+sci = 1.5e3       # 1500
+print "Notación científica 1.5e3 = " sci
+
+# Combinación
+combinado = 0xFF + 0b1010 + 1.5e3
+print "Combinación: 0xFF + 0b1010 + 1.5e3 = " combinado

@@ -27,7 +27,7 @@
     
     suma = 0
     i = 0
-    while i < 1000000
+    while i < 1_000_000
         suma += i
         i += 1
     
@@ -63,7 +63,7 @@
 :benchmark_arrays
     print "=== Benchmark: Operaciones con Arrays ==="
     
-    tamaño = 100000
+    tamaño = 100_000
     numeros = []
     
     # Crear array

@@ -1,0 +1,7 @@
+# Console library
+
+Console.print "Hola "
+Console.println "Mundo"
+
+Console.pause "Presiona cualquier tecla para continuar..."
+Console.clear

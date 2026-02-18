@@ -19,6 +19,11 @@
 
 ## Cómo probar DinoCode
 
+**Opción 1: DinoIDE**
+
+[![Descargar DinoIDE](https://img.shields.io/badge/DinoIDE-para%20Windows-008080?style=for-the-badge&logo=windows)](https://github.com/BlassGO/DinoIDE)
+
+**Opción 2: Línea de comandos (Linux/Windows)**
 1. **Descarga el binario:** Ve a la sección de [Releases](https://github.com/dinocode-lang/dinocode/releases).
 2. **Ejecuta un script**
    ```bash
@@ -84,11 +89,13 @@ Si ya probaste el lenguaje, me encantaría conocer tu experiencia. Ayúdame llen
       12. [`Templates`](./ejemplos/2_basico/12_templates.dino)
    3. [`Avanzados`](./ejemplos/3_avanzado/)
       1. [`BigIntegers`](./ejemplos/3_avanzado/1_bigintegers.dino)
-      2. [`Métodos de Arrays`](./ejemplos/3_avanzado/2_metodos_de_arrays.dino)
-      3. [`Métodos de Objetos`](./ejemplos/3_avanzado/3_metodos_de_objetos.dino)
-      4. [`Benchmarking`](./ejemplos/3_avanzado/4_benchmarking.dino)
-      5. [`Calculadora`](./ejemplos/3_avanzado/calculadora.dino)
-      6. [`Fibonacci`](./ejemplos/3_avanzado/fibonacci.dino)
+      2. [`Otros Números`](./ejemplos/3_avanzado/2_otros_numeros.dino)
+      3. [`Métodos de Arrays`](./ejemplos/3_avanzado/3_metodos_de_arrays.dino)
+      4. [`Métodos de Objetos`](./ejemplos/3_avanzado/4_metodos_de_objetos.dino)
+      5. [`Benchmarking`](./ejemplos/3_avanzado/5_benchmarking.dino)
+      6. [`Calculadora`](./ejemplos/3_avanzado/calculadora.dino)
+      7. [`Consola Library`](./ejemplos/3_avanzado/console_library.dino)
+      8. [`Fibonacci`](./ejemplos/3_avanzado/fibonacci.dino)
 
 ---
 
