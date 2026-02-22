@@ -49,10 +49,12 @@ Si ya probaste el lenguaje, me encantaría conocer tu experiencia. Ayúdame llen
     x = 10
     y = 1.5
 
+
+
     print [   # Nueva lista
 
         # Suma
-        x+y
+        $(suma x y)
 
         # Multiplicación
         x*y
@@ -65,7 +67,7 @@ Si ya probaste el lenguaje, me encantaría conocer tu experiencia. Ayúdame llen
 
 ## Otros ejemplos
 
-[![Ir a Pruebas de Benchmark](https://img.shields.io/badge/Ir%20a-Pruebas%20de%20Benchmark-green?style=flat-square)](./ejemplos/3_avanzado/4_benchmarking.dino)
+[![Ir a Pruebas de Benchmark](https://img.shields.io/badge/Ir%20a-Pruebas%20de%20Benchmark-green?style=flat-square)](./ejemplos/3_avanzado/5_benchmarking.dino)
 
 1. [`ejemplos/`](./ejemplos/)
    1. [`Regla de Oro`](./ejemplos/1_regla_de_oro/)

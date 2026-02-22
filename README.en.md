@@ -40,7 +40,7 @@ If you've already tried the language, I'd love to know about your experience. He
 
 ```dinocode
 
-:suma a b
+:add a b
     return a + b
 
 :main args
@@ -52,7 +52,7 @@ If you've already tried the language, I'd love to know about your experience. He
     print [   # New list
 
         # Sum
-        x+y
+        $(add x y)
 
         # Multiplication
         x*y
@@ -65,7 +65,7 @@ If you've already tried the language, I'd love to know about your experience. He
 
 ## Other examples
 
-[![Go to Benchmark Tests](https://img.shields.io/badge/Go%20to-Benchmark%20Tests-green?style=flat-square)](./examples/3_advanced/4_benchmarking.dino)
+[![Go to Benchmark Tests](https://img.shields.io/badge/Go%20to-Benchmark%20Tests-green?style=flat-square)](./examples/3_advanced/5_benchmarking.dino)
 
 1. [`examples/`](./examples/)
    1. [`Golden Rule`](./examples/1_golden_rule/)

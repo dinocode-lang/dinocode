@@ -10,5 +10,5 @@ NAME = "Ismael"
 print name
 
 # 'ñ' and Spanish accented characters are allowed in identifiers
-year = 2026
-print year
+año = 2026
+print año
