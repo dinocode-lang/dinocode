@@ -49,8 +49,6 @@ Si ya probaste el lenguaje, me encantaría conocer tu experiencia. Ayúdame llen
     x = 10
     y = 1.5
 
-
-
     print [   # Nueva lista
 
         # Suma
