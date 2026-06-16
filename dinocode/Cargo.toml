@@ -1,0 +1,22 @@
+[package]
+name = "dinocode"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+dinocode-macros = { path = "../dinocode-macros" }
+
+# core
+dinocode-core = { path = "../dinocode-core" }
+thiserror = { workspace = true }
+colored = { workspace = true }
+log = { workspace = true }
+
+# native functions
+paste = { workspace = true }
+

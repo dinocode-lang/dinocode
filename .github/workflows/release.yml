@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: "Build (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary_name: dinocode
+            archive_name: dinocode-${{ github.ref_name }}-linux-x64.tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary_name: dinocode.exe
+            archive_name: dinocode-${{ github.ref_name }}-windows-x64.zip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Zig (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.13.0
+
+      - name: Install cargo-zigbuild (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo install cargo-zigbuild --force
+
+      - name: Build Binary (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo zigbuild -p dinocode-cli --release --target ${{ matrix.target }}
+
+      - name: Build Binary (Windows)
+        if: matrix.os == 'windows-latest'
+        run: cargo build -p dinocode-cli --release --target ${{ matrix.target }}
+
+      - name: Package Asset (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} dist/
+          cd dist
+          tar -czf ../${{ matrix.archive_name }} ${{ matrix.binary_name }}
+
+      - name: Package Asset (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item "target\${{ matrix.target }}\release\${{ matrix.binary_name }}" -Destination dist\
+          Compress-Archive -Path "dist\${{ matrix.binary_name }}" -DestinationPath "${{ matrix.archive_name }}" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: ${{ matrix.archive_name }}
+
+  release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts_download
+
+      - name: Prepare assets for release
+        run: |
+          mkdir final_assets
+          find artifacts_download/ -type f -exec cp {} final_assets/ \;
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "${{ github.ref_name }}"
+          generate_release_notes: true
+          files: final_assets/*

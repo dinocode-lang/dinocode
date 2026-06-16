@@ -1,0 +1,24 @@
+[package]
+name = "dinocode-wasm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+dinocode = { path = "../dinocode" }
+dinocode-core = { path = "../dinocode-core" }
+dinocode-platform = { path = "../dinocode-platform" }
+wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+console_error_panic_hook = { workspace = true }
+web-sys = { workspace = true, features = ["console"] }
+colored = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+default = []

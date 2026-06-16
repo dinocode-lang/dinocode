@@ -1,0 +1,39 @@
+[package]
+name = "dinocode-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[[bin]]
+name = "dinocode"
+path = "src/main.rs"
+
+[dependencies]
+# dinocode core
+dinocode = { path = "../dinocode" }
+dinocode-core = { path = "../dinocode-core" }
+
+# CLI
+colored = { workspace = true }
+
+# Windows UTF-8 console support
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true }
+winres = { workspace = true }
+
+[features]
+logging = ["dinocode-core/logging"]
+
+[package.metadata.winres]
+ProductName = "DinoCode"
+CompanyName = "Ismael Quiroz (BlassGO)"
+FileDescription = "DinoCode Programming Language Interpreter"
+OriginalFilename = "dinocode.exe"
+LegalCopyright = "© 2025-2026 Ismael Quiroz"
+
+[build-dependencies]
+winres = { workspace = true, optional = true }
+
+[target.'cfg(windows)'.build-dependencies]
+winres = { workspace = true }

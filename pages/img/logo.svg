@@ -1,0 +1,74 @@
+<svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+  <!-- By Ismael Quiroz (https://www.blassgo.dev/) -->
+  <style>
+    :root {
+      --logo-stroke-blue: #059669;
+      --logo-stroke-gray: #059669;
+      --logo-stroke-w: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --logo-stroke-blue: #10B981;
+        --logo-stroke-gray: #10B981;
+        --logo-stroke-w: 8px;
+      }
+    }
+
+    path {
+      transform-origin: center;
+      animation: chaoticFlow 12s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      stroke: var(--logo-stroke-blue);
+      stroke-width: var(--logo-stroke-w);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .logo-part-gray path {
+      stroke: var(--logo-stroke-gray);
+    }
+
+    path:nth-child(1) { --tx: -40px; --ty: -50px; --rx: 410deg; --ry: 180deg; }
+    path:nth-child(2) { --tx: 30px; --ty: 20px; --rx: -380deg; --ry: 420deg; }
+    path:nth-child(3) { --tx: -50px; --ty: 40px; --rx: 720deg; --ry: -150deg; }
+    path:nth-child(4) { --tx: 40px; --ty: 60px; --rx: 190deg; --ry: 560deg; }
+    path:nth-child(5) { --tx: 60px; --ty: -40px; --rx: 450deg; --ry: 210deg; }
+    path:nth-child(6) { --tx: -60px; --ty: -20px; --rx: -520deg; --ry: -240deg; }
+    path:nth-child(7) { --tx: 25px; --ty: -70px; --rx: 680deg; --ry: 320deg; }
+    path:nth-child(8) { --tx: 70px; --ty: 30px; --rx: 800deg; --ry: -400deg; }
+    path:nth-child(9) { --tx: -30px; --ty: -80px; --rx: -360deg; --ry: 360deg; }
+    path:nth-child(10) { --tx: 50px; --ty: 50px; --rx: 540deg; --ry: 720deg; }
+
+    @keyframes chaoticFlow {
+      0%, 20% { 
+        transform: translate(0px, 0px) rotateX(0deg) rotateY(0deg) rotate(0deg); 
+        opacity: 1; 
+      }
+      55% { 
+        transform: translate(var(--tx), var(--ty)) rotateX(var(--rx)) rotateY(var(--ry)) rotate(20deg); 
+        opacity: 0.7; 
+      }
+      85%, 100% { 
+        transform: translate(0px, 0px) rotateX(0deg) rotateY(0deg) rotate(0deg); 
+        opacity: 1; 
+      }
+    }
+  </style>
+
+  <g class="logo-group">
+    <g class="logo-part-blue">
+      <path d="M267 104l-4-27-23 16z"></path>
+      <path d="M251 176l-74 141h115l30-46z"></path>
+      <path d="M134 222l-36 46 45-9z"></path>
+      <path d="M244 394l-25 33h59z"></path>
+    </g>
+    <g class="logo-part-gray">
+      <path d="M252 331h-76l32 88 27-34z"></path>
+      <path d="M168 303l36-67-56-19z"></path>
+      <path d="M333 99l-52 21-19 36 118 1v-37z"></path>
+      <path d="M264 170h60v79z"></path>
+      <path d="M278 77l36 15-33 13z"></path>
+      <path d="M330 283l13 18-25-1z"></path>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,24 @@
+[package]
+name = "dinocode-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+colored = { workspace = true }
+paste = { workspace = true }
+dinocode-macros = { path = "../dinocode-macros" }
+dinocode-platform = { path = "../dinocode-platform" }
+log = { workspace = true, optional = true }
+env_logger = { workspace = true, optional = true }
+
+[features]
+default = []
+logging = ["log", "env_logger"]
+
+[dev-dependencies]
+
+[lib]
+path = "src/lib.rs"
