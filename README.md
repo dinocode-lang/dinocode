@@ -116,6 +116,9 @@ DinoCode is distributed under the Apache License 2.0. This means that anyone can
 
 ### Contributing
 
-PRs and Issues are welcome. If you find a bug or have an idea to improve the language, your contribution is valuable to the project.
+Contributions, issues, and feature requests are welcome! If you find a bug or have an idea to improve the language, your contribution is valuable.
+
+> [!IMPORTANT]
+> By contributing to this project, you accept our legal and licensing terms. Please read the [Contributing](./CONTRIBUTING.md) before submitting any Pull Request.
 
 ---
