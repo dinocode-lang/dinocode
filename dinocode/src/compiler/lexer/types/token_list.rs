@@ -25,25 +25,34 @@ impl TokenList {
         Self { tokens: Vec::new() }
     }
 
-    pub fn push(&mut self, token: Token, ctx: &mut LexerContext) {
-        if !(self.tokens.is_empty() || ctx.is_continuous || token.is_delimiter()) {
+    pub fn handle_virtual_delims(
+        &mut self,
+        is_delimiter: bool,
+        pos: Option<(u32, u32, usize)>,
+        ctx: &mut LexerContext,
+    ) {
+        if !(self.tokens.is_empty() || ctx.is_continuous || is_delimiter) {
             if ctx.is_leading {
                 if ctx.allow_indent && ctx.current_indent > ctx.indent_counter.get() {
                     ctx.indent_counter.push(ctx.current_indent);
-                    self.tokens.push(Token::delim(TokenType::Indent, None));
+                    self.tokens.push(Token::delim(TokenType::Indent, pos));
                     ctx.stop_indent();
                 } else {
-                    self.tokens.push(Token::end(None));
+                    self.tokens.push(Token::end(pos));
                     while ctx.current_indent < ctx.indent_counter.get() {
                         ctx.indent_counter.leave();
-                        self.tokens.push(Token::delim(TokenType::Dedent, None));
+                        self.tokens.push(Token::delim(TokenType::Dedent, pos));
                     }
                 }
             } else {
-                self.tokens.push(Token::comma());
+                self.tokens.push(Token::comma(pos));
             }
             ctx.discard_break();
         }
+    }
+
+    pub fn push(&mut self, token: Token, ctx: &mut LexerContext) {
+        self.handle_virtual_delims(token.is_delimiter(), None, ctx);
         ctx.is_continuous = token.is_continuous();
         ctx.is_leading = false;
         self.tokens.push(token);

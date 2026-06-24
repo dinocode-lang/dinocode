@@ -65,7 +65,6 @@ pub struct Lexer;
 
 impl Lexer {
 
-    #[inline(always)]
     pub fn tokenize(
         source: &str
     ) -> Result<TokenList, LexError> {
@@ -299,8 +298,9 @@ impl Lexer {
                                 if ctx.is_continuous {
                                     return Err(pretty_lex_error(LexErrorType::UnexpectedSemicolon, info.from_line as usize, column as usize, source));
                                 }
-                                tokens.push(Token::end(pos_now!()), &mut ctx);
+                                ctx.current_indent = 0;
                                 ctx.is_leading = true;
+                                tokens.handle_virtual_delims(false, pos_now!(), &mut ctx);
                                 ctx.join_next(); // Prevents the inclusion of another End
                                 i += 1;
                                 column += 1;

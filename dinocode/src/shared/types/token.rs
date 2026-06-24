@@ -130,8 +130,8 @@ impl Token {
         Self::delim(TokenType::End, pos)
     }
 
-    pub fn comma() -> Self {
-        Self::delim(TokenType::Comma, None)
+    pub fn comma(pos: Option<(u32, u32, usize)>) -> Self {
+        Self::delim(TokenType::Comma, pos)
     }
 
     pub fn with_unary(mut self, is_unary: bool) -> Self {
@@ -144,9 +144,9 @@ impl Token {
         self
     }
     
-    pub fn position(&self) -> Option<(u32, u32)> {
-        match (self.line, self.column) {
-            (Some(line), Some(col)) => Some((line, col)),
+    pub fn pos(&self) -> Option<(u32, u32, usize)> {
+        match (self.line, self.column, self.length) {
+            (Some(line), Some(col), Some(len)) => Some((line, col, len)),
             _ => None,
         }
     }
