@@ -106,23 +106,23 @@ pub fn dyn_greater(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mu
     match (a_type, b_type) {
         // Numbers
         (value_type::INT, value_type::FLOAT) => {
-            return Ok((a.as_int() as f64) > b.as_non_nan_float()?);
+            return Ok((a.as_int() as f64) > b.as_float());
         },
         (value_type::FLOAT, value_type::INT) => {
-            return Ok(a.as_non_nan_float()? > (b.as_int() as f64));
+            return Ok(a.as_float() > (b.as_int() as f64));
         },
         // Bool with number
         (value_type::BOOL, value_type::INT) => {
             return Ok((if a.as_bool() { 1.0 } else { 0.0 }) > (b.as_int() as f64));
         },
         (value_type::BOOL, value_type::FLOAT) => {
-            return Ok((if a.as_bool() { 1.0 } else { 0.0 }) > b.as_non_nan_float()?);
+            return Ok((if a.as_bool() { 1.0 } else { 0.0 }) > b.as_float());
         },
         (value_type::INT, value_type::BOOL) => {
             return Ok((a.as_int() as f64) > (if b.as_bool() { 1.0 } else { 0.0 }));
         },
         (value_type::FLOAT, value_type::BOOL) => {
-            return Ok(a.as_non_nan_float()? > (if b.as_bool() { 1.0 } else { 0.0 }));
+            return Ok(a.as_float() > (if b.as_bool() { 1.0 } else { 0.0 }));
         },
         // String with number
         (value_type::STRING, value_type::INT) => {
@@ -132,7 +132,7 @@ pub fn dyn_greater(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mu
             )
         },
         (value_type::STRING, value_type::FLOAT) => {
-            string_cmp_number!(a, b.as_non_nan_float()?, memory, false,
+            string_cmp_number!(a, b.as_float(), memory, false,
                 |x: i64, y: f64| x as f64 > y,
                 |x: f64, y: f64| x > y
             )
@@ -144,7 +144,7 @@ pub fn dyn_greater(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mu
             )
         },
         (value_type::FLOAT, value_type::STRING) => {
-            string_cmp_number!(b, a.as_non_nan_float()?, memory, true,
+            string_cmp_number!(b, a.as_float(), memory, true,
                 |x: i64, y: f64| y > x as f64,
                 |x: f64, y: f64| y > x
             )
@@ -164,23 +164,23 @@ pub fn dyn_less(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut M
     match (a_type, b_type) {
         // Numbers
         (value_type::INT, value_type::FLOAT) => {
-            return Ok((a.as_int() as f64) < b.as_non_nan_float()?);
+            return Ok((a.as_int() as f64) < b.as_float());
         },
         (value_type::FLOAT, value_type::INT) => {
-            return Ok(a.as_non_nan_float()? < (b.as_int() as f64));
+            return Ok(a.as_float() < (b.as_int() as f64));
         },
         // Bool with number
         (value_type::BOOL, value_type::INT) => {
             return Ok((if a.as_bool() { 1.0 } else { 0.0 }) < (b.as_int() as f64));
         },
         (value_type::BOOL, value_type::FLOAT) => {
-            return Ok((if a.as_bool() { 1.0 } else { 0.0 }) < b.as_non_nan_float()?);
+            return Ok((if a.as_bool() { 1.0 } else { 0.0 }) < b.as_float());
         },
         (value_type::INT, value_type::BOOL) => {
             return Ok((a.as_int() as f64) < (if b.as_bool() { 1.0 } else { 0.0 }));
         },
         (value_type::FLOAT, value_type::BOOL) => {
-            return Ok(a.as_non_nan_float()? < (if b.as_bool() { 1.0 } else { 0.0 }));
+            return Ok(a.as_float() < (if b.as_bool() { 1.0 } else { 0.0 }));
         },
         // String with number
         (value_type::STRING, value_type::INT) => {
@@ -190,7 +190,7 @@ pub fn dyn_less(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut M
             )
         },
         (value_type::STRING, value_type::FLOAT) => {
-            string_cmp_number!(a, b.as_non_nan_float()?, memory, false,
+            string_cmp_number!(a, b.as_float(), memory, false,
                 |x: i64, y: f64| (x as f64) < y,
                 |x: f64, y: f64| x < y
             )
@@ -202,7 +202,7 @@ pub fn dyn_less(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut M
             )
         },
         (value_type::FLOAT, value_type::STRING) => {
-            string_cmp_number!(b, a.as_non_nan_float()?, memory, false,
+            string_cmp_number!(b, a.as_float(), memory, false,
                 |x: i64, y: f64| y < x as f64,
                 |x: f64, y: f64| y < x
             )

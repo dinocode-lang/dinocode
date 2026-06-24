@@ -34,9 +34,11 @@ const TAG_FUNCTION: u64  = 0xFFF7000000000000;
 const FUNCTION_NATIVE_FLAG: u64 = 0x0000000000000001;
 const OBJECT_CLASS_FLAG: u64    = 0x0000000000000001;
 
+const EXPONENT_MASK: u64 = 0x7FF0000000000000;
 const PAYLOAD_32_MASK: u64 = 0x00000000FFFFFFFF;
 const PAYLOAD_48_MASK: u64 = 0x0000FFFFFFFFFFFF;
 const TAG_CLEAR_MASK: u64  = 0xFFFF000000000000;
+const SIGN_CLEAR_MASK: u64  = 0x7FFFFFFFFFFFFFFF;
 
 // Special masks
 const TAG_FUNCTION_MASK: u64 = TAG_FUNCTION;
@@ -71,29 +73,13 @@ impl DinoRef {
 
     // constructors
     #[inline(always)]
-    pub fn number(value: f64) -> Self {
-        if !value.is_finite() {
-            if value.is_nan() {
-                return Self::NAN;
-            }
-            return if value.is_sign_positive() {
-                Self::INFINITY
-            } else {
-                Self::NEG_INFINITY
-            };
+    pub const fn float(value: f64) -> Self {
+        if value.is_nan() {
+            Self::NAN
+        } else {
+            Self(value.to_bits())
         }
-
-        /*let trunc = value.trunc();
-        if value == trunc {
-            let ival = trunc as i64;
-            if Self::is_valid_int(ival) {
-                return Self::int(ival);
-            }
-        }*/
-
-        Self::float(value)
     }
-    #[inline(always)] pub const fn float(value: f64) -> Self { Self(value.to_bits()) }
     #[inline(always)] pub const fn int(value: i64) -> Self { Self(INT_BASE_RANGE | (value as u64 & PAYLOAD_48_MASK)) }
     #[inline(always)] pub const fn bigint(offset: u32) -> Self { Self(TAG_BIGINT | (offset as u64)) }
     #[inline(always)] pub const fn bool(value: bool) -> Self { Self(TAG_BOOL | if value { 1 } else { 0 }) }
@@ -108,7 +94,8 @@ impl DinoRef {
 
     #[inline(always)] pub fn is_float(self) -> bool { self.0 <= MIN_TAGGED_VALUE }
     #[inline(always)] pub fn is_nan(self) -> bool { self.0 == Self::NAN.0 }
-    #[inline(always)] pub fn is_inf(self) -> bool { self.0 == Self::INFINITY.0 || self.0 == Self::NEG_INFINITY.0 }
+    #[inline(always)] pub fn is_inf(self) -> bool { (self.0 & SIGN_CLEAR_MASK) == EXPONENT_MASK }
+    #[inline(always)] pub fn is_finite(self) -> bool { (self.0 & SIGN_CLEAR_MASK) < EXPONENT_MASK }
     #[inline(always)] pub fn is_number(self) -> bool { self.is_float() || self.is_int() || self.is_bigint() }
     #[inline(always)] pub fn is_int(self) -> bool { self.0 >= INT_BASE_RANGE }
     #[inline(always)] pub fn is_bigint(self) -> bool { (self.0 & TAG_CLEAR_MASK) == TAG_BIGINT }
@@ -134,8 +121,10 @@ impl DinoRef {
 
     #[inline(always)]
     pub fn as_finite_float(self) -> Result<f64, RuntimeError> {
-        if self.is_nan() { return Err(RuntimeError::Typed(RuntimeErrorType::ValueIsNaN)); }
-        if self.is_inf() { return Err(RuntimeError::Typed(RuntimeErrorType::ValueIsInfinity)); }
+        if !self.is_finite() {
+            if self.is_nan() { return Err(RuntimeError::Typed(RuntimeErrorType::ValueIsNaN)); }
+            return Err(RuntimeError::Typed(RuntimeErrorType::ValueIsInfinity));
+        }
         Ok(self.as_float())
     }
 

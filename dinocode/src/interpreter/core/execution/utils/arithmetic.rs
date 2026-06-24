@@ -318,75 +318,75 @@ pub fn dyn_mul(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
 pub fn dyn_div(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut MemoryManager) -> Result<DinoRef> {
     match (a_type, b_type) {
         (value_type::INT, value_type::FLOAT) => {
-            Ok(DinoRef::number(a.as_int() as f64 / b.as_float()))
+            Ok(DinoRef::float(a.as_int() as f64 / b.as_float()))
         },
         (value_type::FLOAT, value_type::INT) => {
-            Ok(DinoRef::number(a.as_float() / b.as_int() as f64))
+            Ok(DinoRef::float(a.as_float() / b.as_int() as f64))
         },
         (value_type::BOOL, value_type::INT) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val / b.as_int() as f64))
+            Ok(DinoRef::float(a_val / b.as_int() as f64))
         },
         (value_type::INT, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a.as_int() as f64 / b_val))
+            Ok(DinoRef::float(a.as_int() as f64 / b_val))
         },
         (value_type::BOOL, value_type::FLOAT) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val / b.as_float()))
+            Ok(DinoRef::float(a_val / b.as_float()))
         },
         (value_type::FLOAT, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a.as_float() / b_val))
+            Ok(DinoRef::float(a.as_float() / b_val))
         },
         (value_type::STRING, value_type::INT) => {
             string_op_number!(a, b.as_int(), memory,
-                |x: i64, y: i64| Ok(DinoRef::number(x as f64 / y as f64)),
-                |x: f64, y: i64| Ok(DinoRef::number(x / y as f64))
+                |x: i64, y: i64| Ok(DinoRef::float(x as f64 / y as f64)),
+                |x: f64, y: i64| Ok(DinoRef::float(x / y as f64))
             )
         },
         (value_type::INT, value_type::STRING) => {
             string_op_number!(b, a.as_int(), memory,
-                |x: i64, y: i64| Ok(DinoRef::number(y as f64 / x as f64)),
-                |x: f64, y: i64| Ok(DinoRef::number(y as f64 / x))
+                |x: i64, y: i64| Ok(DinoRef::float(y as f64 / x as f64)),
+                |x: f64, y: i64| Ok(DinoRef::float(y as f64 / x))
             )
         },
         (value_type::STRING, value_type::FLOAT) => {
             string_op_number!(a, b.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number(x as f64 / y)),
-                |x: f64, y: f64| Ok(DinoRef::number(x / y))
+                |x: i64, y: f64| Ok(DinoRef::float(x as f64 / y)),
+                |x: f64, y: f64| Ok(DinoRef::float(x / y))
             )
         },
         (value_type::FLOAT, value_type::STRING) => {
             string_op_number!(b, a.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number(y / x as f64)),
-                |x: f64, y: f64| Ok(DinoRef::number(y / x))
+                |x: i64, y: f64| Ok(DinoRef::float(y / x as f64)),
+                |x: f64, y: f64| Ok(DinoRef::float(y / x))
             )
         },
         (value_type::STRING, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
             string_op_number!(a, b_val, memory,
-                |x: i64, y: f64| Ok(DinoRef::number(x as f64 / y)),
-                |x: f64, y: f64| Ok(DinoRef::number(x / y))
+                |x: i64, y: f64| Ok(DinoRef::float(x as f64 / y)),
+                |x: f64, y: f64| Ok(DinoRef::float(x / y))
             )
         },
         (value_type::BOOL, value_type::STRING) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
             string_op_number!(b, a_val, memory,
-                |x: i64, y: f64| Ok(DinoRef::number(y / x as f64)),
-                |x: f64, y: f64| Ok(DinoRef::number(y / x))
+                |x: i64, y: f64| Ok(DinoRef::float(y / x as f64)),
+                |x: f64, y: f64| Ok(DinoRef::float(y / x))
             )
         },
         (value_type::STRING, value_type::STRING) => {
             string_op_string!(a, b, memory,
-                |ai, bi| Ok(DinoRef::number(ai as f64 / bi as f64)),
-                |af, bf| Ok(DinoRef::number(af / bf))
+                |ai, bi| Ok(DinoRef::float(ai as f64 / bi as f64)),
+                |af, bf| Ok(DinoRef::float(af / bf))
             )
         },
         (value_type::BOOL, value_type::BOOL) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val / b_val))
+            Ok(DinoRef::float(a_val / b_val))
         },
         _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
             left: a.type_name().to_string(),
@@ -400,10 +400,10 @@ pub fn dyn_div(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
 pub fn dyn_mod(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut MemoryManager) -> Result<DinoRef> {
     match (a_type, b_type) {
         (value_type::INT, value_type::FLOAT) => {
-            Ok(DinoRef::number(a.as_int() as f64 % b.as_float()))
+            Ok(DinoRef::float(a.as_int() as f64 % b.as_float()))
         },
         (value_type::FLOAT, value_type::INT) => {
-            Ok(DinoRef::number(a.as_float() % b.as_int() as f64))
+            Ok(DinoRef::float(a.as_float() % b.as_int() as f64))
         },
         (value_type::BOOL, value_type::INT) => {
             let a_val = if a.as_bool() { 1i64 } else { 0 };
@@ -415,60 +415,60 @@ pub fn dyn_mod(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
         },
         (value_type::BOOL, value_type::FLOAT) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val % b.as_float()))
+            Ok(DinoRef::float(a_val % b.as_float()))
         },
         (value_type::FLOAT, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a.as_float() % b_val))
+            Ok(DinoRef::float(a.as_float() % b_val))
         },
         (value_type::STRING, value_type::INT) => {
             string_op_number!(a, b.as_int(), memory,
                 |x: i64, y: i64| Ok(DinoRef::int(x % y)),
-                |x: f64, y: i64| Ok(DinoRef::number(x % y as f64))
+                |x: f64, y: i64| Ok(DinoRef::float(x % y as f64))
             )
         },
         (value_type::INT, value_type::STRING) => {
             string_op_number!(b, a.as_int(), memory,
                 |x: i64, y: i64| Ok(DinoRef::int(y % x)),
-                |x: f64, y: i64| Ok(DinoRef::number(y as f64 % x))
+                |x: f64, y: i64| Ok(DinoRef::float(y as f64 % x))
             )
         },
         (value_type::STRING, value_type::FLOAT) => {
             string_op_number!(a, b.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number(x as f64 % y)),
-                |x: f64, y: f64| Ok(DinoRef::number(x % y))
+                |x: i64, y: f64| Ok(DinoRef::float(x as f64 % y)),
+                |x: f64, y: f64| Ok(DinoRef::float(x % y))
             )
         },
         (value_type::FLOAT, value_type::STRING) => {
             string_op_number!(b, a.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number(y % x as f64)),
-                |x: f64, y: f64| Ok(DinoRef::number(y % x))
+                |x: i64, y: f64| Ok(DinoRef::float(y % x as f64)),
+                |x: f64, y: f64| Ok(DinoRef::float(y % x))
             )
         },
         (value_type::STRING, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1i64 } else { 0 };
             string_op_number!(a, b_val, memory,
                 |x: i64, y: i64| Ok(DinoRef::int(x % y)),
-                |x: f64, y: i64| Ok(DinoRef::number(x % y as f64))
+                |x: f64, y: i64| Ok(DinoRef::float(x % y as f64))
             )
         },
         (value_type::BOOL, value_type::STRING) => {
             let a_val = if a.as_bool() { 1i64 } else { 0 };
             string_op_number!(b, a_val, memory,
                 |x: i64, y: i64| Ok(DinoRef::int(y % x)),
-                |x: f64, y: i64| Ok(DinoRef::number(y as f64 % x))
+                |x: f64, y: i64| Ok(DinoRef::float(y as f64 % x))
             )
         },
         (value_type::STRING, value_type::STRING) => {
             string_op_string!(a, b, memory,
                 |ai: i64, bi: i64| Ok(DinoRef::int(ai % bi)),
-                |af: f64, bf: f64| Ok(DinoRef::number(af % bf))
+                |af: f64, bf: f64| Ok(DinoRef::float(af % bf))
             )
         },
         (value_type::BOOL, value_type::BOOL) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val % b_val))
+            Ok(DinoRef::float(a_val % b_val))
         },
         _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
             left: a.type_name().to_string(),
@@ -482,75 +482,75 @@ pub fn dyn_mod(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
 pub fn dyn_floor_div(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut MemoryManager) -> Result<DinoRef> {
     match (a_type, b_type) {
         (value_type::INT, value_type::FLOAT) => {
-            Ok(DinoRef::number((a.as_int() as f64 / b.as_float()).floor()))
+            Ok(DinoRef::float((a.as_int() as f64 / b.as_float()).floor()))
         },
         (value_type::FLOAT, value_type::INT) => {
-            Ok(DinoRef::number((a.as_float() / b.as_int() as f64).floor()))
+            Ok(DinoRef::float((a.as_float() / b.as_int() as f64).floor()))
         },
         (value_type::BOOL, value_type::INT) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number((a_val / b.as_int() as f64).floor()))
+            Ok(DinoRef::float((a_val / b.as_int() as f64).floor()))
         },
         (value_type::INT, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number((a.as_int() as f64 / b_val).floor()))
+            Ok(DinoRef::float((a.as_int() as f64 / b_val).floor()))
         },
         (value_type::BOOL, value_type::FLOAT) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number((a_val / b.as_float()).floor()))
+            Ok(DinoRef::float((a_val / b.as_float()).floor()))
         },
         (value_type::FLOAT, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number((a.as_float() / b_val).floor()))
+            Ok(DinoRef::float((a.as_float() / b_val).floor()))
         },
         (value_type::STRING, value_type::INT) => {
             string_op_number!(a, b.as_int(), memory,
-                |x: i64, y: i64| Ok(DinoRef::number((x as f64 / y as f64).floor())),
-                |x: f64, y: i64| Ok(DinoRef::number((x / y as f64).floor()))
+                |x: i64, y: i64| Ok(DinoRef::float((x as f64 / y as f64).floor())),
+                |x: f64, y: i64| Ok(DinoRef::float((x / y as f64).floor()))
             )
         },
         (value_type::INT, value_type::STRING) => {
             string_op_number!(b, a.as_int(), memory,
-                |x: i64, y: i64| Ok(DinoRef::number((y as f64 / x as f64).floor())),
-                |x: f64, y: i64| Ok(DinoRef::number((y as f64 / x).floor()))
+                |x: i64, y: i64| Ok(DinoRef::float((y as f64 / x as f64).floor())),
+                |x: f64, y: i64| Ok(DinoRef::float((y as f64 / x).floor()))
             )
         },
         (value_type::STRING, value_type::FLOAT) => {
             string_op_number!(a, b.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number((x as f64 / y).floor())),
-                |x: f64, y: f64| Ok(DinoRef::number((x / y).floor()))
+                |x: i64, y: f64| Ok(DinoRef::float((x as f64 / y).floor())),
+                |x: f64, y: f64| Ok(DinoRef::float((x / y).floor()))
             )
         },
         (value_type::FLOAT, value_type::STRING) => {
             string_op_number!(b, a.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number((y / x as f64).floor())),
-                |x: f64, y: f64| Ok(DinoRef::number((y / x).floor()))
+                |x: i64, y: f64| Ok(DinoRef::float((y / x as f64).floor())),
+                |x: f64, y: f64| Ok(DinoRef::float((y / x).floor()))
             )
         },
         (value_type::STRING, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
             string_op_number!(a, b_val, memory,
-                |x: i64, y: f64| Ok(DinoRef::number((x as f64 / y).floor())),
-                |x: f64, y: f64| Ok(DinoRef::number((x / y).floor()))
+                |x: i64, y: f64| Ok(DinoRef::float((x as f64 / y).floor())),
+                |x: f64, y: f64| Ok(DinoRef::float((x / y).floor()))
             )
         },
         (value_type::BOOL, value_type::STRING) => {
             let a_val = if a.as_bool() { 1.0 } else { 0.0 };
             string_op_number!(b, a_val, memory,
-                |x: i64, y: f64| Ok(DinoRef::number((y / x as f64).floor())),
-                |x: f64, y: f64| Ok(DinoRef::number((y / x).floor()))
+                |x: i64, y: f64| Ok(DinoRef::float((y / x as f64).floor())),
+                |x: f64, y: f64| Ok(DinoRef::float((y / x).floor()))
             )
         },
         (value_type::STRING, value_type::STRING) => {
             string_op_string!(a, b, memory,
-                |ai: i64, bi: i64| Ok(DinoRef::number((ai as f64 / bi as f64).floor())),
-                |af: f64, bf: f64| Ok(DinoRef::number((af / bf).floor()))
+                |ai: i64, bi: i64| Ok(DinoRef::float((ai as f64 / bi as f64).floor())),
+                |af: f64, bf: f64| Ok(DinoRef::float((af / bf).floor()))
             )
         },
         (value_type::BOOL, value_type::BOOL) => {
             let a_val: f64 = if a.as_bool() { 1.0 } else { 0.0 };
             let b_val: f64 = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number((a_val / b_val).floor()))
+            Ok(DinoRef::float((a_val / b_val).floor()))
         },
         _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
             left: a.type_name().to_string(),
@@ -564,75 +564,75 @@ pub fn dyn_floor_div(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &
 pub fn dyn_pow(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut MemoryManager) -> Result<DinoRef> {
     match (a_type, b_type) {
         (value_type::INT, value_type::FLOAT) => {
-            Ok(DinoRef::number((a.as_int() as f64).powf(b.as_float())))
+            Ok(DinoRef::float((a.as_int() as f64).powf(b.as_float())))
         },
         (value_type::FLOAT, value_type::INT) => {
-            Ok(DinoRef::number(a.as_float().powf(b.as_int() as f64)))
+            Ok(DinoRef::float(a.as_float().powf(b.as_int() as f64)))
         },
         (value_type::BOOL, value_type::INT) => {
             let a_val: f64 = if a.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val.powf(b.as_int() as f64)))
+            Ok(DinoRef::float(a_val.powf(b.as_int() as f64)))
         },
         (value_type::INT, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number((a.as_int() as f64).powf(b_val)))
+            Ok(DinoRef::float((a.as_int() as f64).powf(b_val)))
         },
         (value_type::BOOL, value_type::FLOAT) => {
             let a_val: f64 = if a.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val.powf(b.as_float())))
+            Ok(DinoRef::float(a_val.powf(b.as_float())))
         },
         (value_type::FLOAT, value_type::BOOL) => {
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a.as_float().powf(b_val)))
+            Ok(DinoRef::float(a.as_float().powf(b_val)))
         },
         (value_type::STRING, value_type::INT) => {
             string_op_number!(a, b.as_int(), memory,
-                |x: i64, y: i64| Ok(DinoRef::number((x as f64).powf(y as f64))),
-                |x: f64, y: i64| Ok(DinoRef::number(x.powf(y as f64)))
+                |x: i64, y: i64| Ok(DinoRef::float((x as f64).powf(y as f64))),
+                |x: f64, y: i64| Ok(DinoRef::float(x.powf(y as f64)))
             )
         },
         (value_type::INT, value_type::STRING) => {
             string_op_number!(b, a.as_int(), memory,
-                |x: i64, y: i64| Ok(DinoRef::number((y as f64).powf(x as f64))),
-                |x: f64, y: i64| Ok(DinoRef::number((y as f64).powf(x)))
+                |x: i64, y: i64| Ok(DinoRef::float((y as f64).powf(x as f64))),
+                |x: f64, y: i64| Ok(DinoRef::float((y as f64).powf(x)))
             )
         },
         (value_type::STRING, value_type::FLOAT) => {
             string_op_number!(a, b.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number((x as f64).powf(y))),
-                |x: f64, y: f64| Ok(DinoRef::number(x.powf(y)))
+                |x: i64, y: f64| Ok(DinoRef::float((x as f64).powf(y))),
+                |x: f64, y: f64| Ok(DinoRef::float(x.powf(y)))
             )
         },
         (value_type::FLOAT, value_type::STRING) => {
             string_op_number!(b, a.as_float(), memory,
-                |x: i64, y: f64| Ok(DinoRef::number(y.powf(x as f64))),
-                |x: f64, y: f64| Ok(DinoRef::number(y.powf(x)))
+                |x: i64, y: f64| Ok(DinoRef::float(y.powf(x as f64))),
+                |x: f64, y: f64| Ok(DinoRef::float(y.powf(x)))
             )
         },
         (value_type::STRING, value_type::BOOL) => {
             let b_val: f64 = if b.as_bool() { 1.0 } else { 0.0 };
             string_op_number!(a, b_val, memory,
-                |x: i64, y: f64| Ok(DinoRef::number((x as f64).powf(y))),
-                |x: f64, y: f64| Ok(DinoRef::number(x.powf(y)))
+                |x: i64, y: f64| Ok(DinoRef::float((x as f64).powf(y))),
+                |x: f64, y: f64| Ok(DinoRef::float(x.powf(y)))
             )
         },
         (value_type::BOOL, value_type::STRING) => {
             let a_val: f64 = if a.as_bool() { 1.0 } else { 0.0 };
             string_op_number!(b, a_val, memory,
-                |x: i64, y: f64| Ok(DinoRef::number(y.powf(x as f64))),
-                |x: f64, y: f64| Ok(DinoRef::number(y.powf(x)))
+                |x: i64, y: f64| Ok(DinoRef::float(y.powf(x as f64))),
+                |x: f64, y: f64| Ok(DinoRef::float(y.powf(x)))
             )
         },
         (value_type::STRING, value_type::STRING) => {
             string_op_string!(a, b, memory,
-                |ai: i64, bi: i64| Ok(DinoRef::number((ai as f64).powf(bi as f64))),
-                |af: f64, bf: f64| Ok(DinoRef::number(af.powf(bf)))
+                |ai: i64, bi: i64| Ok(DinoRef::float((ai as f64).powf(bi as f64))),
+                |af: f64, bf: f64| Ok(DinoRef::float(af.powf(bf)))
             )
         },
         (value_type::BOOL, value_type::BOOL) => {
             let a_val: f64 = if a.as_bool() { 1.0 } else { 0.0 };
             let b_val: f64 = if b.as_bool() { 1.0 } else { 0.0 };
-            Ok(DinoRef::number(a_val.powf(b_val)))
+            Ok(DinoRef::float(a_val.powf(b_val)))
         },
         _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
             left: a.type_name().to_string(),
