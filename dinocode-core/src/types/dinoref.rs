@@ -55,7 +55,7 @@ pub mod value_type {
     pub const NONE: u16     = 0xFFF5;  // TAG_NONE     >> 48
     pub const OBJECT: u16   = 0xFFF6;  // TAG_OBJECT   >> 48
     pub const FUNCTION: u16 = 0xFFF7;  // TAG_FUNCTION >> 48
-    pub const INT: u16 = 0xFFFF;    // (b >= INT_BASE_RANGE, >= 0xFFF8)
+    pub const INT: u16 = 0xFFF8;       // INT_BASE_RANGE >> 48
 }
 
 impl DinoRef {
@@ -191,10 +191,8 @@ impl DinoRef {
 
     #[inline(always)]
     pub fn decode_type(self) -> u16 {
-        let b = self.0;
-        if b <= MIN_TAGGED_VALUE { return value_type::FLOAT; }
-        if b >= INT_BASE_RANGE  { return value_type::INT; }
-        (b >> 48) as u16
+        let is_float = (self.0 <= MIN_TAGGED_VALUE) as u16;
+        ((self.0 >> 48) as u16) & is_float.wrapping_sub(1)
     }
     
     #[inline(always)]

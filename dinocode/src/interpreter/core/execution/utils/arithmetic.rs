@@ -37,32 +37,32 @@ macro_rules! string_op_string {
             let a_bytes = $memory.get_const_bytes($a.decode_index());
             let b_bytes = $memory.get_const_bytes($b.decode_index());
             
-            match (bytes_to_i64(a_bytes), bytes_to_i64(b_bytes)) {
+            let a_i = bytes_to_i64(a_bytes);
+            let b_i = bytes_to_i64(b_bytes);
+            
+            match (a_i, b_i) {
                 (Some(ai), Some(bi)) => $int_op(ai, bi),
-                _ => match (bytes_to_f64(a_bytes), bytes_to_f64(b_bytes)) {
-                    (Some(af), Some(bf)) => $float_op(af, bf),
-                    (Some(af), None) => {
-                        if let Some(bi) = bytes_to_i64(b_bytes) {
-                            $float_op(af, bi as f64)
-                        } else {
-                            Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($b.decode_index()).to_string())))
-                        }
-                    },
-                    (None, Some(bf)) => {
-                        if let Some(ai) = bytes_to_i64(a_bytes) {
-                            $float_op(ai as f64, bf)
-                        } else {
-                            Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($a.decode_index()).to_string())))
-                        }
-                    },
-                    (None, None) => {
-                        if bytes_to_i64(a_bytes).is_some() {
-                            Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($b.decode_index()).to_string())))
-                        } else {
-                            Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($a.decode_index()).to_string())))
-                        }
-                    },
+                (Some(ai), None) => {
+                    if let Some(bf) = bytes_to_f64(b_bytes) {
+                        $float_op(ai as f64, bf)
+                    } else {
+                        Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($b.decode_index()).to_string())))
+                    }
                 },
+                (None, Some(bi)) => {
+                    if let Some(af) = bytes_to_f64(a_bytes) {
+                        $float_op(af, bi as f64)
+                    } else {
+                        Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($a.decode_index()).to_string())))
+                    }
+                },
+                (None, None) => {
+                    match (bytes_to_f64(a_bytes), bytes_to_f64(b_bytes)) {
+                        (Some(af), Some(bf)) => $float_op(af, bf),
+                        (Some(_), None) => Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($b.decode_index()).to_string()))),
+                        (None, _) => Err(RuntimeError::Typed(RuntimeErrorType::StringNotNumeric($memory.get_string($a.decode_index()).to_string()))),
+                    }
+                }
             }
         }
     };
