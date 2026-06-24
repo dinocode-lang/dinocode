@@ -9,6 +9,10 @@ changelog:
       labels:
         - enhancement
         - feature
+    - title: "Performance"
+      labels:
+        - perf
+        - performance
     - title: "Bug Fixes"
       labels:
         - bug
