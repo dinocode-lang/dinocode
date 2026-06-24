@@ -45,7 +45,7 @@ dependencies = [
 
 [[package]]
 name = "dinocode"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "colored",
  "dinocode-core",
@@ -57,7 +57,7 @@ dependencies = [
 
 [[package]]
 name = "dinocode-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "colored",
  "dinocode",
@@ -68,7 +68,7 @@ dependencies = [
 
 [[package]]
 name = "dinocode-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "colored",
  "dinocode-macros",
@@ -81,7 +81,7 @@ dependencies = [
 
 [[package]]
 name = "dinocode-macros"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "paste",
  "proc-macro2",
@@ -91,7 +91,7 @@ dependencies = [
 
 [[package]]
 name = "dinocode-platform"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -101,7 +101,7 @@ dependencies = [
 
 [[package]]
 name = "dinocode-wasm"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "colored",
  "console_error_panic_hook",
