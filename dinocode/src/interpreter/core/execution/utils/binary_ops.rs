@@ -57,7 +57,7 @@ pub fn execute_binary_operator(
         (value_type::INT, value_type::INT, opcode::DIV) => {
             //let b_val = b.as_int();
             //if b_val == 0 { return Err(RuntimeError::DivisionByZero); }
-            Ok(DinoRef::number(a.as_int() as f64 / b.as_int() as f64))
+            Ok(DinoRef::float(a.as_int() as f64 / b.as_int() as f64))
         },
         (value_type::INT, value_type::INT, opcode::MOD) => {
             let b_val = b.as_int();
@@ -65,11 +65,10 @@ pub fn execute_binary_operator(
             Ok(DinoRef::int(a.as_int() % b_val))
         },
         (value_type::INT, value_type::INT, opcode::FLOOR_DIV) => {
-            Ok(DinoRef::number((a.as_int() as f64 / b.as_int() as f64).floor()))
+            Ok(DinoRef::float((a.as_int() as f64 / b.as_int() as f64).floor()))
         },
         (value_type::INT, value_type::INT, opcode::POW) => {
-            let f_result = (a.as_int() as f64).powf(b.as_int() as f64);
-            Ok(DinoRef::number(f_result))
+            Ok(DinoRef::float((a.as_int() as f64).powf(b.as_int() as f64)))
         },
         
         (value_type::BIGINT, value_type::BIGINT, opcode::ADD) => {
@@ -128,16 +127,16 @@ pub fn execute_binary_operator(
             Ok(DinoRef::float(a.as_float() * b.as_float()))
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::DIV) => {
-            Ok(DinoRef::number(a.as_float() / b.as_float()))
+            Ok(DinoRef::float(a.as_float() / b.as_float()))
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::FLOOR_DIV) => {
-            Ok(DinoRef::number((a.as_float() / b.as_float()).floor()))
+            Ok(DinoRef::float((a.as_float() / b.as_float()).floor()))
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::MOD) => {
-            Ok(DinoRef::number(a.as_float() % b.as_float()))
+            Ok(DinoRef::float(a.as_float() % b.as_float()))
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::POW) => {
-            Ok(DinoRef::number(a.as_float().powf(b.as_float())))
+            Ok(DinoRef::float(a.as_float().powf(b.as_float())))
         },
         
         (value_type::STRING, value_type::STRING, opcode::DOT) => {
@@ -237,22 +236,22 @@ pub fn execute_binary_operator(
         },
         
         (value_type::FLOAT, value_type::FLOAT, opcode::EQ) => {
-            Ok(if a.raw() == b.raw() { DinoRef::TRUE } else { DinoRef::FALSE })
+            Ok(if a.as_float() == b.as_float() { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::NE) => {
-            Ok(if a.raw() != b.raw() { DinoRef::TRUE } else { DinoRef::FALSE })
+            Ok(if a.as_float() != b.as_float() { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::GT) => {
-            Ok(if a.as_non_nan_float()? > b.as_non_nan_float()? { DinoRef::TRUE } else { DinoRef::FALSE })
+            Ok(if a.as_float() > b.as_float() { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::LT) => {
-            Ok(if a.as_non_nan_float()? < b.as_non_nan_float()? { DinoRef::TRUE } else { DinoRef::FALSE })
+            Ok(if a.as_float() < b.as_float() { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::GE) => {
-            Ok(if a.as_non_nan_float()? >= b.as_non_nan_float()? { DinoRef::TRUE } else { DinoRef::FALSE })
+            Ok(if a.as_float() >= b.as_float() { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::FLOAT, value_type::FLOAT, opcode::LE) => {
-            Ok(if a.as_non_nan_float()? <= b.as_non_nan_float()? { DinoRef::TRUE } else { DinoRef::FALSE })
+            Ok(if a.as_float() <= b.as_float() { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         
         (value_type::STRING, value_type::STRING, opcode::EQ) => {

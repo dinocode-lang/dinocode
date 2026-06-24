@@ -76,7 +76,7 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
         
         let hash_val = memory.ensure_const_hash(this);
-        Ok(DinoRef::number(hash_val as f64))
+        Ok(DinoRef::float(hash_val as f64))
     }
 
     #[raw]

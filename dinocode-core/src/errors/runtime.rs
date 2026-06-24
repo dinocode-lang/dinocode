@@ -213,7 +213,7 @@ impl RuntimeErrorType {
 
             RuntimeErrorType::ValueIsNaN =>
                 ("Not a Number (NaN) value detected".to_string(),
-                 Some("NaN is not allowed in logical operations or type coercion".to_string()),
+                 Some("NaN is not allowed in operations that require a finite value".to_string()),
                  Some("NaN is the product of an invalid numeric operation like: 0/0, sqrt(-1), Infinity/Infinity".to_string())),
 
             RuntimeErrorType::ValueIsInfinity =>
