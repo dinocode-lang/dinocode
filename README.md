@@ -9,7 +9,8 @@
 [![Documentation](https://img.shields.io/badge/Documentation-dinocode.blassgo.dev-blue?style=flat-square)](https://dinocode.blassgo.dev)
 </div>
 
-**DinoCode** is a programming language based on **programmer intent inference**, designed specifically to facilitate and accelerate software development.
+**DinoCode** is a general-purpose programming
+language designed with a focus on structural efficiency and ease of use.
 
 > [!NOTE]
 >  Explore the [official documentation](https://dinocode.blassgo.dev) in English and Spanish.
