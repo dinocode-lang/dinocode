@@ -34,49 +34,26 @@ use crate::{
 };
 
 impl Parser {
-    pub fn load_function(ctx: &mut ParserContext, name: &str, prioritize_user: bool, token: &Token) -> Result<(), ParseError> {
-        if prioritize_user {
-            if let Some((scope_level, _var_idx)) = ctx.value_pool.resolve_var_scope_with_level(name) {
-                let current_scope_depth = ctx.value_pool.get_current_scope_depth();
-                
-                if scope_level == 0 || scope_level == current_scope_depth {
-                    if let Some((access_opcode, var_idx)) = ctx.value_pool.get_var_access_opcode(name) {
-                        ctx.emit(Instruction::new_raw(access_opcode, var_idx).0, Some(token));
-                    } else {
-                        return Err(pretty_parse_error(ParseErrorType::FunctionNotFoundInScope, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
-                    }
+    pub fn load_function(ctx: &mut ParserContext, name: &str, token: &Token) -> Result<(), ParseError> {
+        if let Some((scope_level, _var_idx)) = ctx.value_pool.resolve_var_scope_with_level(name) {
+            let current_scope_depth = ctx.value_pool.get_current_scope_depth();
+            
+            if scope_level == 0 || scope_level == current_scope_depth {
+                if let Some((access_opcode, var_idx)) = ctx.value_pool.get_var_access_opcode(name) {
+                    ctx.emit(Instruction::new_raw(access_opcode, var_idx).0, Some(token));
                 } else {
-                    return Err(pretty_parse_error(ParseErrorType::CannotAccessParentScopeFunction, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                    return Err(pretty_parse_error(ParseErrorType::FunctionNotFoundInScope, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
                 }
-            } else if let Some(native_id) = is_native_function(name) {
-                let const_idx = ctx.value_pool.get_or_create_native_fn(native_id);
-                ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
-            } else if let Some(global_idx) = ctx.value_pool.get_bootstrap_global_index_by_name(name) {
-                ctx.emit(Instruction::new_raw(opcode::GET_GLOBAL, global_idx).0, Some(token));
             } else {
-                return Err(pretty_parse_error(ParseErrorType::FunctionNotFound, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                return Err(pretty_parse_error(ParseErrorType::CannotAccessParentScopeFunction, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
             }
+        } else if let Some(native_id) = is_native_function(name) {
+            let const_idx = ctx.value_pool.get_or_create_native_fn(native_id);
+            ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
+        } else if let Some(global_idx) = ctx.value_pool.get_bootstrap_global_index_by_name(name) {
+            ctx.emit(Instruction::new_raw(opcode::GET_GLOBAL, global_idx).0, Some(token));
         } else {
-            if let Some(native_id) = is_native_function(name) {
-                let const_idx = ctx.value_pool.get_or_create_native_fn(native_id);
-                ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
-            } else if let Some(global_idx) = ctx.value_pool.get_bootstrap_global_index_by_name(name) {
-                ctx.emit(Instruction::new_raw(opcode::GET_GLOBAL, global_idx).0, Some(token));
-            } else if let Some((scope_level, _var_idx)) = ctx.value_pool.resolve_var_scope_with_level(name) {
-                let current_scope_depth = ctx.value_pool.get_current_scope_depth();
-                
-                if scope_level == 0 || scope_level == current_scope_depth {
-                    if let Some((access_opcode, var_idx)) = ctx.value_pool.get_var_access_opcode(name) {
-                        ctx.emit(Instruction::new_raw(access_opcode, var_idx).0, Some(token));
-                    } else {
-                        return Err(pretty_parse_error(ParseErrorType::FunctionNotFoundInScope, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
-                    }
-                } else {
-                    return Err(pretty_parse_error(ParseErrorType::CannotAccessParentScopeFunction, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
-                }
-            } else {
-                return Err(pretty_parse_error(ParseErrorType::FunctionNotFound, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
-            }
+            return Err(pretty_parse_error(ParseErrorType::FunctionNotFound, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
         }
         Ok(())
     }

@@ -185,7 +185,7 @@ impl Parser {
                         }
                     }
                 } else {
-                    Self::load_function(ctx, &identifier, is_implicit_call, token)?;
+                    Self::load_function(ctx, &identifier, token)?;
                 }
                 
                 if !is_dollar && is_implicit_call {
