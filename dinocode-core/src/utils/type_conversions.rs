@@ -250,15 +250,8 @@ impl TypeConverter {
             value_type::BIGINT => Ok(memory.get_bigint_string(value.as_bigint())),
             value_type::STRING => Ok(memory.get_string(value.decode_index()).to_string()),
             value_type::BOOL => Ok(value.as_bool().to_string()),
-            value_type::NONE => {
-                if value.is_none() {
-                    Ok("none".to_string())
-                } else if let Some(name) = Symbol::to_name(value) {
-                    Ok(name.to_string())
-                } else {
-                    Ok(format!("[Symbol:{}]", value.as_symbol()))
-                }
-            },
+            value_type::NONE => Ok("none".to_string()),
+            value_type::SYMBOL => Ok(Symbol::to_name(value)),
             value_type::ARRAY => dinojson(value, memory),
             value_type::OBJECT => dinojson(value, memory),
             value_type::FUNCTION => {
@@ -280,15 +273,8 @@ impl TypeConverter {
             value_type::BIGINT => Ok(memory.get_bigint_string(value.as_bigint())),
             value_type::STRING => Ok(memory.get_string(value.decode_index()).to_string()),
             value_type::BOOL => Ok(value.as_bool().to_string()),
-            value_type::NONE => {
-                if value.is_none() {
-                    Ok("none".to_string())
-                } else if let Some(name) = Symbol::to_name(value) {
-                    Ok(name.to_string())
-                } else {
-                    Ok(format!("[Symbol:{}]", value.as_symbol()))
-                }
-            },
+            value_type::NONE => Ok("none".to_string()),
+            value_type::SYMBOL => Ok(Symbol::to_name(value)),
             value_type::ARRAY => Ok(format!("[Array:{}]", value.decode_index())),
             value_type::OBJECT => {
                 let id = value.get_object_id();

@@ -77,6 +77,9 @@ impl Type {
     #[prop(key)]
     pub const BIGINT: DinoRef = DinoRef::int(value_type::BIGINT as i64);
 
+    #[prop(key)]
+    pub const SYMBOL: DinoRef = DinoRef::int(value_type::SYMBOL as i64);
+
     #[raw]
     pub fn name(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
@@ -96,6 +99,7 @@ impl Type {
             value_type::FUNCTION => Self::FUNCTION(),
             value_type::NONE => Self::NONE(),
             value_type::BIGINT => Self::BIGINT(),
+            value_type::SYMBOL => Self::SYMBOL(),
             _ => return Err(RuntimeError::Typed(RuntimeErrorType::InvalidArgumentValue { 
                 func: "type.name".to_string(), 
                 message: format!("unknown type id: {}", vtype as i64) 
@@ -119,7 +123,8 @@ impl Type {
             value_type::BOOL | 
             value_type::STRING | 
             value_type::BIGINT | 
-            value_type::NONE
+            value_type::NONE | 
+            value_type::SYMBOL
         );
         
         Ok(DinoRef::bool(is_primitive))

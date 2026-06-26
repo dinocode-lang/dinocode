@@ -21,7 +21,7 @@ use crate::{
 pub struct DinoRef(u64);
 
 pub const MIN_TAGGED_VALUE: u64 = 0xFFF0000000000000;
-pub const INT_BASE_RANGE: u64   = 0xFFF8000000000000;
+pub const INT_BASE_RANGE: u64   = 0xFFFF000000000000;
 
 const TAG_BIGINT: u64    = 0xFFF1000000000000;
 const TAG_STRING: u64    = 0xFFF2000000000000;
@@ -30,6 +30,7 @@ const TAG_BOOL: u64      = 0xFFF4000000000000;
 const TAG_NONE: u64      = 0xFFF5000000000000;
 const TAG_OBJECT: u64    = 0xFFF6000000000000;
 const TAG_FUNCTION: u64  = 0xFFF7000000000000;
+const TAG_SYMBOL: u64    = 0xFFF8000000000000;
 
 const FUNCTION_NATIVE_FLAG: u64 = 0x0000000000000001;
 const OBJECT_CLASS_FLAG: u64    = 0x0000000000000001;
@@ -55,7 +56,8 @@ pub mod value_type {
     pub const NONE: u16     = 0xFFF5;  // TAG_NONE     >> 48
     pub const OBJECT: u16   = 0xFFF6;  // TAG_OBJECT   >> 48
     pub const FUNCTION: u16 = 0xFFF7;  // TAG_FUNCTION >> 48
-    pub const INT: u16 = 0xFFF8;       // INT_BASE_RANGE >> 48
+    pub const SYMBOL: u16   = 0xFFF8;  // TAG_SYMBOL   >> 48
+    pub const INT: u16 = 0xFFFF;       // INT_BASE_RANGE >> 48
 }
 
 impl DinoRef {
@@ -84,7 +86,7 @@ impl DinoRef {
     #[inline(always)] pub const fn bigint(offset: u32) -> Self { Self(TAG_BIGINT | (offset as u64)) }
     #[inline(always)] pub const fn bool(value: bool) -> Self { Self(TAG_BOOL | if value { 1 } else { 0 }) }
     #[inline(always)] pub const fn none() -> Self { Self(TAG_NONE) }
-    #[inline(always)] pub const fn symbol(id: u32) -> Self { Self(TAG_NONE | (id as u64)) }
+    #[inline(always)] pub const fn symbol(id: u32) -> Self { Self(TAG_SYMBOL | (id as u64)) }
     #[inline(always)] pub const fn string(offset: u32) -> Self { Self(TAG_STRING | (offset as u64)) }
     #[inline(always)] pub const fn array(offset: u32) -> Self { Self(TAG_ARRAY | (offset as u64)) }
     #[inline(always)] pub const fn object(offset: u32) -> Self { Self(TAG_OBJECT | ((offset as u64) << 1)) }
@@ -104,7 +106,7 @@ impl DinoRef {
     #[inline(always)] pub fn is_array(self) -> bool { (self.0 & TAG_CLEAR_MASK) == TAG_ARRAY }
     #[inline(always)] pub fn is_bool(self) -> bool { (self.0 & TAG_CLEAR_MASK) == TAG_BOOL }
     #[inline(always)] pub fn is_none(self) -> bool { self.0 == TAG_NONE }
-    #[inline(always)] pub fn is_symbol(self) -> bool { (self.0 & TAG_CLEAR_MASK) == TAG_NONE && self.0 != TAG_NONE }
+    #[inline(always)] pub fn is_symbol(self) -> bool { (self.0 & TAG_CLEAR_MASK) == TAG_SYMBOL }
     #[inline(always)] pub fn is_object(self) -> bool { (self.0 & TAG_CLEAR_MASK) == TAG_OBJECT }
     #[inline(always)] pub fn is_function(self) -> bool { (self.0 & TAG_CLEAR_MASK) == TAG_FUNCTION }
     #[inline(always)] pub fn is_native_fn(self) -> bool { (self.0 & TAG_NATIVE_FN_MASK) == TAG_NATIVE_FN_MASK }
@@ -208,7 +210,8 @@ impl DinoRef {
             value_type::STRING => "string",
             value_type::ARRAY => "array",
             value_type::OBJECT => "object",
-            value_type::NONE => if self.is_none() { "none" } else { "symbol" },
+            value_type::NONE => "none",
+            value_type::SYMBOL => "symbol",
             value_type::FUNCTION => "function",
             _ => "unknown",
         }
@@ -231,17 +234,8 @@ impl std::fmt::Display for DinoRef {
             value_type::INT => write!(f, "{}", self.as_int()),
             value_type::FLOAT => write!(f, "{}", self.as_float()),
             value_type::BOOL => write!(f, "{}", self.as_bool()),
-            value_type::NONE => {
-                if self.is_none() {
-                    write!(f, "none")
-                } else {
-                    if let Some(name) = Symbol::to_name(*self) {
-                        write!(f, "symbol({})", name)
-                    } else {
-                        write!(f, "symbol({})", self.as_symbol())
-                    }
-                }
-            },
+            value_type::NONE => write!(f, "none"),
+            value_type::SYMBOL => write!(f, "{}", Symbol::to_name(*self)),
             _ => write!(f, "[tag:{:x}:idx:{}]", self.0 >> 48, self.decode_index()),
         }
     }

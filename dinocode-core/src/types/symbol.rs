@@ -70,24 +70,24 @@ impl Symbol {
         }
     }
 
-    pub fn to_name(dinoref: DinoRef) -> Option<&'static str> {
+    pub fn to_name(dinoref: DinoRef) -> String {
         match dinoref {
-            Self::NEW => Some("new"),
-            Self::CALL => Some("call"),
-            Self::ADD => Some("+"),
-            Self::SUB => Some("-"),
-            Self::MUL => Some("*"),
-            Self::DIV => Some("/"),
-            Self::MOD => Some("%"),
-            Self::POW => Some("**"),
-            Self::EQ => Some("=="),
-            Self::NE => Some("!="),
-            Self::LT => Some("<"),
-            Self::LE => Some("<="),
-            Self::GT => Some(">"),
-            Self::GE => Some(">="),
-            Self::IN => Some("in"),
-            _ => None
+            Self::NEW => "new".to_string(),
+            Self::CALL => "call".to_string(),
+            Self::ADD => "+".to_string(),
+            Self::SUB => "-".to_string(),
+            Self::MUL => "*".to_string(),
+            Self::DIV => "/".to_string(),
+            Self::MOD => "%".to_string(),
+            Self::POW => "**".to_string(),
+            Self::EQ => "==".to_string(),
+            Self::NE => "!=".to_string(),
+            Self::LT => "<".to_string(),
+            Self::LE => "<=".to_string(),
+            Self::GT => ">".to_string(),
+            Self::GE => ">=".to_string(),
+            Self::IN => "in".to_string(),
+            _ => format!("[Symbol:{}]", dinoref.as_symbol())
         }
     }
 }

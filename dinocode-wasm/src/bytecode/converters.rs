@@ -40,6 +40,7 @@ use dinocode_core::{
             DinoRef,
         },
         UserFunction,
+        Symbol,
     },
     memory::MemoryManager,
 };
@@ -65,6 +66,7 @@ impl ConstantInfo {
                     ("string", format!("\"{}\"", s))
                 }
             },
+            value_type::SYMBOL => ("symbol", Symbol::to_name(*dino_ref)),
             value_type::FUNCTION => ("function", "<function>".to_string()),
             value_type::ARRAY => ("array", "<array>".to_string()),
             value_type::OBJECT => {
@@ -95,6 +97,7 @@ impl ConstantInfo {
             value_type::FLOAT => ("float", format!("{}", dino_ref.as_float())),
             value_type::BIGINT => ("bigint", "<bigint>".to_string()),
             value_type::STRING => ("string", "<string>".to_string()),
+            value_type::SYMBOL => ("symbol", "<symbol>".to_string()),
             value_type::FUNCTION => ("function", "<function>".to_string()),
             value_type::ARRAY => ("array", "<array>".to_string()),
             value_type::OBJECT => {
