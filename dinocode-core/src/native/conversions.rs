@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 use crate::{
     memory::MemoryManager,
-    types::{DinoRef, dinoref::value_type},
+    types::{DinoRef, dinoref::value_type, Symbol},
     errors::{Result, RuntimeError, RuntimeErrorType},
 };
 
@@ -77,6 +77,7 @@ impl FromDinoRef for String {
             value_type::FLOAT => Ok(arg.as_float().to_string()),
             value_type::BOOL => Ok(if arg.as_bool() { "true" } else { "false" }.to_string()),
             value_type::NONE => Ok("none".to_string()),
+            value_type::SYMBOL => Ok(Symbol::to_name(arg)),
             _ => Ok(format!("{:?}", arg)),
         }
     }
