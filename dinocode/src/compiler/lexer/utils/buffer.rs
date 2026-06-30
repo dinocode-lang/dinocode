@@ -24,15 +24,20 @@ use crate::{
         },
         utils::Operators,
     },
-    compiler::lexer::types::{
-        LexerContextInfo,
-        TokenList,
-        LexerContext,
-        BufType,
-        ParseMode,
+    compiler::lexer::{
+        types::{
+            LexerContextInfo,
+            TokenList,
+            LexerContext,
+            BufType,
+            ParseMode,
+        },
+        utils::numeric::{
+            parse_i64_lex,
+            parse_f64_lex,
+        }
     },
 };
-use dinocode_core::types::DinoRef;
 
 #[inline(always)]
 pub fn push_number(
@@ -49,32 +54,27 @@ pub fn push_number(
     };
     
     let token = if info.has_dot {
-        let val: f64 = raw.parse().map_err(|_| pretty_lex_error(
-            LexErrorType::InvalidFloat, 
-            info.from_line as usize, 
-            info.from_column as usize, 
-            source
-        ))?;
-        let parsed_value = if info.unary_minus { -val } else { val };
-        Token::float(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte)))
-    } else {
-        match raw.parse::<i64>() {
-            Ok(val) => {
-                let parsed_value = if info.unary_minus { -val } else { val };
-                if DinoRef::is_valid_int(parsed_value) {
-                    Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte)))
-                } else {
-                    return Err(pretty_lex_error(
-                        LexErrorType::NumberTooLarge, 
-                        info.from_line as usize, 
-                        info.from_column as usize, 
-                        source
-                    ));
-                }
+        match parse_f64_lex(raw, info.unary_minus) {
+            Ok(parsed_value) => {
+                Token::float(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte)))
             }
-            Err(_) => {
+            Err(err) => {
                 return Err(pretty_lex_error(
-                    LexErrorType::InvalidInteger, 
+                    err, 
+                    info.from_line as usize, 
+                    info.from_column as usize, 
+                    source
+                ));
+            }
+        }
+    } else {
+        match parse_i64_lex(raw, info.unary_minus) {
+            Ok(parsed_value) => {
+                Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte)))
+            }
+            Err(err) => {
+                return Err(pretty_lex_error(
+                    err, 
                     info.from_line as usize, 
                     info.from_column as usize, 
                     source
@@ -100,26 +100,15 @@ pub fn push_hex(
     } else {
         &source[info.from_byte..end_pos]
     };
-    let clean_hex = raw.strip_prefix("0x").unwrap_or(&raw);
     
-    match i64::from_str_radix(clean_hex, 16) {
-        Ok(val) => {
-            let parsed_value = if info.unary_minus { -val } else { val };
-            if DinoRef::is_valid_int(parsed_value) {
-                tokens.push(Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
-                Ok(())
-            } else {
-                return Err(pretty_lex_error(
-                    LexErrorType::HexNumberTooLarge, 
-                    info.from_line as usize, 
-                    info.from_column as usize, 
-                    source
-                ));
-            }
+    match parse_i64_lex(raw, info.unary_minus) {
+        Ok(parsed_value) => {
+            tokens.push(Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
+            Ok(())
         }
-        Err(_) => {
+        Err(err) => {
             return Err(pretty_lex_error(
-                LexErrorType::InvalidHex, 
+                err, 
                 info.from_line as usize, 
                 info.from_column as usize, 
                 source
@@ -141,26 +130,45 @@ pub fn push_bit(
     } else {
         &source[info.from_byte..end_pos]
     };
-    let clean_bits = raw.strip_prefix("0b").unwrap_or(&raw);
     
-    match i64::from_str_radix(clean_bits, 2) {
-        Ok(val) => {
-            let parsed_value = if info.unary_minus { -val } else { val };
-            if DinoRef::is_valid_int(parsed_value) {
-                tokens.push(Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
-                Ok(())
-            } else {
-                return Err(pretty_lex_error(
-                    LexErrorType::BinaryNumberTooLarge, 
-                    info.from_line as usize, 
-                    info.from_column as usize, 
-                    source
-                ));
-            }
+    match parse_i64_lex(raw, info.unary_minus) {
+        Ok(parsed_value) => {
+            tokens.push(Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
+            Ok(())
         }
-        Err(_) => {
+        Err(err) => {
             return Err(pretty_lex_error(
-                LexErrorType::InvalidBinary, 
+                err, 
+                info.from_line as usize, 
+                info.from_column as usize, 
+                source
+            ));
+        }
+    }
+}
+
+#[inline(always)]
+pub fn push_octal(
+    source: &str,
+    end_pos: usize,
+    info: &mut LexerContextInfo,
+    tokens: &mut TokenList,
+    ctx: &mut LexerContext,
+) -> Result<(), LexError> {
+    let raw = if info.has_underscores {
+        &source[info.from_byte..end_pos].replace("_", "")
+    } else {
+        &source[info.from_byte..end_pos]
+    };
+    
+    match parse_i64_lex(raw, info.unary_minus) {
+        Ok(parsed_value) => {
+            tokens.push(Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
+            Ok(())
+        }
+        Err(err) => {
+            return Err(pretty_lex_error(
+                err, 
                 info.from_line as usize, 
                 info.from_column as usize, 
                 source
@@ -200,17 +208,20 @@ pub fn push_scientific(
         &source[info.from_byte..end_pos]
     };
     
-    let val: f64 = raw.parse()
-        .map_err(|_| pretty_lex_error(
-            LexErrorType::InvalidScientific, 
-            info.from_line as usize, 
-            info.from_column as usize, 
-            source
-        ))?;
-    
-    let parsed_value = if info.unary_minus { -val } else { val };
-    tokens.push(Token::float(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
-    Ok(())
+    match parse_f64_lex(raw, info.unary_minus) {
+        Ok(parsed_value) => {
+            tokens.push(Token::float(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
+            Ok(())
+        }
+        Err(err) => {
+            Err(pretty_lex_error(
+                err, 
+                info.from_line as usize, 
+                info.from_column as usize, 
+                source
+            ))
+        }
+    }
 }
 
 #[inline(always)]
@@ -516,6 +527,7 @@ pub fn push_buffer(
         BufType::Number => push_number(source, end_pos, info, tokens, ctx),
         BufType::HexNumber => push_hex(source, end_pos, info, tokens, ctx),
         BufType::BitNumber => push_bit(source, end_pos, info, tokens, ctx),
+        BufType::OctalNumber => push_octal(source, end_pos, info, tokens, ctx),
         BufType::ScientificNumber => push_scientific(source, end_pos, info, tokens, ctx),
         BufType::Identifier => push_ident(source, end_pos, info, ctx, tokens),
         BufType::DollarCall => {

@@ -40,6 +40,7 @@ use crate::compiler::lexer::{
             push_number, 
             push_hex, 
             push_bit, 
+            push_octal,
             push_bigint,
             push_scientific, 
             push_ident, 
@@ -54,6 +55,7 @@ use crate::compiler::lexer::{
             is_digit,
             is_hex_digit,
             is_binary_digit,
+            is_octal_digit,
             is_sci_exp,
             is_sci_digit,
             is_bigint_posfix,
@@ -118,6 +120,8 @@ impl Lexer {
                                 buf_type = BufType::HexNumber;
                             } else if b == b'b' {
                                 buf_type = BufType::BitNumber;
+                            } else if b == b'o' {
+                                buf_type = BufType::OctalNumber;
                             } else if is_sci_exp(b) {
                                 buf_type = BufType::ScientificNumber;
                             } else {
@@ -170,6 +174,28 @@ impl Lexer {
                                     push_bigint(source, i, &mut info, &mut tokens, &mut ctx)?;
                                 } else {
                                     push_bit(source, i, &mut info, &mut tokens, &mut ctx)?;
+                                };
+                                
+                                buf_type = BufType::None;
+                                info.reset_number_flags();
+
+                                if is_bigint {
+                                    i += 1;
+                                    column += 1;
+                                    continue;
+                                }
+                            }
+                        }
+                        BufType::OctalNumber => {
+                            if is_octal_digit(b) {}
+                            else if b == b'_' {
+                                info.has_underscores = true;
+                            } else {
+                                let is_bigint = is_bigint_posfix(b);
+                                if is_bigint {
+                                    push_bigint(source, i, &mut info, &mut tokens, &mut ctx)?;
+                                } else {
+                                    push_octal(source, i, &mut info, &mut tokens, &mut ctx)?;
                                 };
                                 
                                 buf_type = BufType::None;

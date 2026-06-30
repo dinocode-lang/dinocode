@@ -1,0 +1,54 @@
+// ═══════════════════════════════════════════════════════════
+//  DinoCode – Language and Interpreter
+//  
+//  File:       src/utils/conversions/strict/to_bigint.rs
+//  Desc:       Strict BigInt type conversions for TypeConverter
+//  
+//  Author:     Ismael Quiroz
+//  Copyright: (C) 2025-2026 Ismael Quiroz (@BlassGO)
+//  License:    Apache License 2.0 (See 'LICENSE' file for full terms)
+// ═══════════════════════════════════════════════════════════
+
+use crate::{
+    memory::MemoryManager,
+    errors::{RuntimeError, RuntimeErrorType},
+    types::{DinoRef, value_type},
+    utils::{
+        bigint::BigInt,
+        parsers::numeric::parse,
+    },
+};
+use super::super::TypeConverter;
+
+impl TypeConverter {
+    pub fn to_bigint(value: DinoRef, memory: &mut MemoryManager) -> Result<DinoRef, RuntimeError> {
+        match value.decode_type() {
+            value_type::BIGINT => return Ok(value),
+            value_type::INT => {
+                let bigint = BigInt::from_i64(value.as_int());
+                return Ok(memory.alloc_bigint(&bigint));
+            }
+            value_type::FLOAT => {
+                let bigint = BigInt::from_f64(value.as_finite_float()?);
+                return Ok(memory.alloc_bigint(&bigint));
+            }
+            value_type::STRING => {
+                let offset = value.decode_index();
+                let s = memory.get_string(offset);
+                let bigint = parse::<BigInt>(s.as_bytes()).map_err(|e| RuntimeError::Typed(RuntimeErrorType::NumericParse(e)))?;
+                return Ok(memory.alloc_bigint(&bigint));
+            }
+            value_type::BOOL => {
+                let bigint = if value.as_bool() { BigInt::ONE } else { BigInt::ZERO };
+                return Ok(memory.alloc_bigint(&bigint));
+            }
+            _ => {}
+        }
+        Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
+            from: value.type_name().to_string(),
+            to: "bigint".to_string(),
+            info: Some("only int, float, string, and bool can be converted to BigInt".to_string()),
+            help: None,
+        }))
+    }
+}

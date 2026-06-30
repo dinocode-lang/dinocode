@@ -19,8 +19,8 @@ use crate::{
         dinoref::value_type,
     },
     utils::{
-        bigint::{string_to_bigint_bits, bigint_bits_to_string},
         StringInterner,
+        bigint::BigInt,
     },
 };
 
@@ -185,7 +185,8 @@ impl MemoryManager {
 
     // BigInt Operations
 
-    pub fn alloc_bigint_from_bits(&mut self, bits: &[u8]) -> DinoRef {
+    pub fn alloc_bigint(&mut self, val: &BigInt) -> DinoRef {
+        let bits = val.as_bytes();
         let len = bits.len();
         let total_size = 8 + 4 + 4 + 8 + len;  // header + len_field + pad + hash + data
         
@@ -213,19 +214,8 @@ impl MemoryManager {
         
         DinoRef::bigint(offset)
     }
-    
-    pub fn alloc_bigint(&mut self, val: i64) -> Result<DinoRef, String> {
-         let bits = string_to_bigint_bits(&val.to_string())?;
-         Ok(self.alloc_bigint_from_bits(&bits))
-    }
 
-    pub fn alloc_bigint_str(&mut self, s: &str) -> Result<DinoRef, String> {
-         let bits = string_to_bigint_bits(s)?;
-         Ok(self.alloc_bigint_from_bits(&bits))
-    }
-
-    pub fn get_bigint_string(&self, offset: u32) -> String {
-        let bits = self.get_const_bytes(offset);
-        bigint_bits_to_string(bits)
+    pub fn get_bigint(&self, offset: u32) -> BigInt<'_> {
+        BigInt::from_slice(self.get_const_bytes(offset))
     }
 }
