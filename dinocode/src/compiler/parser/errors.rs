@@ -11,6 +11,7 @@
 
 use thiserror::Error;
 use crate::shared::types::TokenType;
+use dinocode_core::utils::parsers::numeric::NumericParseError;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseErrorType {
@@ -63,7 +64,7 @@ pub enum ParseErrorType {
     MatchCorrespondenceError { expected_values: usize, actual_values: usize },
     EmptyMatchComparison,
     ExpectedIndentedBlock(TokenType),
-    
+    NumericParse(NumericParseError),
     Custom(String),
 }
 

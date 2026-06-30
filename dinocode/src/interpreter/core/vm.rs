@@ -311,7 +311,7 @@ impl VirtualMachine {
                             let f_val = value.as_float();
                             DinoRef::float(-f_val)
                         },
-                        _ => return vm_err!(RuntimeError::Typed(RuntimeErrorType::NegationRequiresNumber)),
+                        _ => return vm_err!(RuntimeError::Typed(RuntimeErrorType::ExpectedNumericValue)),
                     };
                     
                     self.memory.stack_pop_n(1);

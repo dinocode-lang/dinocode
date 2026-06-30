@@ -182,16 +182,6 @@ impl DinoRef {
 
     // Utilities
     #[inline(always)]
-    pub const fn is_valid_int(v: i64) -> bool {
-        v >= Self::INT_MIN && v <= Self::INT_MAX
-    }
-
-    #[inline(always)]
-    pub fn is_valid_float(v: f64) -> bool {
-        v.is_finite()
-    }
-
-    #[inline(always)]
     pub fn decode_type(self) -> u16 {
         let is_float = (self.0 <= MIN_TAGGED_VALUE) as u16;
         ((self.0 >> 48) as u16) & is_float.wrapping_sub(1)

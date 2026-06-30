@@ -35,45 +35,10 @@ impl ErrorService {
         match error_type {
             BaseErrorType::Parser(pt) => self.get_parse_message(pt),
 
-            BaseErrorType::InvalidFloat => (
-                "Invalid float number format".to_string(),
-                None,
-                None
-            ),
-            BaseErrorType::InvalidInteger => (
-                "Invalid integer format".to_string(),
-                None,
-                None
-            ),
-            BaseErrorType::InvalidHex => (
-                "Invalid hexadecimal number format".to_string(),
-                Some("Hexadecimal numbers must start with 0x and contain only 0-9, a-f, A-F characters.".to_string()),
-                Some("Example: 0x1A2B, 0xFF, 0xdeadbeef.".to_string())
-            ),
-            BaseErrorType::InvalidBinary => (
-                "Invalid binary number format".to_string(),
-                Some("Binary numbers must start with 0b and contain only 0-1 characters.".to_string()),
-                Some("Example: 0b1010, 0b11111111.".to_string())
-            ),
-            BaseErrorType::InvalidScientific => (
-                "Invalid scientific notation format".to_string(),
-                None,
-                Some("The exponent part must be an integer.".to_string())
-            ),
-            BaseErrorType::NumberTooLarge => (
-                "Number too large".to_string(),
-                Some("Add 'n' suffix to create a BigInt for very large numbers.".to_string()),
-                Some("48-bit integer range: -(2^47) to (2^47)-1.".to_string())
-            ),
-            BaseErrorType::HexNumberTooLarge => (
-                "Hexadecimal number too large".to_string(),
-                Some("Add 'n' suffix to create a BigInt for very large hexadecimal numbers.".to_string()),
-                Some("48-bit integer range: -(2^47) to (2^47)-1.".to_string())
-            ),
-            BaseErrorType::BinaryNumberTooLarge => (
-                "Binary number too large".to_string(),
-                Some("Add 'n' suffix to create a BigInt for very large binary numbers.".to_string()),
-                Some("48-bit integer range: -(2^47) to (2^47)-1.".to_string())
+            BaseErrorType::NumericParse(err) => (
+                err.message.clone(),
+                err.help.clone(),
+                err.info.clone(),
             ),
             
             BaseErrorType::UnexpectedChar => (
@@ -181,7 +146,12 @@ impl ErrorService {
             ParseErrorType::MatchCorrespondenceError { expected_values, actual_values } => ("Match correspondence error".to_string(), Some(format!("expected {} values for comparison, got {}", expected_values, actual_values)), Some("Ensure the number of expected values matches the actual values provided".to_string())),
             ParseErrorType::EmptyMatchComparison => ("Empty match comparison".to_string(), Some("Match expression requires at least one value to compare".to_string()), Some("Example: is 'val1' 'val2' '...'".to_string())),
             ParseErrorType::ExpectedIndentedBlock(token_type) => ("Expected indented block".to_string(), Some(format!("'{}' requires an indented block", format!("{:?}", token_type).to_lowercase())), Some("Add proper indentation after the statement".to_string())),
-            
+            ParseErrorType::NumericParse(err) => (
+                err.message.clone(),
+                err.help.clone(),
+                err.info.clone(),
+            ),
+
             ParseErrorType::Custom(msg) => (msg.clone(), None, None),
         }
     }

@@ -12,7 +12,7 @@
 use dinocode_core::{
     types::{DinoRef, value_type},
     memory::MemoryManager,
-    utils::type_conversions::{bytes_to_i64, bytes_to_f64},
+    utils::parsers::numeric::{Number, parse},
     errors::{RuntimeError, RuntimeErrorType},
 };
 
@@ -23,13 +23,11 @@ macro_rules! string_cmp_number {
             if bytes.is_empty() {
                 return Ok($empty_result);
             }
-            if let Some(num) = bytes_to_i64(bytes) {
-                return Ok($int_cmp(num, $numeric));
+            match parse::<Number>(bytes) {
+                Ok(Number::Int(num)) => return Ok($int_cmp(num, $numeric)),
+                Ok(Number::Float(num)) => return Ok($float_cmp(num, $numeric)),
+                Err(_) => return Ok(false),
             }
-            if let Some(num) = bytes_to_f64(bytes) {
-                return Ok($float_cmp(num, $numeric));
-            }
-            return Ok(false);
         }
     };
 }

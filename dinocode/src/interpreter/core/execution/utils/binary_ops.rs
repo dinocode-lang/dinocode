@@ -11,19 +11,7 @@
 
 use dinocode_core::{
     types::{DinoRef, value_type, opcode, Symbol},
-    utils::{
-        bigint::{
-            bigint_add,
-            bigint_sub,
-            bigint_mul,
-            bigint_div,
-            bigint_mod,
-            bigint_is_zero,
-            bigint_compare,
-            bigint_pow,
-        },
-        opcode::opcode_symbol,
-    },
+    utils::opcode::opcode_symbol,
     errors::{RuntimeError, RuntimeErrorType, Result},
 };
 use super::{
@@ -72,49 +60,49 @@ pub fn execute_binary_operator(
         },
         
         (value_type::BIGINT, value_type::BIGINT, opcode::ADD) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            let result_bits = bigint_add(&a_bits, &b_bits);
-            Ok(runtime.memory.alloc_bigint_from_bits(&result_bits))
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            let result = &a_bigint + &b_bigint;
+            Ok(runtime.memory.alloc_bigint(&result))
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::SUB) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            let result_bits = bigint_sub(&a_bits, &b_bits);
-            Ok(runtime.memory.alloc_bigint_from_bits(&result_bits))
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            let result = &a_bigint - &b_bigint;
+            Ok(runtime.memory.alloc_bigint(&result))
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::MUL) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            let result_bits = bigint_mul(&a_bits, &b_bits);
-            Ok(runtime.memory.alloc_bigint_from_bits(&result_bits))
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            let result = &a_bigint * &b_bigint;
+            Ok(runtime.memory.alloc_bigint(&result))
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::DIV) => {
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            if bigint_is_zero(&b_bits) { return Err(RuntimeError::DivisionByZero); }
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let result_bits = bigint_div(&a_bits, &b_bits);
-            Ok(runtime.memory.alloc_bigint_from_bits(&result_bits))
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            if b_bigint.is_zero() { return Err(RuntimeError::DivisionByZero); }
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let result = &a_bigint / &b_bigint;
+            Ok(runtime.memory.alloc_bigint(&result))
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::FLOOR_DIV) => {
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            if bigint_is_zero(&b_bits) { return Err(RuntimeError::DivisionByZero); }
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let result_bits = bigint_div(&a_bits, &b_bits);
-            Ok(runtime.memory.alloc_bigint_from_bits(&result_bits))
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            if b_bigint.is_zero() { return Err(RuntimeError::DivisionByZero); }
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let result = &a_bigint / &b_bigint; // In integer division, floor_div is equivalent to normal div
+            Ok(runtime.memory.alloc_bigint(&result))
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::MOD) => {
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            if bigint_is_zero(&b_bits) { return Err(RuntimeError::DivisionByZero); }
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let result_bits = bigint_mod(&a_bits, &b_bits);
-            Ok(runtime.memory.alloc_bigint_from_bits(&result_bits))
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            if b_bigint.is_zero() { return Err(RuntimeError::DivisionByZero); }
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let result = &a_bigint % &b_bigint;
+            Ok(runtime.memory.alloc_bigint(&result))
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::POW) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            let result_bits = bigint_pow(&a_bits, &b_bits);
-            Ok(runtime.memory.alloc_bigint_from_bits(&result_bits))
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            let result = a_bigint.pow(&b_bigint);
+            Ok(runtime.memory.alloc_bigint(&result))
         },
         
         (value_type::FLOAT, value_type::FLOAT, opcode::ADD) => {
@@ -204,35 +192,35 @@ pub fn execute_binary_operator(
         
         (value_type::BIGINT, value_type::BIGINT, opcode::EQ) => {
             if a.raw() == b.raw() { return Ok(DinoRef::TRUE); }
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            Ok(if bigint_compare(&a_bits, &b_bits, opcode::EQ) { DinoRef::TRUE } else { DinoRef::FALSE })
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            Ok(if a_bigint == b_bigint { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::NE) => {
             if a.raw() == b.raw() { return Ok(DinoRef::FALSE); }
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            Ok(if bigint_compare(&a_bits, &b_bits, opcode::NE) { DinoRef::TRUE } else { DinoRef::FALSE })
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            Ok(if a_bigint != b_bigint { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::GT) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            Ok(if bigint_compare(&a_bits, &b_bits, opcode::GT) { DinoRef::TRUE } else { DinoRef::FALSE })
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            Ok(if a_bigint > b_bigint { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::LT) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            Ok(if bigint_compare(&a_bits, &b_bits, opcode::LT) { DinoRef::TRUE } else { DinoRef::FALSE })
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            Ok(if a_bigint < b_bigint { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::GE) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            Ok(if bigint_compare(&a_bits, &b_bits, opcode::GE) { DinoRef::TRUE } else { DinoRef::FALSE })
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            Ok(if a_bigint >= b_bigint { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         (value_type::BIGINT, value_type::BIGINT, opcode::LE) => {
-            let a_bits = runtime.memory.get_const_bytes(a.as_bigint());
-            let b_bits = runtime.memory.get_const_bytes(b.as_bigint());
-            Ok(if bigint_compare(&a_bits, &b_bits, opcode::LE) { DinoRef::TRUE } else { DinoRef::FALSE })
+            let a_bigint = runtime.memory.get_bigint(a.as_bigint());
+            let b_bigint = runtime.memory.get_bigint(b.as_bigint());
+            Ok(if a_bigint <= b_bigint { DinoRef::TRUE } else { DinoRef::FALSE })
         },
         
         (value_type::FLOAT, value_type::FLOAT, opcode::EQ) => {

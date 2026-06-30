@@ -90,7 +90,14 @@ impl Parser {
                         TokenValue::BigInt(bi) => {
                             let const_idx = match ctx.value_pool.get_or_create_bigint(bi, &mut ctx.memory_manager) {
                                 Ok(idx) => idx,
-                                Err(err_msg) => return Err(pretty_parse_error(ParseErrorType::Custom(err_msg), token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, source)),
+                                Err(e) => {
+                                    return Err(pretty_parse_error(
+                                        ParseErrorType::NumericParse(e),
+                                        token.line.unwrap_or(1) as usize,
+                                        token.column.unwrap_or(1) as usize,
+                                        source
+                                    ));
+                                }
                             };
                             ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
                         }

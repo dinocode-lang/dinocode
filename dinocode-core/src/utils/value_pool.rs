@@ -15,6 +15,10 @@ use crate::{
     memory::MemoryManager,
     types::{DinoRef, opcode, UserFunction},
     native::{get_native_registry, registry::get_bootstrap_global_index},
+    utils::{
+        bigint::BigInt,
+        parsers::numeric::{parse_lax, NumericParseError},
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -103,11 +107,12 @@ impl ValuePool {
         }
     }
 
-    pub fn get_or_create_bigint(&mut self, value: &str, memory_manager: &mut MemoryManager) -> Result<u32, String> {
+    pub fn get_or_create_bigint(&mut self, value: &str, memory_manager: &mut MemoryManager) -> Result<u32, NumericParseError> {
         if let Some(&dinoref) = self.bigint_to_dinoref.get(value) {
             Ok(self.add_to_const_pool(dinoref))
         } else {
-            let dinoref = memory_manager.alloc_bigint_str(value)?;
+            let bigint = parse_lax::<BigInt>(value.as_bytes(), None)?;
+            let dinoref = memory_manager.alloc_bigint(&bigint);
             self.bigint_to_dinoref.insert(value.to_string(), dinoref);
             Ok(self.add_to_const_pool(dinoref))
         }

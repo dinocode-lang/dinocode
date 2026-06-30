@@ -13,7 +13,7 @@ use dinocode_macros::dinof;
 use crate::types::DinoRef;
 use crate::memory::MemoryManager;
 use crate::errors::{Result, RuntimeError, RuntimeErrorType};
-use crate::utils::type_conversions::TypeConverter;
+use crate::utils::conversions::TypeConverter;
 
 crate::register_module! {
     name: init_types,
@@ -27,7 +27,16 @@ pub fn int(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> 
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
-    TypeConverter::to_int(arg, memory)
+    
+    let base = if args_count > 1 {
+        let base_arg = memory.stack().get(args_start + 1).copied()
+            .ok_or(RuntimeError::StackUnderflow)?;
+        Some(base_arg.try_as_int(memory)? as u32)
+    } else {
+        None
+    };
+    
+    TypeConverter::to_int_lax(arg, base, memory)
 }
 
 #[dinof(raw)]
@@ -37,7 +46,7 @@ pub fn float(memory: &mut MemoryManager, args_start: usize, args_count: usize) -
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
-    TypeConverter::to_float(arg, memory)
+    TypeConverter::to_float_lax(arg, memory)
 }
 
 #[dinof(raw)]
@@ -47,7 +56,7 @@ pub fn number(memory: &mut MemoryManager, args_start: usize, args_count: usize) 
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
-    TypeConverter::to_number(arg, memory)
+    TypeConverter::to_number_lax(arg, memory)
 }
 
 
@@ -58,7 +67,16 @@ pub fn bigint(memory: &mut MemoryManager, args_start: usize, args_count: usize) 
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
-    TypeConverter::to_bigint(arg, memory)
+    
+    let base = if args_count > 1 {
+        let base_arg = memory.stack().get(args_start + 1).copied()
+            .ok_or(RuntimeError::StackUnderflow)?;
+        Some(base_arg.try_as_int(memory)? as u32)
+    } else {
+        None
+    };
+    
+    TypeConverter::to_bigint_lax(arg, base, memory)
 }
 
 #[dinof(raw)]

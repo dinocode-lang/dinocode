@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 use crate::compiler::parser::errors::ParseErrorType;
+use dinocode_core::utils::parsers::numeric::NumericParseError;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum ErrorCategory {
@@ -21,14 +22,7 @@ pub enum ErrorCategory {
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum BaseErrorType {
-    InvalidFloat,
-    InvalidInteger,
-    InvalidHex,
-    InvalidBinary,
-    InvalidScientific,
-    NumberTooLarge,
-    HexNumberTooLarge,
-    BinaryNumberTooLarge,
+    NumericParse(NumericParseError),
     UnexpectedChar,
     UnexpectedTokenAfterDot,
     UnexpectedBlankAfterDot,

@@ -11,13 +11,10 @@
 
 use thiserror::Error;
 use colored::Colorize;
+use crate::utils::parsers::numeric::NumericParseError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeErrorType {
-    BigIntAutoConversionNotSupported,
-    StringNotNumeric(String),
-    CannotConvertToNumber(String),
-    NegationRequiresNumber,
     PlainObjectNotIterable,
     NotIterable(String),
     ArrayIndexNotNumeric,
@@ -25,15 +22,8 @@ pub enum RuntimeErrorType {
     CallNotFunction(String),
     InvalidBinaryOperation { left: String, op: String, right: String },
 
-    FloatFractionalToBigInt,
-    CannotConvertToBigInt(String),
-    BigIntToNumberFailed,
-    BigIntTooLargeForInt,
-    StringToIntFailed(String),
-    StringToFloatFailed(String),
-    CannotConvertToInt(String),
-    CannotConvertToFloat(String),
-    CannotConvertToString(String),
+    NumericParse(NumericParseError),
+    CannotConvert { from: String, to: String, help: Option<String>, info: Option<String> },
 
     ExpectedInteger(String),
     ExpectedNumber(String),
@@ -63,22 +53,6 @@ pub enum RuntimeErrorType {
 impl RuntimeErrorType {
     pub fn get_info(&self) -> (String, Option<String>, Option<String>) {
         match self {
-            RuntimeErrorType::BigIntAutoConversionNotSupported =>
-                ("cannot convert BigInt to number automatically".to_string(),
-                 Some("use explicit conversion or operate with BigInt values only".to_string()), None),
-
-            RuntimeErrorType::StringNotNumeric(s) =>
-                (format!("cannot convert string '{}' to number", s),
-                 Some("check that the string contains a valid numeric literal".to_string()), None),
-
-            RuntimeErrorType::CannotConvertToNumber(t) =>
-                (format!("cannot convert '{}' to number", t),
-                 Some("only int, float, bool and numeric strings can be used as numbers".to_string()), None),
-
-            RuntimeErrorType::NegationRequiresNumber =>
-                ("negation operator '-' requires a numeric value".to_string(),
-                 Some("check that the operand is of type int or float".to_string()), None),
-
             RuntimeErrorType::PlainObjectNotIterable =>
                 ("cannot iterate a plain object without an iterator method".to_string(),
                  Some("implement an iterator method or convert to an Array first".to_string()), None),
@@ -103,41 +77,13 @@ impl RuntimeErrorType {
                 (format!("operator '{}' cannot be applied to '{}' and '{}'", op, left, right),
                  Some("check that both operands have compatible types for this operation".to_string()), None),
 
-            RuntimeErrorType::FloatFractionalToBigInt =>
-                ("cannot convert float with fractional part to BigInt".to_string(),
-                 Some("truncate the decimal part first, e.g. use int(x) before converting".to_string()), None),
+            RuntimeErrorType::NumericParse(err) =>
+                (err.message.clone(), err.help.clone(), err.info.clone()),
 
-            RuntimeErrorType::CannotConvertToBigInt(t) =>
-                (format!("cannot convert '{}' to BigInt", t),
-                 Some("only int, float (without fraction), string, and bool can be converted to BigInt".to_string()), None),
-
-            RuntimeErrorType::BigIntToNumberFailed =>
-                ("cannot convert this BigInt value to a number".to_string(),
-                 Some("the value is too large for float precision — consider using BigInt operations instead".to_string()), None),
-
-            RuntimeErrorType::BigIntTooLargeForInt =>
-                ("BigInt value is too large for int conversion".to_string(),
-                 Some("use BigInt operations or reduce the value before converting".to_string()), None),
-
-            RuntimeErrorType::StringToIntFailed(s) =>
-                (format!("cannot convert string '{}' to int", s),
-                 Some("check that the string contains a valid integer literal".to_string()), None),
-
-            RuntimeErrorType::StringToFloatFailed(s) =>
-                (format!("cannot convert string '{}' to float", s),
-                 Some("check that the string contains a valid numeric literal".to_string()), None),
-
-            RuntimeErrorType::CannotConvertToInt(t) =>
-                (format!("cannot convert '{}' to int", t),
-                 Some("only int, float, bool, and numeric strings can be converted to int".to_string()), None),
-
-            RuntimeErrorType::CannotConvertToFloat(t) =>
-                (format!("cannot convert '{}' to float", t),
-                 Some("only int, float, bool, and numeric strings can be converted to float".to_string()), None),
-
-            RuntimeErrorType::CannotConvertToString(t) =>
-                (format!("cannot convert '{}' to string", t),
-                 Some("use an explicit string conversion function".to_string()), None),
+            RuntimeErrorType::CannotConvert { from, to, help, info } =>
+                (format!("cannot convert '{}' to {}", from, to),
+                 help.clone(),
+                 info.clone()),
 
             RuntimeErrorType::ExpectedInteger(t) =>
                 (format!("expected integer argument, got '{}'", t),

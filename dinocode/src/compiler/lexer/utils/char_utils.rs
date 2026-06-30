@@ -69,6 +69,14 @@ pub fn is_binary_digit(b: u8) -> bool {
 }
 
 #[inline(always)]
+pub fn is_octal_digit(b: u8) -> bool {
+    match b {
+        b'0'..=b'7' => true,
+        _ => false,
+    }
+}
+
+#[inline(always)]
 pub fn is_sci_exp(b: u8) -> bool {
     match b {
         b'e' | b'E' => true,
