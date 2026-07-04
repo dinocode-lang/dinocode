@@ -11,7 +11,7 @@
 
 use crate::{
     memory::MemoryManager,
-    errors::{RuntimeError, RuntimeErrorType},
+    errors::RuntimeError,
     types::{DinoRef, value_type},
     utils::{
         bigint::BigInt,
@@ -35,7 +35,7 @@ impl TypeConverter {
             value_type::STRING => {
                 let offset = value.decode_index();
                 let s = memory.get_string(offset);
-                let bigint = parse::<BigInt>(s.as_bytes()).map_err(|e| RuntimeError::Typed(RuntimeErrorType::NumericParse(e)))?;
+                let bigint = parse::<BigInt>(s.as_bytes()).map_err(|e| RuntimeError::NumericParse(e))?;
                 return Ok(memory.alloc_bigint(&bigint));
             }
             value_type::BOOL => {
@@ -44,11 +44,11 @@ impl TypeConverter {
             }
             _ => {}
         }
-        Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-            from: value.type_name().to_string(),
-            to: "bigint".to_string(),
-            info: Some("only int, float, string, and bool can be converted to BigInt".to_string()),
+        Err(RuntimeError::CannotConvert {
+            from: value.type_name(),
+            to: "bigint",
+            info: Some("only int, float, string, and bool can be converted to BigInt"),
             help: None,
-        }))
+        })
     }
 }

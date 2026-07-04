@@ -250,6 +250,8 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 } else {
                     param_count
                 };
+                let method_name_lit = syn::LitStr::new(&method_name.to_string(), proc_macro2::Span::call_site());
+                let expected_lit = syn::LitStr::new(&expected_count.to_string(), proc_macro2::Span::call_site());
                 
                 let wrapper_fn = quote! {
                     let wrapper = move |memory: &mut crate::memory::MemoryManager,
@@ -258,13 +260,10 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                           -> crate::errors::Result<crate::types::DinoRef> {
                         
                         if args_count != #expected_count {
-                            return Err(crate::errors::RuntimeError::TypeError(
-                                format!(
-                                    "Expected {} arguments, got {}",
-                                    #expected_count,
-                                    args_count
-                                )
-                            ));
+                            return Err(crate::errors::RuntimeError::WrongArgCount {
+                                func: #method_name_lit,
+                                expected: #expected_lit,
+                            });
                         }
                         
                         #(#arg_processing)*
@@ -281,13 +280,10 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                               -> crate::errors::Result<crate::types::DinoRef> {
                             
                             if args_count != #expected_count {
-                                return Err(crate::errors::RuntimeError::TypeError(
-                                    format!(
-                                        "Expected {} arguments, got {}",
-                                        #expected_count,
-                                        args_count
-                                    )
-                                ));
+                                return Err(crate::errors::RuntimeError::WrongArgCount {
+                                    func: #method_name_lit,
+                                    expected: #expected_lit,
+                                });
                             }
                             
                             #(#arg_processing)*
@@ -438,6 +434,8 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
             
             let param_count = param_names.len();
             let expected_count = if param_count == 0 { 1usize } else { param_count };
+            let method_name_lit = syn::LitStr::new(&method_name.to_string(), proc_macro2::Span::call_site());
+            let expected_lit = syn::LitStr::new(&expected_count.to_string(), proc_macro2::Span::call_site());
             
             let mut push_logic = quote! {};
             if is_symbol {
@@ -473,13 +471,10 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                       -> crate::errors::Result<crate::types::DinoRef> {
                     
                     if args_count != #expected_count {
-                        return Err(crate::errors::RuntimeError::TypeError(
-                            format!(
-                                "Expected {} arguments, got {}",
-                                #expected_count,
-                                args_count
-                            )
-                        ));
+                        return Err(crate::errors::RuntimeError::WrongArgCount {
+                            func: #method_name_lit,
+                            expected: #expected_lit,
+                        });
                     }
                     
                     #(#arg_processing)*
@@ -496,13 +491,10 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                           -> crate::errors::Result<crate::types::DinoRef> {
                         
                         if args_count != #expected_count {
-                            return Err(crate::errors::RuntimeError::TypeError(
-                                format!(
-                                    "Expected {} arguments, got {}",
-                                    #expected_count,
-                                    args_count
-                                )
-                            ));
+                            return Err(crate::errors::RuntimeError::WrongArgCount {
+                                func: #method_name_lit,
+                                expected: #expected_lit,
+                            });
                         }
                         
                         #(#arg_processing)*

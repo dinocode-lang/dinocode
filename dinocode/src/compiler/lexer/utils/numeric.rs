@@ -10,18 +10,16 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_core::utils::parsers::numeric::parse_lax;
-use crate::shared::errors::LexErrorType;
+use dinocode_core::utils::parsers::numeric::NumericParseError;
 
 #[inline(always)]
-pub fn parse_i64_lex(s: &str, is_negative: bool) -> Result<i64, LexErrorType> {
+pub fn parse_i64_lex(s: &str, is_negative: bool) -> Result<i64, NumericParseError> {
     parse_lax::<i64>(s.as_bytes(), None)
         .map(|v| if is_negative { -v } else { v })
-        .map_err(|e| LexErrorType::NumericParse(e))
 }
 
 #[inline(always)]
-pub fn parse_f64_lex(s: &str, is_negative: bool) -> Result<f64, LexErrorType> {
+pub fn parse_f64_lex(s: &str, is_negative: bool) -> Result<f64, NumericParseError> {
     parse_lax::<f64>(s.as_bytes(), None)
         .map(|v| if is_negative { -v } else { v })
-        .map_err(|e| LexErrorType::NumericParse(e))
 }

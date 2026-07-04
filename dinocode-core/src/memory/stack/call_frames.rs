@@ -36,10 +36,7 @@ impl MemoryManager {
         argc: usize,
     ) -> Result<()> {
         if self.recursion_depth >= self.max_recursion_depth {
-            return Err(RuntimeError::InternalError(format!(
-                "Recursion depth limit exceeded: {} >= {}",
-                self.recursion_depth, self.max_recursion_depth
-            )));
+            return Err(RuntimeError::RecursionLimitExceeded);
         }
 
         let actual_args = argc.min(function.param_count as usize);

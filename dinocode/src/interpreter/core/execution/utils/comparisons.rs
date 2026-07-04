@@ -13,7 +13,7 @@ use dinocode_core::{
     types::{DinoRef, value_type},
     memory::MemoryManager,
     utils::parsers::numeric::{Number, parse},
-    errors::{RuntimeError, RuntimeErrorType},
+    errors::RuntimeError,
 };
 
 macro_rules! string_cmp_number {
@@ -92,11 +92,11 @@ pub fn dyn_equal(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut 
         _ => {},
     }
     
-    Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-        left: a.type_name().to_string(),
-        op: "==".to_string(),
-        right: b.type_name().to_string(),
-    }))
+    Err(RuntimeError::InvalidBinaryOperation {
+        left: a.type_name(),
+        op: "==",
+        right: b.type_name(),
+    })
 }
 
 #[inline(always)]
@@ -150,11 +150,11 @@ pub fn dyn_greater(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mu
         _ => {},
     }
     
-    Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-        left: a.type_name().to_string(),
-        op: ">".to_string(),
-        right: b.type_name().to_string(),
-    }))
+    Err(RuntimeError::InvalidBinaryOperation {
+        left: a.type_name(),
+        op: ">",
+        right: b.type_name(),
+    })
 }
 
 #[inline(always)]
@@ -208,9 +208,9 @@ pub fn dyn_less(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut M
         _ => {},
     }
     
-    Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-        left: a.type_name().to_string(),
-        op: "<".to_string(),
-        right: b.type_name().to_string(),
-    }))
+    Err(RuntimeError::InvalidBinaryOperation {
+        left: a.type_name(),
+        op: "<",
+        right: b.type_name(),
+    })
 }

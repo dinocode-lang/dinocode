@@ -11,7 +11,7 @@
 
 use crate::{
     memory::MemoryManager,
-    errors::{RuntimeError, RuntimeErrorType},
+    errors::RuntimeError,
     types::{DinoRef, value_type},
     utils::{
         bigint::BigInt,
@@ -37,26 +37,26 @@ impl TypeConverter {
                 let bytes = memory.get_const_bytes(offset);
                 let bigint = BigInt::from_slice(bytes);
                 bigint.to_i64()
-                    .map_err(|e| RuntimeError::Typed(RuntimeErrorType::NumericParse(e)))
+                    .map_err(|e| RuntimeError::NumericParse(e))
                     .and_then(|i| {
                         if is_valid_int(i) { Ok(i) }
-                        else { Err(RuntimeError::Typed(RuntimeErrorType::NumericParse(error_i64(&bytes)))) }
+                        else { Err(RuntimeError::NumericParse(error_i64(&bytes))) }
                     })
             }
             value_type::STRING => {
                 let offset = value.decode_index();
                 let bytes = memory.get_const_bytes(offset);
-                parse_lax::<i64>(bytes, base).map_err(|e| RuntimeError::Typed(RuntimeErrorType::NumericParse(e)))
+                parse_lax::<i64>(bytes, base).map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::BOOL => Ok(
                 if value.as_bool() { 1 } else { 0 }
             ),
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-                from: value.type_name().to_string(),
-                to: "int".to_string(),
-                info: Some("only float, bigint, string, and bool can be converted to int".to_string()),
+            _ => Err(RuntimeError::CannotConvert {
+                from: value.type_name(),
+                to: "int",
+                info: Some("only float, bigint, string, and bool can be converted to int"),
                 help: None,
-            })),
+            }),
         }
     }
 
@@ -75,22 +75,22 @@ impl TypeConverter {
                 let offset = value.decode_index();
                 let bytes = memory.get_const_bytes(offset);
                 let bigint = BigInt::from_slice(bytes);
-                bigint.to_f64().map_err(|e| RuntimeError::Typed(RuntimeErrorType::NumericParse(e)))
+                bigint.to_f64().map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::STRING => {
                 let offset = value.decode_index();
                 let bytes = memory.get_const_bytes(offset);
-                parse_lax::<f64>(bytes, None).map_err(|e| RuntimeError::Typed(RuntimeErrorType::NumericParse(e)))
+                parse_lax::<f64>(bytes, None).map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::BOOL => Ok(
                 if value.as_bool() { 1.0 } else { 0.0 }
             ),
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-                from: value.type_name().to_string(),
-                to: "float".to_string(),
-                info: Some("only int, bigint, string, and bool can be converted to float".to_string()),
+            _ => Err(RuntimeError::CannotConvert {
+                from: value.type_name(),
+                to: "float",
+                info: Some("only int, bigint, string, and bool can be converted to float"),
                 help: None,
-            })),
+            }),
         }
     }
 
@@ -114,7 +114,7 @@ impl TypeConverter {
                 let bigint = BigInt::from_slice(bytes);
                 bigint.to_f64()
                     .map(|f| DinoRef::float(f))
-                    .map_err(|e| RuntimeError::Typed(RuntimeErrorType::NumericParse(e)))
+                    .map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::STRING => {
                 let offset = value.decode_index();
@@ -123,18 +123,18 @@ impl TypeConverter {
                 match parse_lax::<Number>(bytes, None) {
                     Ok(Number::Int(i)) => Ok(DinoRef::int(i)),
                     Ok(Number::Float(f)) => Ok(DinoRef::float(f)),
-                    Err(e) => Err(RuntimeError::Typed(RuntimeErrorType::NumericParse(e))),
+                    Err(e) => Err(RuntimeError::NumericParse(e)),
                 }
             }
             value_type::BOOL => Ok(
                 if value.as_bool() { DinoRef::ONE } else { DinoRef::ZERO }
             ),
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-                from: value.type_name().to_string(),
-                to: "number".to_string(),
-                info: Some("only int, float, bigint, string, and bool can be converted to number".to_string()),
+            _ => Err(RuntimeError::CannotConvert {
+                from: value.type_name(),
+                to: "number",
+                info: Some("only int, float, bigint, string, and bool can be converted to number"),
                 help: None,
-            })),
+            }),
         }
     }
 }

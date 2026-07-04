@@ -21,7 +21,7 @@ use dinocode_core::{
         types::object_types,
     },
     utils::TypeConverter,
-    errors::{RuntimeError, RuntimeErrorType},
+    errors::RuntimeError,
     builtins::io,
 };
 use crate::{
@@ -167,9 +167,7 @@ impl VirtualMachine {
                     if let Some(&dinoref) = self.const_pool.get(payload as usize) {
                         self.memory.stack_push(dinoref);
                     } else {
-                        return vm_err!(RuntimeError::ReferenceError(format!(
-                            "Constant index out of bounds: {}", payload
-                        )));
+                        return vm_err!(RuntimeError::ConstantIndexOutOfBounds);
                     }
                 },
 
@@ -311,7 +309,7 @@ impl VirtualMachine {
                             let f_val = value.as_float();
                             DinoRef::float(-f_val)
                         },
-                        _ => return vm_err!(RuntimeError::Typed(RuntimeErrorType::ExpectedNumericValue)),
+                        _ => return vm_err!(RuntimeError::ExpectedNumeric(value.type_name())),
                     };
                     
                     self.memory.stack_pop_n(1);
@@ -381,11 +379,11 @@ impl VirtualMachine {
                                 step  = self.memory.get_property(handle, Range::STEP_VAL()).unwrap_or(DinoRef::ZERO);
                                 target = DinoRef::NONE;
                             } else {
-                                return vm_err!(RuntimeError::Typed(RuntimeErrorType::PlainObjectNotIterable));
+                                return vm_err!(RuntimeError::NotIterable(None));
                             }
                         },
                         _ => {
-                            return vm_err!(RuntimeError::Typed(RuntimeErrorType::NotIterable(iterable.type_name().to_string())));
+                            return vm_err!(RuntimeError::NotIterable(Some(iterable.type_name())));
                         }
                     }
                     
@@ -403,7 +401,7 @@ impl VirtualMachine {
                     }
                 },
                 opcode::FOR_ITER => {
-                    return vm_err!(RuntimeError::InternalError("Unpatched FOR_ITER instruction reached.".into()));
+                    return vm_err!(RuntimeError::InternalError("unpatched FOR_ITER instruction reached"));
                 },
                 
                 opcode::FOR_ITER_ARRAY => {
@@ -792,14 +790,14 @@ impl VirtualMachine {
                         3 => try_vm!(TypeConverter::to_string(value, &mut self.memory)),   // string
                         4 => try_vm!(TypeConverter::to_bool(value, &mut self.memory)),     // bool
                         5 => try_vm!(TypeConverter::to_bigint(value, &mut self.memory)),  // bigint
-                        _ => return vm_err!(RuntimeError::TypeError(format!("Invalid type index: {}", target_type))),
+                        _ => return vm_err!(RuntimeError::InvalidTypeIndex),
                     };
                     
                     self.memory.stack_pop_n(1);
                     self.memory.stack_push(converted);
                 },
                 
-                _ => return vm_err!(RuntimeError::InternalError(format!("Unimplemented opcode: 0x{:02X}", op))),
+                _ => return vm_err!(RuntimeError::UnknownOpCode(op)),
             }
 
             ip += 1;

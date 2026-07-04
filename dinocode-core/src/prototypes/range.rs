@@ -18,7 +18,6 @@ use crate::{
     errors::{
         Result,
         RuntimeError,
-        RuntimeErrorType,
     },
 };
 use dinocode_macros::{
@@ -50,7 +49,7 @@ impl Range {
     #[raw]
     pub fn step(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("step".into())));
+            return Err(RuntimeError::MissingArgument("step"));
         }
 
         let (this, step_ref) = {
@@ -59,16 +58,16 @@ impl Range {
         };
 
         if !this.is_object() {
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedRangeInstance));
+            return Err(RuntimeError::ExpectedInstance("range"));
         }
         let handle = this.get_object_id();
 
         let step_val = step_ref.try_as_int(memory)?;
         if step_val == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::InvalidArgumentValue { 
-                func: "step".into(), 
-                message: "step value must not be zero".into() 
-            })); 
+            return Err(RuntimeError::InvalidArgumentValue { 
+                func: "step", 
+                message: "step value must not be zero" 
+            }); 
         }
 
         let _ = memory.set_object_property(handle, Self::STEP_VAL(), DinoRef::int(step_val), 0);

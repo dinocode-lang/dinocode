@@ -24,17 +24,16 @@ use crate::{
             Token,
             TokenValue,
         },
-        errors::{
-            ParseError,
-            ParseErrorType,
-            pretty_parse_error,
-        },
         utils::{
             Counter,
             Operators,
         },
     },
     compiler::parser::{
+        errors::{
+            ParseError,
+            ParseErrorType,
+        },
         types::{
             ParserContext,
             Bytecode,
@@ -91,11 +90,9 @@ impl Parser {
                             let const_idx = match ctx.value_pool.get_or_create_bigint(bi, &mut ctx.memory_manager) {
                                 Ok(idx) => idx,
                                 Err(e) => {
-                                    return Err(pretty_parse_error(
+                                    return Err(ParseError::from_token(
                                         ParseErrorType::NumericParse(e),
-                                        token.line.unwrap_or(1) as usize,
-                                        token.column.unwrap_or(1) as usize,
-                                        source
+                                        token
                                     ));
                                 }
                             };
@@ -178,7 +175,10 @@ impl Parser {
                         Self::create_function_call(&mut ctx, args, f.is_method)?;
                     } else if let Some(frame) = ctx.group_with_depth(depth) {
                         if ctx.instructions.len() == frame.output_len {
-                            return Err(pretty_parse_error(ParseErrorType::ExpectedExpression("()".to_string()), token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                            return Err(ParseError::from_token(
+                                ParseErrorType::ExpectedExpression("()"),
+                                token
+                            ));
                         }
                     }
 
@@ -196,7 +196,10 @@ impl Parser {
                     counter.pop();
                     if let Some(frame) = ctx.group_with_depth(depth) {
                         if ctx.instructions.len() == frame.output_len {
-                            return Err(pretty_parse_error(ParseErrorType::ExpectedExpression("${}".to_string()), token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                            return Err(ParseError::from_token(
+                                ParseErrorType::ExpectedExpression("${}"),
+                                token
+                            ));
                         }
                     }
                     Self::pop_until_delim(&mut ctx, TT::LBraceExpr, token)?;
@@ -295,11 +298,9 @@ impl Parser {
                         );
                     } else {
                         let err_msg = if typ == TT::Is { "'Is' statement outside of conditional block" } else { "'In' statement outside of conditional block" };
-                        return Err(pretty_parse_error(
-                            ParseErrorType::Custom(err_msg.to_string()),
-                            token.line.unwrap_or(0) as usize,
-                            token.column.unwrap_or(0) as usize,
-                            ctx.source
+                        return Err(ParseError::from_token(
+                            ParseErrorType::InvalidControlFlow(err_msg),
+                            token
                         ));
                     }
                 }
@@ -325,21 +326,19 @@ impl Parser {
                     let var_token = tokens.get(i + 1);
                     let var_name = match var_token {
                         Some(t) if matches!(t.typ, TT::Identifier) => t.value.as_identifier().unwrap_or_default(),
-                        _ => return Err(pretty_parse_error(
-                            ParseErrorType::Custom("Expected identifier after 'for'".to_string()),
-                            var_token.and_then(|t| t.line).unwrap_or(token.line.unwrap_or(1)) as usize,
-                            var_token.and_then(|t| t.column).unwrap_or(token.column.unwrap_or(1)) as usize,
-                            source
+                        _ => return Err(ParseError::new(
+                            ParseErrorType::ExpectedIdentifier("identifier after 'for'"),
+                            var_token.and_then(|t| t.line).unwrap_or(token.line.unwrap_or(1)),
+                            var_token.and_then(|t| t.column).unwrap_or(token.column.unwrap_or(1))
                         )),
                     };
 
                     let in_token = tokens.get(i + 3);   // TT::Comma, TT::In
                     if !matches!(in_token, Some(t) if matches!(t.typ, TT::In)) {
-                        return Err(pretty_parse_error(
-                            ParseErrorType::Custom("Expected 'in' after variable in for loop".to_string()),
-                            in_token.and_then(|t| t.line).unwrap_or(token.line.unwrap_or(1)) as usize,
-                            in_token.and_then(|t| t.column).unwrap_or(token.column.unwrap_or(1)) as usize,
-                            source
+                        return Err(ParseError::new(
+                            ParseErrorType::ExpectedToken("in"),
+                            in_token.and_then(|t| t.line).unwrap_or(token.line.unwrap_or(1)),
+                            in_token.and_then(|t| t.column).unwrap_or(token.column.unwrap_or(1))
                         ));
                     }
 
@@ -374,11 +373,9 @@ impl Parser {
                     });
 
                     if loop_frame_idx.is_none() {
-                        return Err(pretty_parse_error(
-                            ParseErrorType::BreakOutsideLoop,
-                            token.line.unwrap_or(0) as usize,
-                            token.column.unwrap_or(0) as usize,
-                            ctx.source
+                        return Err(ParseError::from_token(
+                            ParseErrorType::InvalidControlFlow("break statement outside a loop"),
+                            token
                         ));
                     }
 
@@ -399,11 +396,9 @@ impl Parser {
                     });
 
                     if loop_frame.is_none() {
-                        return Err(pretty_parse_error(
-                            ParseErrorType::ContinueOutsideLoop,
-                            token.line.unwrap_or(0) as usize,
-                            token.column.unwrap_or(0) as usize,
-                            ctx.source
+                        return Err(ParseError::from_token(
+                            ParseErrorType::InvalidControlFlow("continue statement outside a loop"),
+                            token
                         ));
                     }
 
@@ -416,11 +411,11 @@ impl Parser {
 
                 TT::Class => {
                     let name_token = tokens.get(i + 1).ok_or_else(|| {
-                        pretty_parse_error(ParseErrorType::ExpectedClassName, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, source)
+                        ParseError::from_token(ParseErrorType::ExpectedIdentifier("class name"), token)
                     })?;
 
                     let class_name = name_token.value.as_identifier().ok_or_else(|| {
-                        pretty_parse_error(ParseErrorType::ExpectedClassName, name_token.line.unwrap_or(1) as usize, name_token.column.unwrap_or(1) as usize, source)
+                        ParseError::from_token(ParseErrorType::ExpectedIdentifier("class name"), name_token)
                     })?;
 
                     let parent_info = match (tokens.get(i + 2), tokens.get(i + 3)) {
@@ -452,11 +447,11 @@ impl Parser {
 
                 TT::Function => {
                     let next_token = tokens.get(i + 1).ok_or_else(|| {
-                        pretty_parse_error(ParseErrorType::ExpectedFunctionName, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, source)
+                        ParseError::from_token(ParseErrorType::ExpectedIdentifier("function name"), token)
                     })?;
 
                     if next_token.typ != TT::Identifier {
-                        return Err(pretty_parse_error(ParseErrorType::ExpectedFunctionName, next_token.line.unwrap_or(1) as usize, next_token.column.unwrap_or(1) as usize, source));
+                        return Err(ParseError::from_token(ParseErrorType::ExpectedIdentifier("function name"), next_token));
                     }
 
                     let func_name = next_token.value.as_identifier().unwrap_or_default();
@@ -488,11 +483,9 @@ impl Parser {
                                 }
                             }
                             TT::Indent => break,
-                            _ => return Err(pretty_parse_error(
-                                ParseErrorType::UnexpectedTokenInParameterList,
-                                t.line.unwrap_or(1) as usize,
-                                t.column.unwrap_or(1) as usize,
-                                source
+                            _ => return Err(ParseError::from_token(
+                                ParseErrorType::UnexpectedToken("unexpected token in parameter list"),
+                                t
                             )),
                         }
                         j += 1;
@@ -624,11 +617,9 @@ impl Parser {
                                 
                                 let count = counter.pop();
                                 if count == 0 {
-                                    return Err(pretty_parse_error(
+                                    return Err(ParseError::from_token(
                                         ParseErrorType::EmptyMatchComparison,
-                                        top.line.unwrap_or(1) as usize,
-                                        top.column.unwrap_or(1) as usize,
-                                        ctx.source
+                                        &top
                                     ));
                                 }
                                 if let Some(f) = ctx.cond_frames.last_mut() {
@@ -643,11 +634,9 @@ impl Parser {
                                         f.exit_jumps.extend(f.if_jumps.clone());
                                         false
                                     } else {
-                                        return Err(pretty_parse_error(
+                                        return Err(ParseError::from_token(
                                             ParseErrorType::MatchCorrespondenceError { expected_values: expr_count, actual_values: count },
-                                            top.line.unwrap_or(1) as usize,
-                                            top.column.unwrap_or(1) as usize,
-                                            ctx.source
+                                            &top
                                         ));
                                     };
 
@@ -776,7 +765,7 @@ impl Parser {
                             if let Some((assign_opcode, idx)) = ctx.value_pool.get_var_assign_opcode(&func_name) {
                                 ctx.emit(Instruction::new_raw(assign_opcode, idx).0, Some(token));
                             } else {
-                                return Err(pretty_parse_error(ParseErrorType::Custom("Internal error: Failed to resolve function variable scope after creation".to_string()), 1, 1, ctx.source));
+                                return Err(ParseError::new(ParseErrorType::FunctionResolutionError("Failed to resolve function variable scope after creation"), 1, 1));
                             }
                             ctx.emit(Instruction::simple_raw(opcode::POP).0, Some(token));
                         }
@@ -872,7 +861,7 @@ impl Parser {
                             continue;
                         } else {
                             let error_type = Parser::get_delimiter_error_message(top.typ);
-                            return Err(pretty_parse_error(error_type, top.line.unwrap_or(1) as usize, top.column.unwrap_or(1) as usize, ctx.source)); 
+                            return Err(ParseError::from_token(error_type, &top)); 
                         }
                     } else if let Some(f) = ctx.call_with_depth(depth) {
                         let args = counter.pop();
@@ -895,7 +884,7 @@ impl Parser {
         while let Some(item) = ctx.op_stack.pop() {
             if Parser::STACK_DELIMITERS.contains(&item.typ) {
                 let error_type = Parser::get_delimiter_error_message(item.typ);
-                return Err(pretty_parse_error(error_type, item.line.unwrap_or(1) as usize, item.column.unwrap_or(1) as usize, ctx.source));
+                return Err(ParseError::from_token(error_type, &item));
             }
             Self::process_op(item, &mut ctx)?;
         }

@@ -26,7 +26,7 @@ use crate::{
         array::Array as ProtoArray,
         object::Object as ProtoObject,
     },
-    errors::{RuntimeError, Result, RuntimeErrorType},
+    errors::{RuntimeError, Result},
 };
 use std::alloc::{alloc, dealloc, Layout};
 
@@ -172,7 +172,7 @@ impl MemoryManager {
         let (object_count, object_capacity, _) = {
             let slot = self.object_pool.get_slot(handle);
             if slot.kind != value_type::OBJECT { 
-                return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance));
+                return Err(RuntimeError::ExpectedInstance("object"));
             }
             unsafe { (slot.data.object.count, slot.data.object.capacity, slot.data.object.entries) }
         };
@@ -225,7 +225,7 @@ impl MemoryManager {
                 }
             }
         }
-        Err(RuntimeError::InternalError("Object property map is full".to_string()))
+        Err(RuntimeError::InternalError("Object property map is full"))
     }
 
     pub fn set_proto(&mut self, handle: u32, proto: DinoRef) {

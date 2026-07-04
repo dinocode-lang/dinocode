@@ -14,11 +14,11 @@ mod display;
 
 use args::Args;
 use colored::Colorize;
+use dinocode_core::DinoError;
 use dinocode::{
     compiler::lexer::Lexer,
     compiler::parser::Parser,
-    interpreter::core::VirtualMachine,
-    shared::errors::pretty_runtime_error_from_info,
+    interpreter::VirtualMachine,
 };
 use std::{
     fs,
@@ -34,20 +34,21 @@ fn execute_code(
     let tokens = match Lexer::tokenize(code) {
         Ok(tokens) => tokens,
         Err(e) => {
-            return Err(e.to_string());
+            let dino_error: DinoError = e.into();
+            return Err(dino_error.render(code));
         }
     };
 
     if show_tokens {
-        let token_vec: Vec<_> = tokens.iter().cloned().collect();
-        display::display_tokens(&token_vec);
+        display::display_tokens(tokens.as_slice());
     }
 
     if show_bytecode || (!show_tokens && !show_bytecode) {
-        let (bytecode, source_map) = match Parser::compile(tokens.iter().as_slice(), code) {
+        let (bytecode, source_map) = match Parser::compile(tokens.as_slice(), code) {
             Ok((b, sm)) => (b, sm),
             Err(e) => {
-                return Err(e.to_string());
+                let dino_error: DinoError = e.into();
+                return Err(dino_error.render(code));
             }
         };
 
@@ -58,13 +59,8 @@ fn execute_code(
         if !show_tokens && !show_bytecode {
             let mut vm = VirtualMachine::from_bytecode(bytecode);
             if let Err(e) = vm.run_with_args(&main_args) {
-                let pretty = pretty_runtime_error_from_info(
-                    e.source,
-                    &e.traces,
-                    &source_map,
-                    code,
-                );
-                return Err(pretty);
+                let dino_error = e.to_dino_error(&source_map);
+                return Err(dino_error.render(code));
             }
         }
     }
@@ -73,7 +69,7 @@ fn execute_code(
 }
 
 fn print_version() {
-    println!("{}", "DinoCode v0.1.0".bright_cyan().bold());
+    println!("{} v{}", "DinoCode".bright_cyan().bold(), env!("CARGO_PKG_VERSION"));
     println!();
     println!("Author: {}", "Ismael Quiroz (@BlassGO)".bright_white());
     println!("Copyright: (C) 2025-2026 Ismael Quiroz");

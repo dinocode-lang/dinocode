@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use crate::{
     types::DinoRef,
     memory::MemoryManager,
-    errors::{RuntimeError, RuntimeErrorType, Result},
+    errors::{RuntimeError, Result},
 };
 
 pub type NativeFnWrapper = fn(&mut MemoryManager, usize, usize) -> Result<DinoRef>;
@@ -188,8 +188,6 @@ pub fn call_native_function(
         let function_name = registry
             .get_name_by_id(function_id)
             .unwrap_or("<unknown>");
-        Err(RuntimeError::Typed(RuntimeErrorType::NativeFunctionNotFound(
-            format!("{} (ID: {})", function_name, function_id)
-        )))
+        Err(RuntimeError::NativeFunctionNotFound(function_name))
     }
 }

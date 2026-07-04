@@ -12,7 +12,7 @@
 use crate::{
     memory::MemoryManager,
     types::DinoRef,
-    errors::{Result, RuntimeError, RuntimeErrorType},
+    errors::{Result, RuntimeError},
 };
 use dinocode_macros::{
     dinoclass,
@@ -33,7 +33,7 @@ impl Math {
     #[raw]
     pub fn abs(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("abs".into())));
+            return Err(RuntimeError::MissingArgument("abs"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -44,7 +44,7 @@ impl Math {
     #[raw]
     pub fn sqrt(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("sqrt".into())));
+            return Err(RuntimeError::MissingArgument("sqrt"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -55,7 +55,7 @@ impl Math {
     #[raw]
     pub fn sin(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("sin".into())));
+            return Err(RuntimeError::MissingArgument("sin"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -66,7 +66,7 @@ impl Math {
     #[raw]
     pub fn cos(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("cos".into())));
+            return Err(RuntimeError::MissingArgument("cos"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -77,7 +77,7 @@ impl Math {
     #[raw]
     pub fn tan(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("tan".into())));
+            return Err(RuntimeError::MissingArgument("tan"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -88,7 +88,7 @@ impl Math {
     #[raw]
     pub fn asin(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("asin".into())));
+            return Err(RuntimeError::MissingArgument("asin"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -99,7 +99,7 @@ impl Math {
     #[raw]
     pub fn acos(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("acos".into())));
+            return Err(RuntimeError::MissingArgument("acos"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -110,7 +110,7 @@ impl Math {
     #[raw]
     pub fn atan(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("atan".into())));
+            return Err(RuntimeError::MissingArgument("atan"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -121,7 +121,7 @@ impl Math {
     #[raw]
     pub fn atan2(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("atan2".into())));
+            return Err(RuntimeError::MissingArgument("atan2"));
         }
         let arg1 = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -135,7 +135,7 @@ impl Math {
     #[raw]
     pub fn floor(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("floor".into())));
+            return Err(RuntimeError::MissingArgument("floor"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -146,7 +146,7 @@ impl Math {
     #[raw]
     pub fn ceil(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("ceil".into())));
+            return Err(RuntimeError::MissingArgument("ceil"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -157,7 +157,7 @@ impl Math {
     #[raw]
     pub fn round(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("round".into())));
+            return Err(RuntimeError::MissingArgument("round"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -168,7 +168,7 @@ impl Math {
     #[raw]
     pub fn exp(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("exp".into())));
+            return Err(RuntimeError::MissingArgument("exp"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -179,7 +179,7 @@ impl Math {
     #[raw]
     pub fn log(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("log".into())));
+            return Err(RuntimeError::MissingArgument("log"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -190,7 +190,7 @@ impl Math {
     #[raw]
     pub fn log10(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("log10".into())));
+            return Err(RuntimeError::MissingArgument("log10"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -201,7 +201,7 @@ impl Math {
     #[raw]
     pub fn log2(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("log2".into())));
+            return Err(RuntimeError::MissingArgument("log2"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -212,7 +212,7 @@ impl Math {
     #[raw]
     pub fn pow(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("pow".into())));
+            return Err(RuntimeError::MissingArgument("pow"));
         }
         let arg1 = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -226,7 +226,7 @@ impl Math {
     #[raw]
     pub fn max(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("max".into())));
+            return Err(RuntimeError::MissingArgument("max"));
         }
         let arg1 = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -240,7 +240,7 @@ impl Math {
     #[raw]
     pub fn min(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("min".into())));
+            return Err(RuntimeError::MissingArgument("min"));
         }
         let arg1 = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -254,7 +254,7 @@ impl Math {
     #[raw]
     pub fn cbrt(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("cbrt".into())));
+            return Err(RuntimeError::MissingArgument("cbrt"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -265,7 +265,7 @@ impl Math {
     #[raw]
     pub fn hypot(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("hypot".into())));
+            return Err(RuntimeError::MissingArgument("hypot"));
         }
         let arg1 = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;

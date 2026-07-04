@@ -17,14 +17,10 @@ use crate::{
             Operator,
             STATEMENT_KEYWORDS,
         },
-        errors::{
-            pretty_lex_error,
-            LexErrorType,
-            LexError,
-        },
         utils::Operators,
     },
     compiler::lexer::{
+        errors::LexErrorType,
         types::{
             LexerContextInfo,
             TokenList,
@@ -38,6 +34,8 @@ use crate::{
         }
     },
 };
+
+use crate::compiler::lexer::errors::LexError;
 
 #[inline(always)]
 pub fn push_number(
@@ -59,11 +57,10 @@ pub fn push_number(
                 Token::float(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte)))
             }
             Err(err) => {
-                return Err(pretty_lex_error(
-                    err, 
-                    info.from_line as usize, 
-                    info.from_column as usize, 
-                    source
+                return Err(LexError::new(
+                    LexErrorType::NumericParse(err),
+                    info.from_line as u32,
+                    info.from_column as u32
                 ));
             }
         }
@@ -73,11 +70,10 @@ pub fn push_number(
                 Token::integer(parsed_value, Some((info.from_line, info.from_column, end_pos - info.from_byte)))
             }
             Err(err) => {
-                return Err(pretty_lex_error(
-                    err, 
-                    info.from_line as usize, 
-                    info.from_column as usize, 
-                    source
+                return Err(LexError::new(
+                    LexErrorType::NumericParse(err),
+                    info.from_line as u32,
+                    info.from_column as u32
                 ));
             }
         }
@@ -107,11 +103,10 @@ pub fn push_hex(
             Ok(())
         }
         Err(err) => {
-            return Err(pretty_lex_error(
-                err, 
-                info.from_line as usize, 
-                info.from_column as usize, 
-                source
+            return Err(LexError::new(
+                LexErrorType::NumericParse(err),
+                info.from_line as u32,
+                info.from_column as u32
             ));
         }
     }
@@ -137,11 +132,10 @@ pub fn push_bit(
             Ok(())
         }
         Err(err) => {
-            return Err(pretty_lex_error(
-                err, 
-                info.from_line as usize, 
-                info.from_column as usize, 
-                source
+            return Err(LexError::new(
+                LexErrorType::NumericParse(err),
+                info.from_line as u32,
+                info.from_column as u32
             ));
         }
     }
@@ -167,11 +161,10 @@ pub fn push_octal(
             Ok(())
         }
         Err(err) => {
-            return Err(pretty_lex_error(
-                err, 
-                info.from_line as usize, 
-                info.from_column as usize, 
-                source
+            return Err(LexError::new(
+                LexErrorType::NumericParse(err),
+                info.from_line as u32,
+                info.from_column as u32
             ));
         }
     }
@@ -214,11 +207,10 @@ pub fn push_scientific(
             Ok(())
         }
         Err(err) => {
-            Err(pretty_lex_error(
-                err, 
-                info.from_line as usize, 
-                info.from_column as usize, 
-                source
+            Err(LexError::new(
+                LexErrorType::NumericParse(err),
+                info.from_line as u32,
+                info.from_column as u32
             ))
         }
     }
@@ -236,11 +228,10 @@ pub fn push_ident(
     let ident_lower = ident.to_lowercase();
 
     if !ctx.is_leading && STATEMENT_KEYWORDS.contains(&ident_lower.as_str()) {
-        return Err(pretty_lex_error(
+        return Err(LexError::new(
             LexErrorType::ReservedKeywordAsIdentifier, 
-            info.from_line as usize, 
-            info.from_column as usize, 
-            source
+            info.from_line as u32, 
+            info.from_column as u32
         ));
     }
 
@@ -341,7 +332,7 @@ pub fn push_dollar(
 #[inline(always)]
 pub fn process_op(
     op_str: &str,
-    source: &str,
+    _source: &str,
     end_pos: usize,
     ctx: &mut LexerContext,
     info: &mut LexerContextInfo,
@@ -467,7 +458,7 @@ pub fn process_op(
             }
 
             if ctx.is_unary && !is_unary_allowed {
-                return Err(pretty_lex_error(LexErrorType::OperatorNotAllowed, info.from_line as usize, info.from_column as usize, source));
+                return Err(LexError::new(LexErrorType::InvalidOperator("operator not allowed in this context"), info.from_line as u32, info.from_column as u32));
             }
 
             tokens.push(
@@ -479,7 +470,7 @@ pub fn process_op(
 
             Ok(())
         }
-        Err(_e) => Err(pretty_lex_error(LexErrorType::InvalidOperator, info.from_line as usize, info.from_column as usize, source))
+        Err(_e) => Err(LexError::new(LexErrorType::InvalidOperator("invalid operator"), info.from_line as u32, info.from_column as u32))
     }
 }
 
@@ -531,11 +522,10 @@ pub fn push_buffer(
         BufType::ScientificNumber => push_scientific(source, end_pos, info, tokens, ctx),
         BufType::Identifier => push_ident(source, end_pos, info, ctx, tokens),
         BufType::DollarCall => {
-            Err(pretty_lex_error(
-                LexErrorType::UnexpectedDollarCall, 
-                info.from_line as usize, 
-                info.from_column as usize, 
-                source
+            Err(LexError::new(
+                LexErrorType::UnexpectedToken("unexpected dollar call"), 
+                info.from_line as u32, 
+                info.from_column as u32
             ))
         }
         BufType::Operator => {
@@ -555,15 +545,14 @@ pub fn push_buffer(
                         );
                         Ok(())
                     } else {
-                        Err(pretty_lex_error(
-                            LexErrorType::InvalidOperator, 
-                            info.from_line as usize, 
-                            info.from_column as usize, 
-                            source
+                        Err(LexError::new(
+                            LexErrorType::InvalidOperator("invalid operator"), 
+                            info.from_line as u32, 
+                            info.from_column as u32
                         ))
                     }
                 }
-                Err(_) => Err(pretty_lex_error(LexErrorType::InvalidOperator, info.from_line as usize, info.from_column as usize, source))
+                Err(_) => Err(LexError::new(LexErrorType::InvalidOperator("invalid operator"), info.from_line as u32, info.from_column as u32))
             }
         }
         BufType::None 
@@ -571,11 +560,10 @@ pub fn push_buffer(
         | BufType::FString
         | BufType::Comment => Ok(()),
         BufType::MultiLineComment => {
-            Err(pretty_lex_error(
-                LexErrorType::Custom("Unterminated multiline comment".to_string()), 
-                info.from_line as usize, 
-                info.from_column as usize, 
-                source
+            Err(LexError::new(
+                LexErrorType::UnterminatedMultilineComment, 
+                info.from_line as u32, 
+                info.from_column as u32
             ))
         }
     }

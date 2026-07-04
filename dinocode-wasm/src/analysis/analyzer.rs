@@ -40,14 +40,14 @@ impl BytecodeAnalyzer {
             }
         };
 
-        let (bytecode, source_map) = match Parser::compile(tokens.iter().as_slice(), source) {
+        let (mut bytecode, source_map) = match Parser::compile(tokens.iter().as_slice(), source) {
             Ok((b, sm)) => (b, sm),
             Err(e) => {
                 return Err(JsValue::from_str(&e.to_string()));
             }
         };
 
-        let info = BytecodeInfo::from_bytecode_and_source_map(&bytecode, &source_map);
+        let info = BytecodeInfo::from_bytecode_and_source_map(&mut bytecode, &source_map);
         
         Ok(BytecodeAnalyzer { info, source: source.to_string() })
     }

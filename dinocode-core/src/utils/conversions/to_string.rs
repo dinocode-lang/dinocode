@@ -11,7 +11,7 @@
 
 use crate::{
     memory::MemoryManager,
-    errors::{RuntimeError, RuntimeErrorType},
+    errors::RuntimeError,
     utils::dinojson,
     types::{DinoRef, value_type, Symbol},
 };
@@ -27,12 +27,12 @@ impl TypeConverter {
             value_type::BOOL => Ok(value.as_bool().to_string()),
             value_type::NONE => Ok("none".to_string()),
             value_type::SYMBOL => Ok(Symbol::to_name(value)),
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-                from: value.type_name().to_string(),
-                to: "string".to_string(),
-                help: Some("only int, float, bigint, string, bool, none and symbol can be converted to string".to_string()),
+            _ => Err(RuntimeError::CannotConvert {
+                from: value.type_name(),
+                to: "string",
+                help: Some("only int, float, bigint, string, bool, none and symbol can be converted to string"),
                 info: None,
-            })),
+            }),
         }
     }
 
@@ -62,12 +62,12 @@ impl TypeConverter {
                     Ok(format!("[UserFn:{}]", id))
                 }
             },
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-                from: value.type_name().to_string(),
-                to: "output".to_string(),
+            _ => Err(RuntimeError::CannotConvert {
+                from: value.type_name(),
+                to: "output",
                 help: None,
                 info: None,
-            })),
+            }),
         }
     }
 
@@ -97,12 +97,12 @@ impl TypeConverter {
                     Ok(format!("[UserFn:{}]", id))
                 }
             },
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-                from: value.type_name().to_string(),
-                to: "key".to_string(),
+            _ => Err(RuntimeError::CannotConvert {
+                from: value.type_name(),
+                to: "key",
                 help: None,
                 info: None,
-            })),
+            }),
         }
     }
 }

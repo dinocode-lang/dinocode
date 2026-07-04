@@ -11,7 +11,7 @@
 
 use crate::{
     memory::MemoryManager,
-    errors::{RuntimeError, RuntimeErrorType},
+    errors::RuntimeError,
     types::{DinoRef, value_type},
 };
 use super::TypeConverter;
@@ -40,12 +40,12 @@ impl TypeConverter {
                 let id = value.get_object_id();
                 Ok(memory.get_object_len(id) > 0)
             }
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::CannotConvert {
-                from: value.type_name().to_string(),
-                to: "bool".to_string(),
+            _ => Err(RuntimeError::CannotConvert {
+                from: value.type_name(),
+                to: "bool",
                 info: None,
                 help: None,
-            })),
+            }),
         }
     }
 
