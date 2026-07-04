@@ -10,9 +10,14 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_macros::dinof;
-use crate::types::DinoRef;
-use crate::memory::MemoryManager;
-use crate::errors::{Result, RuntimeError, RuntimeErrorType};
+use crate::{
+    memory::MemoryManager,
+    types::DinoRef,
+    errors::{
+        Result,
+        RuntimeError,
+    },
+};
 
 crate::register_module! {
     name: init_utils,
@@ -22,11 +27,11 @@ crate::register_module! {
 #[dinof(raw)]
 pub fn panic(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::Panic {
-            message: "panic called without message".to_string(),
+        return Err(RuntimeError::Panic {
+            message: "execution aborted".to_string(),
             help: None,
             info: None,
-        }));
+        });
     }
 
     let (message, help, info) = {
@@ -56,5 +61,5 @@ pub fn panic(memory: &mut MemoryManager, args_start: usize, args_count: usize) -
         (msg, help, info)
     };
 
-    Err(RuntimeError::Typed(RuntimeErrorType::Panic { message, help, info }))
+    Err(RuntimeError::Panic { message, help, info })
 }

@@ -9,58 +9,57 @@
 //  License:    Apache License 2.0 (See 'LICENSE' file for full terms)
 // ═══════════════════════════════════════════════════════════
 
-use crate::shared::{
-    types::{
+use crate::{
+    shared::types::{
         Token,
         TokenType,
         Operator,
     },
-    errors::{
-        pretty_lex_error,
-        LexErrorType,
-        LexError,
-    },
-};
-use crate::compiler::lexer::{
-    types::{
-        BufType,
-        ParseMode,
-        LexerContext,
-        LexerContextInfo,
-        TokenList,
-    },
-    utils::{
-        string::{
-            handle_escape,
-            handle_interpolation,
-            push_utf8_char,
+    compiler::lexer::{
+        errors::{
+            LexError,
+            LexErrorType,
         },
-        headers::get_header_len,
-        buffer::{
-            push_number, 
-            push_hex, 
-            push_bit, 
-            push_octal,
-            push_bigint,
-            push_scientific, 
-            push_ident, 
-            push_dollar,
-            push_operator,
-            push_buffer,
+        types::{
+            BufType,
+            ParseMode,
+            LexerContext,
+            LexerContextInfo,
+            TokenList,
         },
-        char_utils::{
-            is_ident_start,
-            is_op_start,
-            is_ident,
-            is_digit,
-            is_hex_digit,
-            is_binary_digit,
-            is_octal_digit,
-            is_sci_exp,
-            is_sci_digit,
-            is_bigint_posfix,
+        utils::{
+            string::{
+                handle_escape,
+                handle_interpolation,
+                push_utf8_char,
+            },
+            headers::get_header_len,
+            buffer::{
+                push_number, 
+                push_hex, 
+                push_bit, 
+                push_octal,
+                push_bigint,
+                push_scientific, 
+                push_ident, 
+                push_dollar,
+                push_operator,
+                push_buffer,
+            },
+            char_utils::{
+                is_ident_start,
+                is_op_start,
+                is_ident,
+                is_digit,
+                is_hex_digit,
+                is_binary_digit,
+                is_octal_digit,
+                is_sci_exp,
+                is_sci_digit,
+                is_bigint_posfix,
+            },
         },
-    },
+    }
 };
 
 pub struct Lexer;
@@ -312,7 +311,7 @@ impl Lexer {
                                      * the header expression is fully resolved, preventing detached 
                                      * or ambiguous redirections.
                                      */
-                                    return Err(pretty_lex_error(LexErrorType::IncompleteRedirection, info.from_line as usize, info.from_column as usize, source));
+                                    return Err(LexError::new(LexErrorType::UnexpectedLogicalContinuation, info.from_line as u32, info.from_column as u32));
                                 }
                                 line += 1;
                                 info.blank = true;
@@ -322,7 +321,7 @@ impl Lexer {
                             }
                             b';' => {
                                 if ctx.is_continuous {
-                                    return Err(pretty_lex_error(LexErrorType::UnexpectedSemicolon, info.from_line as usize, column as usize, source));
+                                    return Err(LexError::new(LexErrorType::UnexpectedToken("unexpected semicolon"), info.from_line as u32, column as u32));
                                 }
                                 ctx.current_indent = 0;
                                 ctx.is_leading = true;
@@ -416,7 +415,7 @@ impl Lexer {
                                     buf_type = BufType::Operator;
                                     op_info = info;
                                 } else {
-                                    return Err(pretty_lex_error(LexErrorType::UnexpectedChar, info.from_line as usize, column as usize, source))
+                                    return Err(LexError::new(LexErrorType::UnexpectedToken("unexpected character"), info.from_line as u32, column as u32))
                                 }
                             }
                         }
@@ -424,15 +423,15 @@ impl Lexer {
                         if is_relevant {
                             if info.expect_dollar_call && buf_type != BufType::DollarCall {
                                 if info.blank {
-                                    return Err(pretty_lex_error(LexErrorType::DollarCallWithSpace, info.from_line as usize, info.from_column as usize, source));
+                                    return Err(LexError::new(LexErrorType::DollarCallWithSpace, info.from_line as u32, info.from_column as u32));
                                 }
-                                return Err(pretty_lex_error(LexErrorType::UnexpectedDollarCall, info.from_line as usize, info.from_column as usize, source));
+                                return Err(LexError::new(LexErrorType::UnexpectedToken("unexpected dollar call"), info.from_line as u32, info.from_column as u32));
                             }
                             if info.has_dot_access() {
                                 if buf_type != BufType::Identifier {
-                                    return Err(pretty_lex_error(LexErrorType::UnexpectedTokenAfterDot, info.from_line as usize, info.from_column as usize, source));
+                                    return Err(LexError::new(LexErrorType::UnexpectedTokenAfterDot, info.from_line as u32, info.from_column as u32));
                                 } else if info.blank {
-                                    return Err(pretty_lex_error(LexErrorType::UnexpectedBlankAfterDot, info.from_line as usize, info.from_column as usize, source));
+                                    return Err(LexError::new(LexErrorType::UnexpectedBlankAfterDot, info.from_line as u32, info.from_column as u32));
                                 }
                                 if info.maybe_dot_access {
                                     tokens.pop();   // Discard the dot operator
@@ -527,7 +526,7 @@ impl Lexer {
                                 tokens.push(Token::string(string_buf.clone(), Some((line, info.from_column, string_buf.len()))), &mut ctx);
                                 string_buf.clear();
                             } else {
-                                return Err(pretty_lex_error(LexErrorType::Custom("Literal block string cannot be empty".to_string()), info.from_line as usize, info.from_column as usize, source));
+                                return Err(LexError::new(LexErrorType::EmptyLiteralBlockString, info.from_line as u32, info.from_column as u32));
                             }
                             tokens.push(Token::delim(TokenType::RString, pos!()), &mut ctx);
                             ctx.pop_mode();

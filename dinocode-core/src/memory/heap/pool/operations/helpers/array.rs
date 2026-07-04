@@ -4,7 +4,7 @@ use crate::{
         DinoRef,
         value_type,
     },
-    errors::{Result, RuntimeError, RuntimeErrorType},
+    errors::{Result, RuntimeError},
 };
 use std::alloc::{Layout, realloc};
 
@@ -32,7 +32,7 @@ impl MemoryManager {
     pub fn set_array_element(&mut self, handle: u32, index: u32, value: DinoRef) -> Result<()> {
         let slot = self.object_pool.get_slot_mut(handle);
         if slot.kind != value_type::ARRAY { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance));
+            return Err(RuntimeError::ExpectedInstance("array"));
         }
         
         let cap_needed = index + 1;
@@ -50,7 +50,7 @@ impl MemoryManager {
             unsafe {
                 let new_ptr = realloc(current_ptr as *mut u8, old_layout, new_layout.size()) as *mut DinoRef;
                 if new_ptr.is_null() { 
-                    return Err(RuntimeError::InternalError("Out of memory".to_string()));
+                    return Err(RuntimeError::InternalError("Out of memory"));
                 }
                 
                 let slot = self.object_pool.get_slot_mut(handle);

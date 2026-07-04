@@ -12,7 +12,7 @@
 use crate::{
     memory::MemoryManager,
     utils::TypeConverter,
-    errors::{RuntimeError, RuntimeErrorType},
+    errors::RuntimeError,
     types::Symbol,
 };
 
@@ -124,15 +124,15 @@ impl DinoRef {
     #[inline(always)]
     pub fn as_finite_float(self) -> Result<f64, RuntimeError> {
         if !self.is_finite() {
-            if self.is_nan() { return Err(RuntimeError::Typed(RuntimeErrorType::ValueIsNaN)); }
-            return Err(RuntimeError::Typed(RuntimeErrorType::ValueIsInfinity));
+            if self.is_nan() { return Err(RuntimeError::ValueIsNaN); }
+            return Err(RuntimeError::ValueIsInfinity);
         }
         Ok(self.as_float())
     }
 
     #[inline(always)]
     pub fn as_non_nan_float(self) -> Result<f64, RuntimeError> {
-        if self.is_nan() { return Err(RuntimeError::Typed(RuntimeErrorType::ValueIsNaN)); }
+        if self.is_nan() { return Err(RuntimeError::ValueIsNaN); }
         Ok(self.as_float())
     }
 
@@ -190,7 +190,6 @@ impl DinoRef {
     #[inline(always)]
     pub fn decode_index(self) -> u32 { (self.0 & PAYLOAD_32_MASK) as u32 }
 
-    #[inline(always)]
     pub fn type_name(self) -> &'static str {
         match self.decode_type() {
             value_type::INT => "int",

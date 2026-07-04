@@ -18,7 +18,6 @@ use crate::{
     errors::{
         Result,
         RuntimeError,
-        RuntimeErrorType,
     },
 };
 use dinocode_macros::{
@@ -42,7 +41,7 @@ impl Array {
     #[raw]
     pub fn push(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("push".into())));
+            return Err(RuntimeError::MissingArgument("push"));
         }
         
         let stack = memory.stack();
@@ -54,7 +53,7 @@ impl Array {
         let value = stack[args_start + 1];
 
         if !this.is_array() {
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance));
+            return Err(RuntimeError::ExpectedInstance("array"));
         }
         
         let handle = this.decode_index();
@@ -76,7 +75,7 @@ impl Array {
         
         let this = stack[args_start];
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
         let val = memory.array_pop(handle);
@@ -85,7 +84,7 @@ impl Array {
     
     #[raw]
     pub fn get(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("get".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("get")); }
         
         let (this, idx_ref) = {
             let stack = memory.stack();
@@ -95,7 +94,7 @@ impl Array {
             (stack[args_start], stack[args_start + 1])
         };
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let idx = idx_ref.try_as_int(memory)?;
         
@@ -109,7 +108,7 @@ impl Array {
     
     #[raw]
     pub fn set(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 3 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("set".into()))); }
+        if args_count < 3 { return Err(RuntimeError::MissingArgument("set")); }
         
         let (this, idx_ref, val) = {
             let stack = memory.stack();
@@ -119,11 +118,11 @@ impl Array {
             (stack[args_start], stack[args_start + 1], stack[args_start + 2])
         };
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let idx = idx_ref.try_as_int(memory)?;
         
-        if idx < 0 { return Err(RuntimeError::Typed(RuntimeErrorType::IndexOutOfBounds)); }
+        if idx < 0 { return Err(RuntimeError::IndexOutOfBounds); }
 
         let handle = this.decode_index();
         memory.set_array_element(handle, idx as u32, val)?;
@@ -142,7 +141,7 @@ impl Array {
         
         let this = stack[args_start];
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
         let len = memory.get_array_len(handle);
@@ -160,12 +159,12 @@ impl Array {
         
         let this = stack[args_start];
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
         let slot = memory.object_pool.get_slot_mut(handle);
         if slot.kind != value_type::ARRAY { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); 
+            return Err(RuntimeError::ExpectedInstance("array")); 
         }
         
         slot.data.array.count = 0;
@@ -184,7 +183,7 @@ impl Array {
         
         let this = stack[args_start];
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
         let len = memory.get_array_len(handle);
@@ -202,7 +201,7 @@ impl Array {
         
         let this = stack[args_start];
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
         let len = memory.get_array_len(handle);
@@ -226,7 +225,7 @@ impl Array {
         
         let this = stack[args_start];
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
         let len = memory.get_array_len(handle);
@@ -243,7 +242,7 @@ impl Array {
     #[symbol(name="in", alias)]
     pub fn contains(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("contains".into()))); 
+            return Err(RuntimeError::MissingArgument("contains")); 
         }
         
         let stack = memory.stack();
@@ -254,7 +253,7 @@ impl Array {
         let this = stack[args_start];
         let value = stack[args_start + 1];
         
-        if !this.is_array() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedArrayInstance)); }
+        if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
         let len = memory.get_array_len(handle);

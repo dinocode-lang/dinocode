@@ -82,6 +82,10 @@ impl TokenList {
         self.tokens.iter()
     }
 
+    pub fn as_slice(&self) -> &[Token] {
+        &self.tokens
+    }
+
     pub fn pop(&mut self) -> Option<Token> {
         self.tokens.pop()
     }

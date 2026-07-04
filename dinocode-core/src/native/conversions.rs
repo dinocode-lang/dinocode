@@ -11,7 +11,7 @@
 use crate::{
     memory::MemoryManager,
     types::{DinoRef, dinoref::value_type, Symbol},
-    errors::{Result, RuntimeError, RuntimeErrorType},
+    errors::{Result, RuntimeError},
 };
 
 pub trait FromDinoRef {
@@ -30,7 +30,7 @@ impl FromDinoRef for i64 {
             value_type::INT => Ok(arg.as_int()),
             value_type::FLOAT => Ok(arg.as_float() as i64),
             value_type::BOOL => Ok(if arg.as_bool() { 1 } else { 0 }),
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::ExpectedInteger(arg.type_name().to_string()))),
+            _ => Err(RuntimeError::ExpectedNumeric(arg.type_name())),
         }
     }
 }
@@ -41,7 +41,7 @@ impl FromDinoRef for i32 {
             value_type::INT => Ok(arg.as_int() as i32),
             value_type::FLOAT => Ok(arg.as_float() as i32),
             value_type::BOOL => Ok(if arg.as_bool() { 1 } else { 0 }),
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::ExpectedInteger(arg.type_name().to_string()))),
+            _ => Err(RuntimeError::ExpectedNumeric(arg.type_name())),
         }
     }
 }
@@ -52,7 +52,7 @@ impl FromDinoRef for f64 {
             value_type::INT => Ok(arg.as_int() as f64),
             value_type::FLOAT => Ok(arg.as_float()),
             value_type::BOOL => Ok(if arg.as_bool() { 1.0 } else { 0.0 }),
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::ExpectedNumber(arg.type_name().to_string()))),
+            _ => Err(RuntimeError::ExpectedNumeric(arg.type_name())),
         }
     }
 }

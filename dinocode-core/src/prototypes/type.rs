@@ -18,7 +18,6 @@ use crate::{
     errors::{
         Result,
         RuntimeError,
-        RuntimeErrorType,
     },
 };
 use dinocode_macros::{
@@ -42,7 +41,7 @@ impl Type {
     #[symbol(name="call")]
     pub fn call(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("type".into())));
+            return Err(RuntimeError::MissingArgument("type"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -83,7 +82,7 @@ impl Type {
     #[raw]
     pub fn name(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("name".into())));
+            return Err(RuntimeError::MissingArgument("name"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -100,10 +99,10 @@ impl Type {
             value_type::NONE => Self::NONE(),
             value_type::BIGINT => Self::BIGINT(),
             value_type::SYMBOL => Self::SYMBOL(),
-            _ => return Err(RuntimeError::Typed(RuntimeErrorType::InvalidArgumentValue { 
-                func: "type.name".to_string(), 
-                message: format!("unknown type id: {}", vtype as i64) 
-            })),
+            _ => return Err(RuntimeError::InvalidArgumentValue {
+                func: "type.name",
+                message: "unrecognized data type"
+            }),
         };
         Ok(key_ref)
     }
@@ -111,7 +110,7 @@ impl Type {
     #[raw]
     pub fn is_primitive(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("is_primitive".into())));
+            return Err(RuntimeError::MissingArgument("is_primitive"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
@@ -133,7 +132,7 @@ impl Type {
     #[raw]
     pub fn instance_of(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("instance_of".into())));
+            return Err(RuntimeError::MissingArgument("instance_of"));
         }
         
         let stack = memory.stack();
@@ -179,7 +178,7 @@ impl Type {
     #[raw]
     pub fn id(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("id".into())));
+            return Err(RuntimeError::MissingArgument("id"));
         }
         let arg = memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;

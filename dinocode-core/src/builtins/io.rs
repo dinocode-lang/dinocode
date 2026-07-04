@@ -10,12 +10,13 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_macros::dinof;
-use crate::memory::MemoryManager;
-use crate::types::DinoRef;
-use crate::errors::{
-    Result,
-    RuntimeError,
-    RuntimeErrorType,
+use crate::{
+    memory::MemoryManager,
+    types::DinoRef,
+    errors::{
+        Result,
+        RuntimeError,
+    },
 };
 use dinocode_platform::io;
 
@@ -53,7 +54,7 @@ pub fn input(memory: &mut MemoryManager, args_start: usize, args_count: usize) -
     };
 
     let input = io::input(&prompt)
-        .map_err(|e| RuntimeError::Typed(RuntimeErrorType::ReadInputFailed(e)))?;
+        .map_err(|e| RuntimeError::ReadInputFailed(e))?;
 
     let trimmed_input = input.trim_end_matches(['\r', '\n']);
 

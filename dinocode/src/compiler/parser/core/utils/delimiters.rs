@@ -9,20 +9,19 @@
 //  License:    Apache License 2.0 (See 'LICENSE' file for full terms)
 // ═══════════════════════════════════════════════════════════
 
-use crate::shared::{
-    types::{
+use crate::{
+    shared::types::{
         TokenType,
         Token,
     },
-    errors::{
-        ParseError,
-        ParseErrorType,
-        pretty_parse_error,
-    },
-};
-use crate::compiler::parser::{
-    types::ParserContext,
-    core::Parser,
+    compiler::parser::{
+        errors::{
+            ParseError,
+            ParseErrorType,
+        },
+        types::ParserContext,
+        core::Parser,
+    }
 };
 
 use TokenType as TT;
@@ -30,24 +29,30 @@ use TokenType as TT;
 impl Parser {
     pub fn get_delimiter_error_message(delim_type: TokenType) -> ParseErrorType {
         match delim_type {
-            TT::LParen => ParseErrorType::ExpectedRightParen,
-            TT::LBrace => ParseErrorType::ExpectedRightBrace,
-            TT::LBracket => ParseErrorType::ExpectedRightBracket,
-            TT::LString => ParseErrorType::ExpectedStringTerminator,
-            TT::LBraceExpr => ParseErrorType::ExpectedRightBraceExpr,
-            TT::RParen => ParseErrorType::ExpectedLeftParen,
-            TT::RBrace => ParseErrorType::ExpectedLeftBrace,
-            TT::RBracket => ParseErrorType::ExpectedLeftBracket,
-            TT::RString => ParseErrorType::ExpectedStringInitializer,
-            TT::RBraceExpr => ParseErrorType::ExpectedLeftBraceExpr,
+            TT::LParen => ParseErrorType::ExpectedToken(")"),
+            TT::LBrace => ParseErrorType::ExpectedToken("}"),
+            TT::LBracket => ParseErrorType::ExpectedToken("]"),
+            TT::LString => ParseErrorType::ExpectedToken("string terminator"),
+            TT::LBraceExpr => ParseErrorType::ExpectedToken("}" ),
+            TT::RParen => ParseErrorType::ExpectedToken("("),
+            TT::RBrace => ParseErrorType::ExpectedToken("{"),
+            TT::RBracket => ParseErrorType::ExpectedToken("["),
+            TT::RString => ParseErrorType::ExpectedToken("string initializer"),
+            TT::RBraceExpr => ParseErrorType::ExpectedToken("{"),
 
-            TT::IsMatch => ParseErrorType::ExpectedIndentedBlock(TT::Is),
-            TT::InMatch => ParseErrorType::ExpectedIndentedBlock(TT::In),
-            TT::If | TT::Else | TT::Elif |
-            TT::While | TT::For | TT::Is | TT::In |
-            TT::Function | TT::Class => ParseErrorType::ExpectedIndentedBlock(delim_type),
+            TT::IsMatch => ParseErrorType::ExpectedIndentedBlock("is"),
+            TT::InMatch => ParseErrorType::ExpectedIndentedBlock("in"),
+            TT::If => ParseErrorType::ExpectedIndentedBlock("if"),
+            TT::Else => ParseErrorType::ExpectedIndentedBlock("else"),
+            TT::Elif => ParseErrorType::ExpectedIndentedBlock("elif"),
+            TT::While => ParseErrorType::ExpectedIndentedBlock("while"),
+            TT::For => ParseErrorType::ExpectedIndentedBlock("for"),
+            TT::Is => ParseErrorType::ExpectedIndentedBlock("is"),
+            TT::In => ParseErrorType::ExpectedIndentedBlock("in"),
+            TT::Function => ParseErrorType::ExpectedIndentedBlock("function"),
+            TT::Class => ParseErrorType::ExpectedIndentedBlock("class"),
 
-            _ => ParseErrorType::MismatchedDelimiter(format!("Mismatched delimiter: {:?}", delim_type)),
+            _ => ParseErrorType::MismatchedDelimiter("unrecognized delimiter"),
         }
     }
 
@@ -93,7 +98,10 @@ impl Parser {
             }
         }
          let error_type = Self::get_delimiter_error_message(Self::get_counteract_delim(target));
-         Err(pretty_parse_error(error_type, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source))
+         Err(ParseError::from_token(
+             error_type,
+             token
+         ))
     }
 
     pub fn pop_to_any_delim(
@@ -118,8 +126,11 @@ impl Parser {
         while let Some(top) = ctx.op_stack.last() {
             if is_target(top.typ) { break; }
             if Parser::STACK_DELIMITERS.contains(&top.typ) {
-                    let error_type = Parser::get_delimiter_error_message(top.typ.clone());
-                    return Err(pretty_parse_error(error_type, top.line.unwrap_or(1) as usize, top.column.unwrap_or(1) as usize, ctx.source));
+                    return Err(ParseError::new(
+                        ParseErrorType::MismatchedDelimiter("mismatched delimiter"),
+                        top.line.unwrap_or(1),
+                        top.column.unwrap_or(1)
+                    ));
             }
             if Self::process_op(ctx.op_stack.pop().unwrap(), ctx)? {
                 break;

@@ -15,7 +15,6 @@ use crate::{
     errors::{
         Result,
         RuntimeError,
-        RuntimeErrorType,
     },
     prototypes::array::Array,
 };
@@ -47,7 +46,7 @@ impl String {
         }
         
         let this = stack[args_start];
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index() as usize;
         let hash = memory.ensure_const_hash(this);
@@ -73,7 +72,7 @@ impl String {
         }
         
         let this = stack[args_start];
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let hash_val = memory.ensure_const_hash(this);
         Ok(DinoRef::float(hash_val as f64))
@@ -91,7 +90,7 @@ impl String {
         
         let this = stack[args_start];
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
         let len = memory.get_const_len(handle);
@@ -109,7 +108,7 @@ impl String {
         
         let this = stack[args_start];
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
         let len = memory.get_const_len(handle);
@@ -118,7 +117,7 @@ impl String {
     
     #[raw]
     pub fn char_at(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("char_at".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("char_at")); }
         
         let (this, idx_ref) = {
             let stack = memory.stack();
@@ -128,7 +127,7 @@ impl String {
             (stack[args_start], stack[args_start + 1])
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let idx = idx_ref.try_as_int(memory)?;
         
@@ -165,7 +164,7 @@ impl String {
     
     #[raw]
     pub fn concat(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("concat".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("concat")); }
         
         let (this, other) = {
             let stack = memory.stack();
@@ -175,7 +174,7 @@ impl String {
             (stack[args_start], stack[args_start + 1])
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let other_str = other.try_as_string(memory)?;
         
@@ -189,7 +188,7 @@ impl String {
     #[raw]
     #[symbol(name="in", alias)]
     pub fn contains(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("contains".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("contains")); }
         
         let (this, substr) = {
             let stack = memory.stack();
@@ -199,7 +198,7 @@ impl String {
             (stack[args_start], stack[args_start + 1])
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let substr_str = substr.try_as_string(memory)?;
         
@@ -211,17 +210,17 @@ impl String {
     
     #[raw]
     pub fn starts_with(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("starts_with".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("starts_with")); }
         
         let (this, prefix) = {
             let stack = memory.stack();
             if args_start + 1 >= stack.len() { 
-                return Err("Stack underflow".into()); 
+                return Err(RuntimeError::StackUnderflow); 
             }
             (stack[args_start], stack[args_start + 1])
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let prefix_str = prefix.try_as_string(memory)?;
         
@@ -233,17 +232,17 @@ impl String {
     
     #[raw]
     pub fn ends_with(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("ends_with".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("ends_with")); }
         
         let (this, suffix) = {
             let stack = memory.stack();
             if args_start + 1 >= stack.len() { 
-                return Err("Stack underflow".into()); 
+                return Err(RuntimeError::StackUnderflow); 
             }
             (stack[args_start], stack[args_start + 1])
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let suffix_str = suffix.try_as_string(memory)?;
         
@@ -265,7 +264,7 @@ impl String {
             stack[args_start]
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
         let content = memory.get_string(handle);
@@ -285,7 +284,7 @@ impl String {
             stack[args_start]
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
         let content = memory.get_string(handle);
@@ -306,7 +305,7 @@ impl String {
             (stack[args_start], c_arg)
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let trimmed = if let Some(arg) = chars_arg {
             let chars_to_trim = arg.try_as_string(memory)?;
@@ -324,7 +323,7 @@ impl String {
     
     #[raw]
     pub fn repeat(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("repeat".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("repeat")); }
         
         let (this, count_ref) = {
             let stack = memory.stack();
@@ -334,15 +333,15 @@ impl String {
             (stack[args_start], stack[args_start + 1])
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let count = count_ref.try_as_int(memory)?;
         
         if count < 0 { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::InvalidArgumentValue { 
-                func: "repeat".to_string(), 
-                message: "repeat count must be non-negative".to_string() 
-            })); 
+            return Err(RuntimeError::InvalidArgumentValue { 
+                func: "repeat", 
+                message: "repeat count must be non-negative" 
+            }); 
         }
         
         let handle = this.decode_index();
@@ -365,7 +364,7 @@ impl String {
             (stack[args_start], del)
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let parts: Vec<std::string::String> = if let Some(del_ref) = delimiter_ref {
             let delimiter = del_ref.try_as_string(memory)?;
@@ -391,7 +390,7 @@ impl String {
     
     #[raw]
     pub fn replace(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 3 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("replace".into()))); }
+        if args_count < 3 { return Err(RuntimeError::MissingArgument("replace")); }
         
         let (this, from_ref, to_ref) = {
             let stack = memory.stack();
@@ -401,7 +400,7 @@ impl String {
             (stack[args_start], stack[args_start + 1], stack[args_start + 2])
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let from_str = from_ref.try_as_string(memory)?;
         let to_str = to_ref.try_as_string(memory)?;
@@ -415,7 +414,7 @@ impl String {
     
     #[raw]
     pub fn substr(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("substring".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("substring")); }
         
         let (this, start_ref, end_ref) = {
             let stack = memory.stack();
@@ -426,7 +425,7 @@ impl String {
             (stack[args_start], stack[args_start + 1], end)
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let start = start_ref.try_as_int(memory)?;
         if start < 0 { return Ok(DinoRef::NONE); }
@@ -455,7 +454,7 @@ impl String {
     
     #[raw]
     pub fn index_of(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("index_of".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("index_of")); }
         
         let (this, search_ref, start_ref) = {
             let stack = memory.stack();
@@ -466,7 +465,7 @@ impl String {
             (stack[args_start], stack[args_start + 1], s_ref)
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let search_str = search_ref.try_as_string(memory)?;
         
@@ -493,7 +492,7 @@ impl String {
     
     #[raw]
     pub fn last_index_of(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("last_index_of".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("last_index_of")); }
         
         let (this, search_ref, end_ref) = {
             let stack = memory.stack();
@@ -504,7 +503,7 @@ impl String {
             (stack[args_start], stack[args_start + 1], e_ref)
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let search_str = search_ref.try_as_string(memory)?;
         
@@ -533,7 +532,7 @@ impl String {
     
     #[raw]
     pub fn pad_left(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("pad_left".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("pad_left")); }
         
         let (this, width_ref, pad_ref) = {
             let stack = memory.stack();
@@ -544,16 +543,16 @@ impl String {
             (stack[args_start], stack[args_start + 1], pad)
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
         
         let width = width_ref.try_as_int(memory)?;
         if width < 0 { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::InvalidArgumentValue { 
-                func: "pad_left".to_string(), 
-                message: "width must be non-negative".to_string() 
-            })); 
+            return Err(RuntimeError::InvalidArgumentValue { 
+                func: "pad_left", 
+                message: "width must be non-negative" 
+            }); 
         }
         
         let pad_char = if let Some(p) = pad_ref {
@@ -578,7 +577,7 @@ impl String {
     
     #[raw]
     pub fn pad_right(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("pad_right".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("pad_right")); }
         
         let (this, width_ref, pad_ref) = {
             let stack = memory.stack();
@@ -589,16 +588,16 @@ impl String {
             (stack[args_start], stack[args_start + 1], pad)
         };
         
-        if !this.is_string() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedStringInstance)); }
+        if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
         
         let width = width_ref.try_as_int(memory)?;
         if width < 0 { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::InvalidArgumentValue { 
-                func: "pad_right".to_string(), 
-                message: "width must be non-negative".to_string() 
-            })); 
+            return Err(RuntimeError::InvalidArgumentValue { 
+                func: "pad_right", 
+                message: "width must be non-negative" 
+            }); 
         }
         
         let pad_char = if let Some(p) = pad_ref {

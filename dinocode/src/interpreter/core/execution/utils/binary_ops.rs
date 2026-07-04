@@ -12,7 +12,7 @@
 use dinocode_core::{
     types::{DinoRef, value_type, opcode, Symbol},
     utils::opcode::opcode_symbol,
-    errors::{RuntimeError, RuntimeErrorType, Result},
+    errors::{RuntimeError, Result},
 };
 use super::{
     comparisons,
@@ -389,11 +389,11 @@ pub fn execute_binary_operator(
         },
         
         _ => {
-            Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-                left: a.type_name().to_string(),
-                op: opcode_symbol(op).to_string(),
-                right: b.type_name().to_string(),
-            }))
+            Err(RuntimeError::InvalidBinaryOperation {
+                left: a.type_name(),
+                op: opcode_symbol(op),
+                right: b.type_name(),
+            })
         }
     }
 }

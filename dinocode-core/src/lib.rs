@@ -5,10 +5,12 @@ pub mod prototypes;
 pub mod errors;
 pub mod utils;
 pub mod builtins;
+pub mod formatter;
 
 pub use types::DinoRef;
 pub use memory::MemoryManager;
 pub use errors::{RuntimeError, Result};
+pub use formatter::*;
 
 pub mod macros;
 

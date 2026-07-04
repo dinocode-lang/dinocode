@@ -27,13 +27,12 @@ use crate::{
             Counter,
             Operators,
         },
+    },
+    compiler::parser::{
         errors::{
             ParseError,
             ParseErrorType,
-            pretty_parse_error,
         },
-    },
-    compiler::parser::{
         types::{
             ParserContext,
             frames::LogicFrame,
@@ -93,7 +92,7 @@ impl Parser {
                         let is_index = matches!(token.value, TokenValue::Integer(2));
 
                         let Some(bin_op) = Self::get_bin_opcode(op) else {
-                            return Err(pretty_parse_error(ParseErrorType::InvalidAssignmentTarget, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                            return Err(ParseError::from_token(ParseErrorType::InvalidAssignmentTarget, &token));
                         };
 
                         if is_member || is_index {
@@ -113,7 +112,7 @@ impl Parser {
                         let is_index = matches!(token.value, TokenValue::Integer(2));
                         
                         let Some(bin_op) = Self::get_bin_opcode(op) else {
-                            return Err(pretty_parse_error(ParseErrorType::InvalidAssignmentTarget, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                            return Err(ParseError::from_token(ParseErrorType::InvalidAssignmentTarget, &token));
                         };
                         
                         if is_member || is_index {
@@ -136,7 +135,7 @@ impl Parser {
                         if let TokenValue::Integer(type_index) = token.value {
                             ctx.emit(Instruction::new_raw(opcode::TO, type_index as u32).0, Some(&token));
                         } else {
-                            return Err(pretty_parse_error(ParseErrorType::InvalidTypeIndexForAsOperator, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                            return Err(ParseError::from_token(ParseErrorType::InvalidOperator("invalid type index for 'as' operator"), &token));
                         }
                     },
                     Operator::And | Operator::Or => {
@@ -163,18 +162,16 @@ impl Parser {
                             match op {
                                 Operator::Sub => opcode::NEG,
                                 Operator::Not => opcode::NOT,
-                                _ => return Err(pretty_parse_error(
-                                    ParseErrorType::InvalidUnaryOperator, 
-                                    token.line.unwrap_or(1) as usize, 
-                                    token.column.unwrap_or(1) as usize, 
-                                    ctx.source)),
+                                _ => return Err(ParseError::from_token(
+                                    ParseErrorType::InvalidOperator("invalid unary operator"), 
+                                    &token
+                                )),
                             }
                         } else {
-                            Self::get_bin_opcode(op).ok_or_else(|| pretty_parse_error(
-                                ParseErrorType::InvalidBinaryOperator, 
-                                token.line.unwrap_or(1) as usize, 
-                                token.column.unwrap_or(1) as usize, 
-                                ctx.source))?
+                            Self::get_bin_opcode(op).ok_or_else(|| ParseError::from_token(
+                                ParseErrorType::InvalidOperator("invalid binary operator"), 
+                                &token
+                            ))?
                         };
                         
                         ctx.emit(Instruction::simple_raw(opcode).0, Some(&token));
@@ -197,12 +194,7 @@ impl Parser {
 
             _ => {
                 let error_type = Parser::get_delimiter_error_message(token.typ);
-                return Err(pretty_parse_error(
-                    error_type,
-                    token.line.unwrap_or(1) as usize,
-                    token.column.unwrap_or(1) as usize,
-                    ctx.source,
-                ));
+                return Err(ParseError::from_token(error_type, &token));
             }
         }
         Ok(false)
@@ -216,15 +208,15 @@ impl Parser {
     ) -> Result<(), ParseError> {
 
         if token.is_unary {
-            return Err(pretty_parse_error(ParseErrorType::UnexpectedIsOperator, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+            return Err(ParseError::from_token(ParseErrorType::UnexpectedToken("unexpected 'is' operator"), token));
         }
 
         let next_token = tokens.get(*advance + 1).ok_or_else(|| {
-            pretty_parse_error(ParseErrorType::ExpectedTypeIdentifierAfterAs, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source)
+            ParseError::from_token(ParseErrorType::ExpectedIdentifier("type identifier after 'as'"), token)
         })?;
 
         if !matches!(next_token.typ, TT::Identifier) {
-            return Err(pretty_parse_error(ParseErrorType::ExpectedTypeIdentifierAfterAs, next_token.line.unwrap_or(1) as usize, next_token.column.unwrap_or(1) as usize, ctx.source));
+            return Err(ParseError::from_token(ParseErrorType::ExpectedIdentifier("type identifier after 'as'"), next_token));
         }
 
         let type_identifier = next_token.value.as_identifier().unwrap_or("".to_string());
@@ -241,14 +233,12 @@ impl Parser {
             None => {
                 let suggestion = ctx.type_resolver.suggest_type(&type_identifier);
                 
-                return Err(pretty_parse_error(
+                return Err(ParseError::from_token(
                     ParseErrorType::UnknownType { 
                         name: type_identifier.clone(),
                         suggestion 
                     },
-                    next_token.line.unwrap_or(1) as usize,
-                    next_token.column.unwrap_or(1) as usize,
-                    ctx.source
+                    next_token
                 ));
             }
         }
@@ -308,16 +298,14 @@ impl Parser {
         tokens: &[Token],
         i: usize,
         ctx: &mut ParserContext,
-        source: &str,
+        _source: &str,
     ) -> Result<(), ParseError> {
         let mut op_token = token.clone();
         
         if token.is_unary && (op == Operator::Inc || op == Operator::Dec) {
-            return Err(pretty_parse_error(
+            return Err(ParseError::from_token(
                 ParseErrorType::PrefixIncrementDecrementNotSupported,
-                token.line.unwrap_or(1) as usize,
-                token.column.unwrap_or(1) as usize,
-                source
+                token
             ));
         }
         
@@ -338,11 +326,9 @@ impl Parser {
                         }
                     } else if matches!(prev.typ, TT::NativeAccess) {
                         // Native properties are read-only
-                        return Err(pretty_parse_error(
+                        return Err(ParseError::from_token(
                             ParseErrorType::NativePropertyAssignment,
-                            token.line.unwrap_or(0) as usize,
-                            token.column.unwrap_or(0) as usize,
-                            source
+                            &token
                         ));
                     } else if matches!(prev.typ, TT::Identifier) {
                         // Assignment to variable
@@ -412,11 +398,9 @@ impl Parser {
         }
 
         if op == Operator::Backdot {
-            return Err(pretty_parse_error(
+            return Err(ParseError::from_token(
                 ParseErrorType::UnsupportedBackdotOperator,
-                token.line.unwrap_or(0) as usize,
-                token.column.unwrap_or(0) as usize,
-                source
+                token
             ));
         }
 

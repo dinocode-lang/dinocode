@@ -10,11 +10,13 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_core::{
-    memory::MemoryManager,
-    memory::types::PropertyFlags,
+    memory::{
+        MemoryManager,
+        types::PropertyFlags,
+    },
     types::{DinoRef, UserFunction, Symbol, value_type},
     native::call_native_function,
-    errors::{Result, RuntimeError, RuntimeErrorType},
+    errors::{Result, RuntimeError},
     prototypes::{
         string::String as StringProto,
         array::Array as ProtoArray,
@@ -62,7 +64,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                         
                         *self.ip = start_ip as usize - 1;
                     } else {
-                        return Err(RuntimeError::ReferenceError(format!("Function with ID {} not found", function_id)));
+                        return Err(RuntimeError::FunctionNotFound);
                     }
                 }
             }
@@ -124,12 +126,12 @@ impl<'a, 'b> Runtime<'a, 'b> {
                             return Ok(());
                         }
                     } else {
-                        return Err(RuntimeError::Typed(RuntimeErrorType::CallNotFunction(function_ref.type_name().to_string())));
+                        return Err(RuntimeError::CallNotFunction(function_ref.type_name()));
                     }
                 }
             }
             _ => {
-                return Err(RuntimeError::Typed(RuntimeErrorType::CallNotFunction(function_ref.type_name().to_string())));
+                return Err(RuntimeError::CallNotFunction(function_ref.type_name()));
             }
         }
         
@@ -151,18 +153,18 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     args_start,
                     argc
                 ) {
-                    return Err(e.into());
+                    return Err(e);
                 }
                 *self.ip = start_ip as usize;
                 Ok(DinoRef::NONE)
             } else {
-                Err(RuntimeError::ReferenceError(format!("Function with ID {} not found", function_id)))
+                Err(RuntimeError::FunctionNotFound)
             }
         } else {
-            Err(RuntimeError::Typed(RuntimeErrorType::InvalidArgumentValue {
-                func: "call_function".to_string(),
-                message: "Expected a function reference".to_string(),
-            }))
+            Err(RuntimeError::InvalidArgumentValue {
+                func: "call_function",
+                message: "expected a function reference",
+            })
         }
     }
 
@@ -203,9 +205,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
             }
         } else {
             let name_str = self.get_property_name_string(property_name);
-            Err(RuntimeError::Typed(RuntimeErrorType::PropertyNotFound(
-                name_str
-            )))
+            Err(RuntimeError::PropertyNotFound(name_str))
         }
     }
 
@@ -217,9 +217,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     self.get_property_by_id(proto.get_object_id(), property_name)
                 } else {
                     let name_str = self.get_property_name_string(property_name);
-                    Err(RuntimeError::Typed(RuntimeErrorType::PropertyNotFound(
-                        name_str
-                    )))
+                    Err(RuntimeError::PropertyNotFound(name_str))
                 }
             }
             value_type::OBJECT => {
@@ -231,10 +229,10 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     let proto_id = proto_ref.get_object_id();
                     self.get_property_by_id(proto_id, property_name)
                 } else {
-                    Err(RuntimeError::InternalError("String prototype bootstrap not available".to_string()))
+                    Err(RuntimeError::InternalError("String prototype bootstrap not available"))
                 }
             }
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::MemberAccessNotObject))
+            _ => Err(RuntimeError::MemberAccessNotObject)
         }
     }
 
@@ -248,15 +246,11 @@ impl<'a, 'b> Runtime<'a, 'b> {
                         Ok(res)
                     } else {
                         let name_str = self.get_property_name_string(property_name);
-                        Err(RuntimeError::Typed(RuntimeErrorType::PropertyNotFound(
-                            name_str
-                        )))
+                        Err(RuntimeError::PropertyNotFound(name_str))
                     }
                 } else {
                     let name_str = self.get_property_name_string(property_name);
-                    Err(RuntimeError::Typed(RuntimeErrorType::PropertyNotFound(
-                        name_str
-                    )))
+                    Err(RuntimeError::PropertyNotFound(name_str))
                 }
             }
             value_type::OBJECT => {
@@ -268,7 +262,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     Ok(value)
                 }
             }
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::MemberAccessNotObject))
+            _ => Err(RuntimeError::MemberAccessNotObject)
         }
     }
 
@@ -277,14 +271,14 @@ impl<'a, 'b> Runtime<'a, 'b> {
             value_type::ARRAY => {
                 let index = index_ref.try_as_int(self.memory)?;
                 if index < 0 {
-                    return Err(RuntimeError::Typed(RuntimeErrorType::IndexOutOfBounds));
+                    return Err(RuntimeError::IndexOutOfBounds);
                 }
                 
                 let array_offset = object.decode_index();
                 let array_len = self.memory.get_array_len(array_offset);
                 
                 if index as u32 >= array_len {
-                    return Err(RuntimeError::Typed(RuntimeErrorType::IndexOutOfBounds));
+                    return Err(RuntimeError::IndexOutOfBounds);
                 }
                 
                 let element = self.memory.get_array_element(array_offset, index as u32);
@@ -296,13 +290,13 @@ impl<'a, 'b> Runtime<'a, 'b> {
             value_type::STRING => {
                 if let Ok(index) = index_ref.try_as_int(self.memory) {
                     if index < 0 {
-                        return Err(RuntimeError::Typed(RuntimeErrorType::IndexOutOfBounds));
+                        return Err(RuntimeError::IndexOutOfBounds);
                     }
                     let s = self.memory.get_string(object.decode_index());
                     if let Some(c) = s.chars().nth(index as usize) {
                         return Ok(self.memory.alloc_string(&c.to_string()));
                     } else {
-                        return Err(RuntimeError::Typed(RuntimeErrorType::IndexOutOfBounds));
+                        return Err(RuntimeError::IndexOutOfBounds);
                     }
                 }
                 
@@ -311,10 +305,10 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     let proto_id = proto_ref.get_object_id();
                     self.get_property_by_id(proto_id, index_ref)
                 } else {
-                    Err(RuntimeError::InternalError("String prototype bootstrap not available".to_string()))
+                    Err(RuntimeError::InternalError("String prototype bootstrap not available"))
                 }
             }
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::MemberAccessNotObject))
+            _ => Err(RuntimeError::MemberAccessNotObject)
         }
     }
 
@@ -323,7 +317,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
             value_type::ARRAY => {
                 let index = index_ref.try_as_int(self.memory)?;
                 if index < 0 {
-                    return Err(RuntimeError::Typed(RuntimeErrorType::IndexOutOfBounds));
+                    return Err(RuntimeError::IndexOutOfBounds);
                 }
                 
                 let array_offset = object.decode_index();
@@ -339,7 +333,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     Ok(value)
                 }
             }
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::MemberAccessNotObject))
+            _ => Err(RuntimeError::MemberAccessNotObject)
         }
     }
 
@@ -363,15 +357,13 @@ impl<'a, 'b> Runtime<'a, 'b> {
                             }
                         } else {
                             let name_str = self.get_property_name_string(property_name);
-                            Err(RuntimeError::Typed(RuntimeErrorType::PropertyNotFound(
-                                name_str
-                            )))
+                            Err(RuntimeError::PropertyNotFound(name_str))
                         }
                     } else {
-                        Err(RuntimeError::InternalError("String prototype not found".to_string()))
+                        Err(RuntimeError::InternalError("String prototype not found"))
                     }
                 } else {
-                    Err(RuntimeError::InternalError("String prototype not initialized".to_string()))
+                    Err(RuntimeError::InternalError("String prototype not initialized"))
                 }
             },
             value_type::ARRAY => {
@@ -392,15 +384,13 @@ impl<'a, 'b> Runtime<'a, 'b> {
                             }
                         } else {
                             let name_str = self.get_property_name_string(property_name);
-                            Err(RuntimeError::Typed(RuntimeErrorType::PropertyNotFound(
-                                name_str
-                            )))
+                            Err(RuntimeError::PropertyNotFound(name_str))
                         }
                     } else {
-                        Err(RuntimeError::InternalError("Array prototype not found".to_string()))
+                        Err(RuntimeError::InternalError("Array prototype not found"))
                     }
                 } else {
-                    Err(RuntimeError::InternalError("Array prototype not initialized".to_string()))
+                    Err(RuntimeError::InternalError("Array prototype not initialized"))
                 }
             },
             value_type::OBJECT => {
@@ -421,15 +411,13 @@ impl<'a, 'b> Runtime<'a, 'b> {
                         }
                     } else {
                         let name_str = self.get_property_name_string(property_name);
-                        Err(RuntimeError::Typed(RuntimeErrorType::PropertyNotFound(
-                            name_str
-                        )))
+                        Err(RuntimeError::PropertyNotFound(name_str))
                     }
                 } else {
-                    Err(RuntimeError::InternalError("Object does not have native prototype".to_string()))
+                    Err(RuntimeError::InternalError("Object does not have native prototype"))
                 }
             },
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance))
+            _ => Err(RuntimeError::ExpectedInstance("object"))
         }
     }
 }

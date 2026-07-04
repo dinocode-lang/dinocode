@@ -16,27 +16,28 @@ use dinocode_core::{
     },
     native::registry::is_native_function,
 };
-use crate::shared::{
-    types::{
-        TokenType,
-        Token,
+use crate::{
+    shared::{
+        types::{
+            TokenType,
+            Token,
+        },
+        utils::{
+            Counter,
+            Operators,
+        },
     },
-    utils::{
-        Counter,
-        Operators,
-    },
-    errors::{
-        ParseError,
-        ParseErrorType,
-        pretty_parse_error,
-    },
-};
-use crate::compiler::parser::{
-    types::{
-        ParserContext,
-        FuncFrame,
-    },
-    core::Parser,
+    compiler::parser::{
+        errors::{
+            ParseError,
+            ParseErrorType,
+        },
+        types::{
+            ParserContext,
+            FuncFrame,
+        },
+        core::Parser,
+    }
 };
 
 use TokenType as TT;
@@ -53,14 +54,12 @@ impl Parser {
         } else {
             let suggestion = ctx.value_pool.suggest_variable_name(identifier);
 
-            return Err(pretty_parse_error(
+            return Err(ParseError::from_token(
                 ParseErrorType::UndefinedVariable { 
                     name: identifier.to_string(),
                     suggestion 
                 },
-                token.line.unwrap_or(1) as usize,
-                token.column.unwrap_or(1) as usize,
-                ctx.source
+                token
             ));
         }
         Ok(())
@@ -68,7 +67,7 @@ impl Parser {
 
     pub fn store_variable(ctx: &mut ParserContext, token: &Token) -> Result<(), ParseError> {
         let Some(name) = token.value.as_identifier() else {
-            return Err(pretty_parse_error(ParseErrorType::InvalidAssignmentTarget, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+            return Err(ParseError::from_token(ParseErrorType::InvalidAssignmentTarget, token));
         };
 
         ctx.value_pool.get_or_create_var_name(&name);
@@ -78,7 +77,7 @@ impl Parser {
         } else if let Some(global_idx) = ctx.value_pool.get_bootstrap_global_index_by_name(&name) {
             ctx.emit(Instruction::new_raw(opcode::SET_GLOBAL, global_idx).0, Some(token));
         } else {
-            return Err(pretty_parse_error(ParseErrorType::Custom("Internal error: Failed to resolve variable scope after creation".to_string()), token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+            return Err(ParseError::from_token(ParseErrorType::FunctionResolutionError("Failed to resolve variable scope after creation"), token));
         }
         Ok(())
     }
@@ -91,14 +90,12 @@ impl Parser {
         } else {
             let suggestion = ctx.value_pool.suggest_variable_name(identifier);
 
-            return Err(pretty_parse_error(
+            return Err(ParseError::from_token(
                 ParseErrorType::UndefinedVariable { 
                     name: identifier.to_string(),
                     suggestion 
                 },
-                token.line.unwrap_or(1) as usize,
-                token.column.unwrap_or(1) as usize,
-                ctx.source
+                token
             ));
         }
         Ok(())
@@ -130,10 +127,10 @@ impl Parser {
 
         if is_dollar_start {
             if next.map_or(false, |t| matches!(t.typ, TT::Op(_))) {
-                return Err(pretty_parse_error(ParseErrorType::UnexpectedOperatorInDollarCall, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                return Err(ParseError::from_token(ParseErrorType::UnexpectedToken("unexpected operator in dollar call"), token));
             }
             if ctx.op_stack.is_empty() || ctx.op_stack.last().unwrap().typ != TT::LParen {
-                return Err(pretty_parse_error(ParseErrorType::UnexpectedDollarCall, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                return Err(ParseError::from_token(ParseErrorType::UnexpectedToken("unexpected dollar call"), token));
             }
         }
 

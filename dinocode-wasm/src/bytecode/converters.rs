@@ -35,80 +35,29 @@ use dinocode_core::{
             MAKE_OBJECT,
             MAKE_CLASS,
         },
-        dinoref::{
-            value_type,
-            DinoRef,
-        },
+        dinoref::DinoRef,
         UserFunction,
-        Symbol,
     },
     memory::MemoryManager,
 };
 use dinocode::compiler::parser::types::Bytecode;
 
 impl ConstantInfo {
-    pub fn from_dinoref_with_memory(index: u32, dino_ref: &DinoRef, memory: &MemoryManager) -> Self {
-        let vtype = dino_ref.decode_type();
-        let (const_type, value) = match vtype {
-            value_type::NONE => ("none", "null".to_string()),
-            value_type::BOOL => ("bool", format!("{}", dino_ref.as_bool())),
-            value_type::INT => ("int", format!("{}", dino_ref.as_int())),
-            value_type::FLOAT => ("float", format!("{}", dino_ref.as_float())),
-            value_type::BIGINT => {
-                let s = memory.get_bigint_string(dino_ref.as_bigint());
-                ("bigint", format!("{}n", s))
-            },
-            value_type::STRING => {
-                let s = memory.get_string(dino_ref.decode_index()).to_string();
+    pub fn from_dinoref(index: u32, dino_ref: &DinoRef, memory: &mut MemoryManager) -> Self {
+        let const_type = dino_ref.type_name();
+        let value = dino_ref
+            .try_as_string(memory)
+            .map(|s| {
                 if s.chars().count() > 50 {
-                    ("string", format!("\"{}...\"", s.chars().take(50).collect::<String>()))
+                    let mut r = String::with_capacity(53);
+                    r.extend(s.chars().take(50));
+                    r.push_str("...");
+                    r
                 } else {
-                    ("string", format!("\"{}\"", s))
+                    s
                 }
-            },
-            value_type::SYMBOL => ("symbol", Symbol::to_name(*dino_ref)),
-            value_type::FUNCTION => ("function", "<function>".to_string()),
-            value_type::ARRAY => ("array", "<array>".to_string()),
-            value_type::OBJECT => {
-                if dino_ref.is_class() {
-                    ("class", "<class>".to_string())
-                } else {
-                    ("object", "<object>".to_string())
-                }
-            },
-            _ => ("unknown", "<unknown>".to_string()),
-        };
-
-        Self {
-            index,
-            const_type: const_type.to_string(),
-            value,
-            raw: Some(dino_ref.raw()),
-        }
-    }
-
-    pub fn from_dinoref(index: u32, dino_ref: &DinoRef) -> Self {
-        // Fallback without memory access for basic info
-        let vtype = dino_ref.decode_type();
-        let (const_type, value) = match vtype {
-            value_type::NONE => ("none", "null".to_string()),
-            value_type::BOOL => ("bool", format!("{}", dino_ref.as_bool())),
-            value_type::INT => ("int", format!("{}", dino_ref.as_int())),
-            value_type::FLOAT => ("float", format!("{}", dino_ref.as_float())),
-            value_type::BIGINT => ("bigint", "<bigint>".to_string()),
-            value_type::STRING => ("string", "<string>".to_string()),
-            value_type::SYMBOL => ("symbol", "<symbol>".to_string()),
-            value_type::FUNCTION => ("function", "<function>".to_string()),
-            value_type::ARRAY => ("array", "<array>".to_string()),
-            value_type::OBJECT => {
-                if dino_ref.is_class() {
-                    ("class", "<class>".to_string())
-                } else {
-                    ("object", "<object>".to_string())
-                }
-            },
-            _ => ("unknown", "<unknown>".to_string()),
-        };
+            })
+            .unwrap_or("<unknown>".to_string());
 
         Self {
             index,
@@ -196,7 +145,7 @@ impl InstructionInfo {
 
 impl BytecodeInfo {
     pub fn from_bytecode_and_source_map(
-        bytecode: &Bytecode,
+        bytecode: &mut Bytecode,
         source_map: &SourceMap,
     ) -> Self {
         let constants: Vec<ConstantInfo> = bytecode
@@ -204,7 +153,7 @@ impl BytecodeInfo {
             .iter()
             .enumerate()
             .map(|(idx, dino_ref)| {
-                ConstantInfo::from_dinoref_with_memory(idx as u32, dino_ref, &bytecode.memory_manager)
+                ConstantInfo::from_dinoref(idx as u32, dino_ref, &mut bytecode.memory_manager)
             })
             .collect();
 

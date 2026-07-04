@@ -10,10 +10,15 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_macros::dinof;
-use crate::types::DinoRef;
-use crate::memory::MemoryManager;
-use crate::errors::{Result, RuntimeError, RuntimeErrorType};
-use crate::utils::conversions::TypeConverter;
+use crate::{
+    memory::MemoryManager,
+    types::DinoRef,
+    errors::{
+        Result,
+        RuntimeError,
+    },
+    utils::conversions::TypeConverter,
+};
 
 crate::register_module! {
     name: init_types,
@@ -23,7 +28,7 @@ crate::register_module! {
 #[dinof(raw)]
 pub fn int(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("int".into())));
+        return Err(RuntimeError::MissingArgument("int"));
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
@@ -42,7 +47,7 @@ pub fn int(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> 
 #[dinof(raw)]
 pub fn float(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("float".into())));
+        return Err(RuntimeError::MissingArgument("float"));
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
@@ -52,7 +57,7 @@ pub fn float(memory: &mut MemoryManager, args_start: usize, args_count: usize) -
 #[dinof(raw)]
 pub fn number(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("number".into())));
+        return Err(RuntimeError::MissingArgument("number"));
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
@@ -63,7 +68,7 @@ pub fn number(memory: &mut MemoryManager, args_start: usize, args_count: usize) 
 #[dinof(raw)]
 pub fn bigint(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("bigint".into())));
+        return Err(RuntimeError::MissingArgument("bigint"));
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
@@ -82,7 +87,7 @@ pub fn bigint(memory: &mut MemoryManager, args_start: usize, args_count: usize) 
 #[dinof(raw)]
 pub fn bool(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("bool".into())));
+        return Err(RuntimeError::MissingArgument("bool"));
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
@@ -92,7 +97,7 @@ pub fn bool(memory: &mut MemoryManager, args_start: usize, args_count: usize) ->
 #[dinof(raw)]
 pub fn str(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("str".into())));
+        return Err(RuntimeError::MissingArgument("str"));
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;
@@ -102,7 +107,7 @@ pub fn str(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> 
 #[dinof(raw)]
 pub fn id(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("id".into())));
+        return Err(RuntimeError::MissingArgument("id"));
     }
     let arg = memory.stack().get(args_start).copied()
         .ok_or(RuntimeError::StackUnderflow)?;

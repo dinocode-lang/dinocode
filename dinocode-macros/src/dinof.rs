@@ -105,6 +105,13 @@ pub fn dinof(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     } else {
         let indices: Vec<usize> = (0..params.len()).collect();
+        let expected_count = param_names.len();
+        let mut fn_name_str = fn_name.to_string();
+        if let Some(stripped) = fn_name_str.strip_prefix("r#") {
+            fn_name_str = stripped.to_string();
+        }
+        let fn_name_lit = syn::LitStr::new(&fn_name_str, proc_macro2::Span::call_site());
+        let expected_lit = syn::LitStr::new(&expected_count.to_string(), proc_macro2::Span::call_site());
 
         quote! {
             #(#fn_attrs)*
@@ -121,16 +128,11 @@ pub fn dinof(_attr: TokenStream, item: TokenStream) -> TokenStream {
                                        args_count: usize|
                           -> crate::errors::Result<crate::types::DinoRef> {
                         
-                        let expected_count = [#(stringify!(#param_names)),*].len();
-                        
-                        if args_count != expected_count {
-                            return Err(crate::errors::RuntimeError::TypeError(
-                                format!(
-                                    "Expected {} arguments, got {}",
-                                    expected_count,
-                                    args_count
-                                )
-                            ));
+                        if args_count != #expected_count {
+                            return Err(crate::errors::RuntimeError::WrongArgCount {
+                                func: #fn_name_lit,
+                                expected: #expected_lit,
+                            });
                         }
                         
                         #(

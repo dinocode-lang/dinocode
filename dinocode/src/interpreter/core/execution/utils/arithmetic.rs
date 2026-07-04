@@ -13,7 +13,7 @@ use dinocode_core::{
     types::{DinoRef, value_type},
     memory::MemoryManager,
     utils::parsers::numeric::{Number, parse},
-    errors::{RuntimeError, RuntimeErrorType, Result},
+    errors::{RuntimeError, Result},
 };
 
 macro_rules! string_op_number {
@@ -23,7 +23,7 @@ macro_rules! string_op_number {
             match parse::<Number>(bytes) {
                 Ok(Number::Int(si)) => $string_left_op(si, $numeric),
                 Ok(Number::Float(sf)) => $string_right_op(sf, $numeric),
-                Err(e) => Err(RuntimeError::Typed(RuntimeErrorType::NumericParse(e))),
+                Err(e) => Err(RuntimeError::NumericParse(e)),
             }
         }
     };
@@ -43,9 +43,9 @@ macro_rules! string_op_string {
                 (Ok(Number::Int(ai)), Ok(Number::Float(bf))) => $float_op(ai as f64, bf),
                 (Ok(Number::Float(af)), Ok(Number::Int(bi))) => $float_op(af, bi as f64),
                 (Ok(Number::Float(af)), Ok(Number::Float(bf))) => $float_op(af, bf),
-                (Ok(_), Err(e)) => Err(RuntimeError::Typed(RuntimeErrorType::NumericParse(e))),
-                (Err(e), Ok(_)) => Err(RuntimeError::Typed(RuntimeErrorType::NumericParse(e))),
-                (Err(e), _) => Err(RuntimeError::Typed(RuntimeErrorType::NumericParse(e))),
+                (Ok(_), Err(e)) => Err(RuntimeError::NumericParse(e)),
+                (Err(e), Ok(_)) => Err(RuntimeError::NumericParse(e)),
+                (Err(e), _) => Err(RuntimeError::NumericParse(e)),
             }
         }
     };
@@ -125,11 +125,11 @@ pub fn dyn_add(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
             let b_val = if b.as_bool() { 1i64 } else { 0 };
             Ok(DinoRef::int(a_val.wrapping_add(b_val)))
         },
-        _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-            left: a.type_name().to_string(),
-            op: "+".to_string(),
-            right: b.type_name().to_string(),
-        })),
+        _ => Err(RuntimeError::InvalidBinaryOperation {
+            left: a.type_name(),
+            op: "+",
+            right: b.type_name(),
+        }),
     }
 }
 
@@ -207,11 +207,11 @@ pub fn dyn_sub(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
             let b_val = if b.as_bool() { 1i64 } else { 0 };
             Ok(DinoRef::int(a_val.wrapping_sub(b_val)))
         },
-        _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-            left: a.type_name().to_string(),
-            op: "-".to_string(),
-            right: b.type_name().to_string(),
-        })),
+        _ => Err(RuntimeError::InvalidBinaryOperation {
+            left: a.type_name(),
+            op: "-",
+            right: b.type_name(),
+        }),
     }
 }
 
@@ -289,11 +289,11 @@ pub fn dyn_mul(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
             let b_val = if b.as_bool() { 1i64 } else { 0 };
             Ok(DinoRef::int(a_val.wrapping_mul(b_val)))
         },
-        _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-            left: a.type_name().to_string(),
-            op: "*".to_string(),
-            right: b.type_name().to_string(),
-        })),
+        _ => Err(RuntimeError::InvalidBinaryOperation {
+            left: a.type_name(),
+            op: "*",
+            right: b.type_name(),
+        }),
     }
 }
 
@@ -371,11 +371,11 @@ pub fn dyn_div(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
             Ok(DinoRef::float(a_val / b_val))
         },
-        _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-            left: a.type_name().to_string(),
-            op: "/".to_string(),
-            right: b.type_name().to_string(),
-        })),
+        _ => Err(RuntimeError::InvalidBinaryOperation {
+            left: a.type_name(),
+            op: "/",
+            right: b.type_name(),
+        }),
     }
 }
 
@@ -453,11 +453,11 @@ pub fn dyn_mod(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
             let b_val = if b.as_bool() { 1.0 } else { 0.0 };
             Ok(DinoRef::float(a_val % b_val))
         },
-        _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-            left: a.type_name().to_string(),
-            op: "%".to_string(),
-            right: b.type_name().to_string(),
-        })),
+        _ => Err(RuntimeError::InvalidBinaryOperation {
+            left: a.type_name(),
+            op: "%",
+            right: b.type_name(),
+        }),
     }
 }
 
@@ -535,11 +535,11 @@ pub fn dyn_floor_div(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &
             let b_val: f64 = if b.as_bool() { 1.0 } else { 0.0 };
             Ok(DinoRef::float((a_val / b_val).floor()))
         },
-        _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-            left: a.type_name().to_string(),
-            op: "//".to_string(),
-            right: b.type_name().to_string(),
-        })),
+        _ => Err(RuntimeError::InvalidBinaryOperation {
+            left: a.type_name(),
+            op: "//",
+            right: b.type_name(),
+        }),
     }
 }
 
@@ -617,10 +617,10 @@ pub fn dyn_pow(a: DinoRef, b: DinoRef, a_type: u16, b_type: u16, memory: &mut Me
             let b_val: f64 = if b.as_bool() { 1.0 } else { 0.0 };
             Ok(DinoRef::float(a_val.powf(b_val)))
         },
-        _ => Err(RuntimeError::Typed(RuntimeErrorType::InvalidBinaryOperation {
-            left: a.type_name().to_string(),
-            op: "**".to_string(),
-            right: b.type_name().to_string(),
-        })),
+        _ => Err(RuntimeError::InvalidBinaryOperation {
+            left: a.type_name(),
+            op: "**",
+            right: b.type_name(),
+        }),
     }
 }

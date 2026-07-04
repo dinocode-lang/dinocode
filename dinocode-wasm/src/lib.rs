@@ -6,7 +6,6 @@ use dinocode::{
     compiler::parser::Parser,
     interpreter::VirtualMachine,
 };
-use dinocode::shared::errors;
 use dinocode_platform::io;
 
 mod bytecode;
@@ -127,12 +126,8 @@ impl DinoWasm {
                 }
             },
             Err(vm_error) => {
-                let pretty_error = errors::pretty_runtime_error_from_info(
-                    vm_error.source,
-                    &vm_error.traces,
-                    &source_map,
-                    source,
-                );
+                let dino_error = vm_error.to_dino_error(&source_map);
+                let pretty_error = dino_error.render(source);
 
                 let (line, col) = source_map.get_location(vm_error.ip).unwrap_or((0, 0));
 

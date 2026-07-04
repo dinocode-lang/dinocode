@@ -21,7 +21,6 @@ use crate::{
     errors::{
         Result,
         RuntimeError,
-        RuntimeErrorType,
     },
     prototypes::array::Array,
 };
@@ -53,7 +52,7 @@ impl Object {
         }
         
         let this = stack[args_start];
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         let keys = memory.get_object_keys(handle);
@@ -70,7 +69,7 @@ impl Object {
         }
         
         let this = stack[args_start];
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         let values = memory.get_object_values(handle);
@@ -79,7 +78,7 @@ impl Object {
     
     #[raw]
     pub fn get(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("get".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("get")); }
         
         let stack = memory.stack();
         if args_start + 1 >= stack.len() { 
@@ -89,7 +88,7 @@ impl Object {
         let this = stack[args_start];
         let key = stack[args_start + 1];
         
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         match memory.get_property(handle, key) {
@@ -100,7 +99,7 @@ impl Object {
     
     #[raw]
     pub fn set(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 3 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("set".into()))); }
+        if args_count < 3 { return Err(RuntimeError::MissingArgument("set")); }
         
         let stack = memory.stack();
         if args_start + 2 >= stack.len() { 
@@ -111,7 +110,7 @@ impl Object {
         let key = stack[args_start + 1];
         let val = stack[args_start + 2];
         
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         memory.set_object_property(handle, key, val, 0)?;
@@ -130,13 +129,13 @@ impl Object {
         }
         
         let this = stack[args_start];
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         let slot = memory.object_pool.get_slot(handle);
         
         if slot.kind != value_type::OBJECT { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); 
+            return Err(RuntimeError::ExpectedInstance("object")); 
         }
         
         let count = unsafe { slot.data.object.count };
@@ -146,7 +145,7 @@ impl Object {
     #[raw]
     #[symbol(name="in", alias)]
     pub fn has(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("has".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("has")); }
         
         let stack = memory.stack();
         if args_start + 1 >= stack.len() { 
@@ -156,7 +155,7 @@ impl Object {
         let this = stack[args_start];
         let key = stack[args_start + 1];
         
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         let has_property = memory.get_property(handle, key).is_some();
@@ -166,7 +165,7 @@ impl Object {
     
     #[raw]
     pub fn delete(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 { return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("delete".into()))); }
+        if args_count < 2 { return Err(RuntimeError::MissingArgument("delete")); }
         
         let stack = memory.stack();
         if args_start + 1 >= stack.len() { 
@@ -176,7 +175,7 @@ impl Object {
         let this = stack[args_start];
         let key = stack[args_start + 1];
         
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         let key_hash = memory.get_key_hash(key);
@@ -187,7 +186,7 @@ impl Object {
         let (object_capacity, object_entries) = {
             let slot = memory.object_pool.get_slot(handle);
             if slot.kind != value_type::OBJECT { 
-                return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); 
+                return Err(RuntimeError::ExpectedInstance("object")); 
             }
             unsafe { (slot.data.object.capacity, slot.data.object.entries) }
         };
@@ -241,13 +240,13 @@ impl Object {
         }
         
         let this = stack[args_start];
-        if !this.is_object() { return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); }
+        if !this.is_object() { return Err(RuntimeError::ExpectedInstance("object")); }
         
         let handle = this.get_object_id();
         let slot = memory.object_pool.get_slot_mut(handle);
         
         if slot.kind != value_type::OBJECT { 
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedObjectInstance)); 
+            return Err(RuntimeError::ExpectedInstance("object")); 
         }
         
         unsafe {

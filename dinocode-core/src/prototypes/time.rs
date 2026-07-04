@@ -21,7 +21,6 @@ use crate::{
     errors::{
         Result,
         RuntimeError,
-        RuntimeErrorType,
     },
     utils::DinoTime
 };
@@ -82,7 +81,7 @@ impl Time {
     #[raw]
     pub fn from_timestamp(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("from_timestamp".into())));
+            return Err(RuntimeError::MissingArgument("from_timestamp"));
         }
 
         let arg = unsafe { *memory.stack_ptr.add(args_start + 1) };
@@ -94,7 +93,7 @@ impl Time {
     #[raw]
     pub fn from_date(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 4 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("from_date".into())));
+            return Err(RuntimeError::MissingArgument("from_date"));
         }
 
         let year_arg = unsafe { *memory.stack_ptr.add(args_start + 1) };
@@ -112,7 +111,7 @@ impl Time {
     #[raw]
     pub fn sleep(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("sleep".into())));
+            return Err(RuntimeError::MissingArgument("sleep"));
         }
 
         let arg = unsafe { *memory.stack_ptr.add(args_start + 1) };
@@ -129,10 +128,10 @@ impl Time {
                 thread::sleep(Duration::from_millis(ms));
                 Ok(DinoRef::NONE)
             }
-            _ => Err(RuntimeError::Typed(RuntimeErrorType::WrongArgType { 
-                func: "sleep".to_string(), 
-                expected: "number (int or float)".to_string() 
-            }))
+            _ => Err(RuntimeError::WrongArgType { 
+                func: "sleep", 
+                expected: "number (int or float)" 
+            })
         }
     }
 
@@ -152,7 +151,7 @@ impl Time {
         };
 
         if !this.is_object() {
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedTimeInstance));
+            return Err(RuntimeError::ExpectedInstance("time"));
         }
         let handle = this.get_object_id();
 
@@ -191,7 +190,7 @@ impl Time {
     #[raw]
     pub fn add_seconds(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
-            return Err(RuntimeError::Typed(RuntimeErrorType::MissingArgument("add_seconds".into())));
+            return Err(RuntimeError::MissingArgument("add_seconds"));
         }
 
         let (this, amount_ref) = {
@@ -200,7 +199,7 @@ impl Time {
         };
 
         if !this.is_object() {
-            return Err(RuntimeError::Typed(RuntimeErrorType::ExpectedTimeInstance));
+            return Err(RuntimeError::ExpectedInstance("time"));
         }
         let handle = this.get_object_id();
 

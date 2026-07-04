@@ -19,15 +19,12 @@ use dinocode_core::{
     native::registry::is_native_function,
 };
 use crate::{
-    shared::{
+    shared::types::Token,
+    compiler::parser::{
         errors::{
             ParseError,
             ParseErrorType,
-            pretty_parse_error,
         },
-        types::Token,
-    },
-    compiler::parser::{
         types::ParserContext,
         core::Parser,
     },
@@ -42,10 +39,10 @@ impl Parser {
                 if let Some((access_opcode, var_idx)) = ctx.value_pool.get_var_access_opcode(name) {
                     ctx.emit(Instruction::new_raw(access_opcode, var_idx).0, Some(token));
                 } else {
-                    return Err(pretty_parse_error(ParseErrorType::FunctionNotFoundInScope, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                    return Err(ParseError::from_token(ParseErrorType::FunctionResolutionError("function not found in this scope"), token));
                 }
             } else {
-                return Err(pretty_parse_error(ParseErrorType::CannotAccessParentScopeFunction, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+                return Err(ParseError::from_token(ParseErrorType::FunctionResolutionError("cannot access function from a parent scope"), token));
             }
         } else if let Some(native_id) = is_native_function(name) {
             let const_idx = ctx.value_pool.get_or_create_native_fn(native_id);
@@ -53,7 +50,7 @@ impl Parser {
         } else if let Some(global_idx) = ctx.value_pool.get_bootstrap_global_index_by_name(name) {
             ctx.emit(Instruction::new_raw(opcode::GET_GLOBAL, global_idx).0, Some(token));
         } else {
-            return Err(pretty_parse_error(ParseErrorType::FunctionNotFound, token.line.unwrap_or(1) as usize, token.column.unwrap_or(1) as usize, ctx.source));
+            return Err(ParseError::from_token(ParseErrorType::FunctionResolutionError("function not found"), token));
         }
         Ok(())
     }
@@ -73,20 +70,16 @@ impl Parser {
     
     pub fn handle_return_statement(ctx: &mut ParserContext, token: &Token, args: usize) -> Result<(), ParseError> {
         if args > 1 {
-            return Err(pretty_parse_error(
+            return Err(ParseError::from_token(
                 ParseErrorType::MultipleReturnValues,
-                token.line.unwrap_or(1) as usize,
-                token.column.unwrap_or(1) as usize,
-                ctx.source
+                token
             ));
         }
         
         if ctx.function_def_frames.is_empty() {
-            return Err(pretty_parse_error(
-                ParseErrorType::ReturnOutsideFunction,
-                token.line.unwrap_or(1) as usize,
-                token.column.unwrap_or(1) as usize,
-                ctx.source
+            return Err(ParseError::from_token(
+                ParseErrorType::InvalidControlFlow("return statement outside function"),
+                token
             ));
         }
                 
@@ -111,7 +104,7 @@ impl Parser {
             .collect();
         
         if main_functions.len() > 1 {
-            return Err(pretty_parse_error(ParseErrorType::MultipleMainFunction, 1, 1, ctx.source));
+            return Err(ParseError::new(ParseErrorType::MultipleMainFunction, 1, 1));
         }
         
         if let Some((function_id, _function)) = main_functions.first() {
