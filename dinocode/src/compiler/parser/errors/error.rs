@@ -61,7 +61,7 @@ impl From<ParseError> for DinoError<'static> {
             }
             ParseErrorType::InvalidControlFlow(msg) => {
                 dino = dino.add_message(msg, FormatterColor::Default)
-                    .add_note("check the context where this statement is used", FormatterColor::Green);
+                    .add_note("check the context where this statement is used", FormatterColor::Default);
             }
             ParseErrorType::FunctionResolutionError(msg) => {
                 dino = dino.add_message(msg, FormatterColor::Default);
@@ -83,11 +83,11 @@ impl From<ParseError> for DinoError<'static> {
             }
             ParseErrorType::MultipleMainFunction => {
                 dino = dino.add_message("multiple 'main' functions defined", FormatterColor::Default)
-                    .add_note("only one 'main' function is allowed per program", FormatterColor::Green);
+                    .add_note("only one 'main' function is allowed per program", FormatterColor::Default);
             }
             ParseErrorType::PrefixIncrementDecrementNotSupported => {
                 dino = dino.add_message("prefix '++' / '--' is not supported", FormatterColor::Default)
-                    .add_note("use postfix form: 'i++' or 'i--'", FormatterColor::Green);
+                    .add_note("use postfix form: 'i++' or 'i--'", FormatterColor::Default);
             }
             ParseErrorType::EmptyMatchComparison => {
                 dino = dino.add_message("empty match comparison", FormatterColor::Default);
@@ -100,9 +100,9 @@ impl From<ParseError> for DinoError<'static> {
                     .add_message_owned(name, FormatterColor::WhiteBold)
                     .add_message("'", FormatterColor::Default);
                 if let Some(s) = suggestion {
-                    dino = dino.add_note("did you mean '", FormatterColor::Green)
+                    dino = dino.add_note("did you mean '", FormatterColor::Default)
                         .add_note_owned(s, FormatterColor::WhiteBold)
-                        .add_note("'?", FormatterColor::Green);
+                        .add_note("'?", FormatterColor::Default);
                 }
             }
             ParseErrorType::UnknownType { name, suggestion } => {
@@ -110,9 +110,9 @@ impl From<ParseError> for DinoError<'static> {
                     .add_message_owned(name, FormatterColor::WhiteBold)
                     .add_message("'", FormatterColor::Default);
                 if let Some(s) = suggestion {
-                    dino = dino.add_note("did you mean '", FormatterColor::Green)
+                    dino = dino.add_note("did you mean '", FormatterColor::Default)
                         .add_note_owned(s, FormatterColor::WhiteBold)
-                        .add_note("'?", FormatterColor::Green);
+                        .add_note("'?", FormatterColor::Default);
                 }
             }
             ParseErrorType::MatchCorrespondenceError { expected_values, actual_values } => {
@@ -124,10 +124,10 @@ impl From<ParseError> for DinoError<'static> {
             ParseErrorType::NumericParse(err) => {
                 dino = dino.add_message_owned(err.message.clone(), FormatterColor::Default);
                 if let Some(help) = err.help {
-                    dino = dino.add_note_owned(help, FormatterColor::Green);
+                    dino = dino.add_note_owned(help, FormatterColor::Default);
                 }
                 if let Some(info) = err.info {
-                    dino = dino.add_info_owned(info, FormatterColor::BrightBlueBold);
+                    dino = dino.add_info_owned(info, FormatterColor::Default);
                 }
             }
             ParseErrorType::Custom(msg) => {

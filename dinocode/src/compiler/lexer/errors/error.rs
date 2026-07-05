@@ -38,10 +38,10 @@ impl From<LexError> for DinoError<'static> {
             LexErrorType::NumericParse(npe) => {
                 dino = dino.add_message_owned(npe.message.clone(), FormatterColor::Default);
                 if let Some(help) = &npe.help {
-                    dino = dino.add_note_owned(help.clone(), FormatterColor::Green);
+                    dino = dino.add_note_owned(help.clone(), FormatterColor::Default);
                 }
                 if let Some(info) = &npe.info {
-                    dino = dino.add_info_owned(info.clone(), FormatterColor::BrightBlueBold);
+                    dino = dino.add_info_owned(info.clone(), FormatterColor::Default);
                 }
             }
             LexErrorType::UnexpectedToken(msg) => {
@@ -49,19 +49,19 @@ impl From<LexError> for DinoError<'static> {
             }
             LexErrorType::UnexpectedTokenAfterDot => {
                 dino = dino.add_message("unexpected token after '.'", FormatterColor::Default)
-                    .add_note("dot access must be followed by an identifier", FormatterColor::Green);
+                    .add_note("dot access must be followed by an identifier", FormatterColor::Default);
             }
             LexErrorType::UnexpectedBlankAfterDot => {
                 dino = dino.add_message("unexpected space after '.'", FormatterColor::Default)
-                    .add_note("dot access cannot have spaces between the dot and the identifier", FormatterColor::Green);
+                    .add_note("dot access cannot have spaces between the dot and the identifier", FormatterColor::Default);
             }
             LexErrorType::UnexpectedLogicalContinuation => {
                 dino = dino.add_message("incomplete expression", FormatterColor::Default)
-                    .add_note("ensure the expression ends properly", FormatterColor::Green);
+                    .add_note("ensure the expression ends properly", FormatterColor::Default);
             }
             LexErrorType::DollarCallWithSpace => {
                 dino = dino.add_message("unexpected space after '$'", FormatterColor::Default)
-                    .add_note("dollar calls cannot have spaces between '$' and '('", FormatterColor::Green);
+                    .add_note("dollar calls cannot have spaces between '$' and '('", FormatterColor::Default);
             }
             LexErrorType::InvalidOperator(msg) => {
                 dino = dino.add_message(msg, FormatterColor::Default);
@@ -71,11 +71,11 @@ impl From<LexError> for DinoError<'static> {
             }
             LexErrorType::UnterminatedMultilineComment => {
                 dino = dino.add_message("unterminated multiline comment", FormatterColor::Default)
-                    .add_note("multiline comments must be closed with '*#'", FormatterColor::Green);
+                    .add_note("multiline comments must be closed with '*#'", FormatterColor::Default);
             }
             LexErrorType::EmptyLiteralBlockString => {
                 dino = dino.add_message("literal block string cannot be empty", FormatterColor::Default)
-                    .add_note("block strings must contain at least one character", FormatterColor::Green);
+                    .add_note("block strings must contain at least one character", FormatterColor::Default);
             }
             LexErrorType::Custom(msg) => {
                 dino = dino.add_message_owned(msg, FormatterColor::Default);

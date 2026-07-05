@@ -105,7 +105,7 @@ impl RuntimeError {
             RuntimeError::ArrayIndexNotNumeric => {
                 DinoError::new(line, column)
                     .add_message("array index must be a numeric value", FormatterColor::Default)
-                    .add_note("pass a numerically representable value", FormatterColor::Green)
+                    .add_note("pass a numerically representable value", FormatterColor::Default)
             }
             RuntimeError::MemberAccessNotObject => {
                 DinoError::new(line, column)
@@ -116,7 +116,7 @@ impl RuntimeError {
                     .add_message("attempted to call a '", FormatterColor::Default)
                     .add_message(t, FormatterColor::WhiteBold)
                     .add_message("' value as a function", FormatterColor::Default)
-                    .add_note("check that the value is a function before calling it", FormatterColor::Green)
+                    .add_note("check that the value is a function before calling it", FormatterColor::Default)
             }
             RuntimeError::InvalidBinaryOperation { left, op, right } => {
                 DinoError::new(line, column)
@@ -127,15 +127,15 @@ impl RuntimeError {
                     .add_message("' and '", FormatterColor::Default)
                     .add_message(right, FormatterColor::WhiteBold)
                     .add_message("'", FormatterColor::Default)
-                    .add_note("check that both operands have compatible types for this operation", FormatterColor::Green)
+                    .add_note("check that both operands have compatible types for this operation", FormatterColor::Default)
             }
             RuntimeError::NumericParse(err) => {
                 let mut dino = DinoError::new(line, column).add_message_owned(err.message.clone(), FormatterColor::Default);
                 if let Some(help) = &err.help {
-                    dino = dino.add_note_owned(help.clone(), FormatterColor::Green);
+                    dino = dino.add_note_owned(help.clone(), FormatterColor::Default);
                 }
                 if let Some(info) = &err.info {
-                    dino = dino.add_info_owned(info.clone(), FormatterColor::BrightBlueBold);
+                    dino = dino.add_info_owned(info.clone(), FormatterColor::Default);
                 }
                 dino
             }
@@ -146,10 +146,10 @@ impl RuntimeError {
                     .add_message("' to ", FormatterColor::Default)
                     .add_message(to, FormatterColor::WhiteBold);
                 if let Some(h) = help {
-                    dino = dino.add_note(h, FormatterColor::Green);
+                    dino = dino.add_note(h, FormatterColor::Default);
                 }
                 if let Some(i) = info {
-                    dino = dino.add_info(i, FormatterColor::BrightBlueBold);
+                    dino = dino.add_info(i, FormatterColor::Default);
                 }
                 dino
             }
@@ -158,21 +158,21 @@ impl RuntimeError {
                     .add_message("expected numeric argument, got '", FormatterColor::Default)
                     .add_message(t, FormatterColor::WhiteBold)
                     .add_message("'", FormatterColor::Default)
-                    .add_note("pass a numerically representable value", FormatterColor::Green)
+                    .add_note("pass a numerically representable value", FormatterColor::Default)
             }
             RuntimeError::ExpectedInstance(type_name) => {
                 DinoError::new(line, column)
                     .add_message("expected a '", FormatterColor::Default)
                     .add_message(type_name, FormatterColor::WhiteBold)
                     .add_message("' instance", FormatterColor::Default)
-                    .add_info("this method can only be called on '", FormatterColor::Green)
+                    .add_info("this method can only be called on '", FormatterColor::Default)
                     .add_info(type_name, FormatterColor::WhiteBold)
-                    .add_info("' objects", FormatterColor::Green)
+                    .add_info("' objects", FormatterColor::Default)
             }
             RuntimeError::IndexOutOfBounds => {
                 DinoError::new(line, column)
                     .add_message("index out of bounds", FormatterColor::Default)
-                    .add_note("check that the index is within the valid range for the collection", FormatterColor::Green)
+                    .add_note("check that the index is within the valid range for the collection", FormatterColor::Default)
             }
             RuntimeError::NativeFunctionNotFound(name) => {
                 DinoError::new(line, column)
@@ -184,12 +184,12 @@ impl RuntimeError {
                     .add_message("property '", FormatterColor::Default)
                     .add_message_owned(name.clone(), FormatterColor::WhiteBold)
                     .add_message("' not found", FormatterColor::Default)
-                    .add_note("ensure the property name is spelled correctly", FormatterColor::Green)
+                    .add_note("ensure the property name is spelled correctly", FormatterColor::Default)
             }
             RuntimeError::ReadInputFailed(err) => {
                 DinoError::new(line, column)
                     .add_message("failed to read input", FormatterColor::Default)
-                    .add_info_owned(err.clone(), FormatterColor::Green)
+                    .add_info_owned(err.clone(), FormatterColor::Default)
             }
             RuntimeError::MissingArgument(func) => {
                 DinoError::new(line, column)
@@ -218,7 +218,7 @@ impl RuntimeError {
                     .add_message("'", FormatterColor::Default)
                     .add_message(func, FormatterColor::WhiteBold)
                     .add_message("()' invalid argument", FormatterColor::Default)
-                    .add_info(message, FormatterColor::Green)
+                    .add_info(message, FormatterColor::Default)
             }
             RuntimeError::ExpectedIterable(func) => {
                 DinoError::new(line, column)
@@ -229,22 +229,22 @@ impl RuntimeError {
             RuntimeError::ValueIsNaN => {
                 DinoError::new(line, column)
                     .add_message("Not a Number (NaN) value detected", FormatterColor::Default)
-                    .add_note("NaN is not allowed in operations that require a finite value", FormatterColor::Green)
-                    .add_info("NaN examples: 0/0, infi/infi", FormatterColor::BrightBlueBold)
+                    .add_note("NaN is not allowed in operations that require a finite value", FormatterColor::Default)
+                    .add_info("NaN examples: 0/0, infi/infi", FormatterColor::Default)
             }
             RuntimeError::ValueIsInfinity => {
                 DinoError::new(line, column)
                     .add_message("Infinity value detected", FormatterColor::Default)
-                    .add_note("Infinity is not allowed in operations that require a finite value", FormatterColor::Green)
-                    .add_info("Infinity examples: 1/0, very large numbers", FormatterColor::BrightBlueBold)
+                    .add_note("Infinity is not allowed in operations that require a finite value", FormatterColor::Default)
+                    .add_info("Infinity examples: 1/0, very large numbers", FormatterColor::Default)
             }
             RuntimeError::Panic { message, help, info } => {
                 let mut dino = DinoError::new(line, column).add_message_owned(message.clone(), FormatterColor::Default);
                 if let Some(h) = help {
-                    dino = dino.add_note_owned(h.clone(), FormatterColor::Green);
+                    dino = dino.add_note_owned(h.clone(), FormatterColor::Default);
                 }
                 if let Some(i) = info {
-                    dino = dino.add_info_owned(i.clone(), FormatterColor::BrightBlueBold);
+                    dino = dino.add_info_owned(i.clone(), FormatterColor::Default);
                 }
                 dino
             }
@@ -253,12 +253,12 @@ impl RuntimeError {
             RuntimeError::DivisionByZero => {
                 DinoError::new(line, column)
                     .add_message("division by zero", FormatterColor::Default)
-                    .add_note("check divisor before performing division", FormatterColor::Green)
+                    .add_note("check divisor before performing division", FormatterColor::Default)
             }
             RuntimeError::StackUnderflow => {
                 DinoError::new(line, column)
                     .add_message("stack underflow", FormatterColor::Default)
-                    .add_note("check stack operations for proper balance", FormatterColor::Green)
+                    .add_note("check stack operations for proper balance", FormatterColor::Default)
             }
             RuntimeError::RecursionLimitExceeded => {
                 DinoError::new(line, column)
@@ -279,7 +279,7 @@ impl RuntimeError {
             RuntimeError::InternalError(msg) => {
                 DinoError::new(line, column)
                     .add_message(msg, FormatterColor::Default)
-                    .add_info("this is likely a bug, please report it", FormatterColor::Green)
+                    .add_info("this is likely a bug, please report it", FormatterColor::Default)
             }
             RuntimeError::UnknownOpCode(op) => {
                 let opcode_str = format!("{:02X}", op);
