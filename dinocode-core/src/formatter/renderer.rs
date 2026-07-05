@@ -14,6 +14,7 @@ use crate::formatter::{
     DinoError,
     ErrorGroup,
     ErrorType,
+    FormatterColor,
 };
 
 pub struct ErrorRenderer<'a> {
@@ -165,7 +166,13 @@ impl<'a> ErrorRenderer<'a> {
     fn group_parts(&self, group: ErrorGroup) -> String {
         let mut buf = String::new();
         for part in self.error.parts.iter().filter(|p| p.group == group) {
-            buf.push_str(part.content.as_ref());
+            if part.color != FormatterColor::Default {
+                buf.push_str(part.color.ansi_code());
+                buf.push_str(part.content.as_ref());
+                buf.push_str(FormatterColor::Reset.ansi_code());
+            } else {
+                buf.push_str(part.content.as_ref());
+            }
         }
         buf
     }
