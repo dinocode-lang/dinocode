@@ -14,3 +14,7 @@ pub use std::time::Duration;
 pub fn sleep(duration: Duration) {
     std::thread::sleep(duration);
 }
+
+pub fn step(_ip: usize) {
+    // Nothing
+}

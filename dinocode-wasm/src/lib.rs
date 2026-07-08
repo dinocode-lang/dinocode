@@ -6,6 +6,7 @@ use dinocode::{
     compiler::parser::Parser,
     interpreter::VirtualMachine,
 };
+use dinocode_core::DinoError;
 use dinocode_platform::io;
 
 mod bytecode;
@@ -22,16 +23,12 @@ pub struct ExecutionError {
     message: String,
     pub line: u32,
     pub col: u32,
-    stack_trace: Vec<JsValue>,
 }
 
 #[wasm_bindgen]
 impl ExecutionError {
     #[wasm_bindgen(getter)]
     pub fn message(&self) -> String { self.message.clone() }
-
-    #[wasm_bindgen(getter, js_name = stackTrace)]
-    pub fn stack_trace(&self) -> Vec<JsValue> { self.stack_trace.clone() }
 }
 
 #[wasm_bindgen]
@@ -74,6 +71,17 @@ impl DinoWasm {
         dinocode_platform::thread::set_sleep_hook(f);
     }
 
+    #[wasm_bindgen(js_name = setStepCallback)]
+    pub fn set_step_callback(&self, f: js_sys::Function) {
+        dinocode_platform::thread::set_step_hook(f);
+    }
+
+    #[wasm_bindgen(js_name = enableStep)]
+    pub fn enable_step(&self) { dinocode_platform::thread::enable_step(); }
+
+    #[wasm_bindgen(js_name = disableStep)]
+    pub fn disable_step(&self) { dinocode_platform::thread::disable_step(); }
+
     #[wasm_bindgen(js_name = analyzeBytecode)]
     pub fn analyze_bytecode(&self, source: &str) -> Result<BytecodeAnalyzer, JsValue> {
         BytecodeAnalyzer::from_source(source)
@@ -89,13 +97,13 @@ impl DinoWasm {
         let tokens = match Lexer::tokenize(source) {
             Ok(tokens) => tokens,
             Err(e) => {
+                let err: DinoError = e.into();
                 return ExecutionResult {
                     success: false,
                     error: Some(ExecutionError {
-                        message: e.to_string(),
-                        line: 0,
-                        col: 0,
-                        stack_trace: Vec::new(),
+                        message: err.render(source),
+                        line: err.line,
+                        col: err.column,
                     }),
                 };
             }
@@ -104,13 +112,13 @@ impl DinoWasm {
         let (bytecode, source_map) = match Parser::compile(tokens.iter().as_slice(), source) {
             Ok((b, sm)) => (b, sm),
             Err(e) => {
+                let err: DinoError = e.into();
                 return ExecutionResult {
                     success: false,
                     error: Some(ExecutionError {
-                        message: e.to_string(),
-                        line: 0,
-                        col: 0,
-                        stack_trace: Vec::new(),
+                        message: err.render(source),
+                        line: err.line,
+                        col: err.column,
                     }),
                 };
             }
@@ -119,30 +127,22 @@ impl DinoWasm {
         let mut vm = VirtualMachine::from_bytecode(bytecode);
 
         match vm.run_with_args(&args) {
-            Ok(_) => {
-                ExecutionResult {
-                    success: true,
-                    error: None,
-                }
+            Ok(_) => ExecutionResult {
+                success: true,
+                error: None,
             },
             Err(vm_error) => {
                 let dino_error = vm_error.to_dino_error(&source_map);
                 let pretty_error = dino_error.render(source);
 
                 let (line, col) = source_map.get_location(vm_error.ip).unwrap_or((0, 0));
-
-                let stack_trace: Vec<JsValue> = vm_error.traces.iter().map(|&ip| {
-                    let (l, c) = source_map.get_location(ip).unwrap_or((0, 0));
-                    JsValue::from_str(&format!("Line {}, Col {}", l, c))
-                }).collect();
-
+                
                 ExecutionResult {
                     success: false,
                     error: Some(ExecutionError {
                         message: pretty_error,
                         line: line as u32,
                         col: col as u32,
-                        stack_trace,
                     }),
                 }
             }

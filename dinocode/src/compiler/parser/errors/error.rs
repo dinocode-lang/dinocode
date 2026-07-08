@@ -54,7 +54,10 @@ impl From<ParseError> for DinoError<'static> {
             ParseErrorType::ExpectedIndentedBlock(keyword) => {
                 dino = dino.add_message("expected indented block after '", FormatterColor::Default)
                     .add_message(keyword, FormatterColor::WhiteBold)
-                    .add_message("'", FormatterColor::Default);
+                    .add_message("'", FormatterColor::Default)
+                    .add_info("the next line after the '", FormatterColor::Default)
+                    .add_info(keyword, FormatterColor::WhiteBold)
+                    .add_info("' must have more indentation", FormatterColor::Default);
             }
             ParseErrorType::MismatchedDelimiter(msg) => {
                 dino = dino.add_message(msg, FormatterColor::Default);

@@ -800,6 +800,9 @@ impl VirtualMachine {
                 _ => return vm_err!(RuntimeError::UnknownOpCode(op)),
             }
 
+            #[cfg(target_arch = "wasm32")]
+            dinocode_platform::thread::step(ip);
+
             ip += 1;
         }
         
