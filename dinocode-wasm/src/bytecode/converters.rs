@@ -93,9 +93,9 @@ impl InstructionInfo {
         let op_name = opcode_name(opcode_byte).to_string();
         let operand_desc = Self::decode_operand(opcode_byte, payload, bytecode);
         
-        let (source_line, source_column) = source_map
-            .get_location(ip as usize)
-            .unwrap_or((0, 0));
+        let (source_line, source_column, _, end_ip_for_line) = source_map
+            .get_location_and_range(ip as usize)
+            .unwrap_or((0, 0, 0, 0));
 
         Self {
             ip,
@@ -105,36 +105,53 @@ impl InstructionInfo {
             operand_description: operand_desc,
             source_line: source_line as u32,
             source_column: source_column as u32,
+            end_ip_for_line: end_ip_for_line as u32,
         }
     }
 
     fn decode_operand(opcode: u8, operand: u32, bytecode: &Bytecode) -> String {
+        let mut s = String::with_capacity(32);
         match opcode {
             LOAD_CONST => {
                 if (operand as usize) < bytecode.const_pool.len() {
                     format!("#{} {:?}", operand, bytecode.const_pool[operand as usize])
                 } else {
-                    format!("#{} (out of range)", operand)
+                    s.push("#".chars().next().unwrap());
+                    s.push_str(&operand.to_string());
+                    s.push_str(" (out of range)");
+                    s
                 }
             }
             GET_LOCAL | SET_LOCAL => {
-                format!("local[{}]", operand)
+                s.push_str("local[");
+                s.push_str(&operand.to_string());
+                s.push("]".chars().next().unwrap());
+                s
             }
             GET_GLOBAL | SET_GLOBAL => {
-                format!("global[{}]", operand)
+                s.push_str("global[");
+                s.push_str(&operand.to_string());
+                s.push("]".chars().next().unwrap());
+                s
             }
             JUMP | JUMP_IF | JUMP_IF_NOT => {
-                format!("-> {}", operand)
+                s.push_str("-> ");
+                s.push_str(&operand.to_string());
+                s
             }
             CALL => {
-                format!("argc: {}", operand)
+                s.push_str("argc: ");
+                s.push_str(&operand.to_string());
+                s
             }
             MAKE_ARRAY | MAKE_OBJECT | MAKE_CLASS => {
-                format!("size: {}", operand)
+                s.push_str("size: ");
+                s.push_str(&operand.to_string());
+                s
             }
             _ => {
                 if operand > 0 {
-                    format!("{}", operand)
+                    operand.to_string()
                 } else {
                     String::new()
                 }

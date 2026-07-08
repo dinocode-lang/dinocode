@@ -13,6 +13,7 @@ dinocode-macros = { path = "../dinocode-macros" }
 
 # core
 dinocode-core = { path = "../dinocode-core" }
+dinocode-platform = { path = "../dinocode-platform" }
 thiserror = { workspace = true }
 colored = { workspace = true }
 log = { workspace = true }

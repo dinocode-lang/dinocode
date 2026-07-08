@@ -38,6 +38,7 @@ pub struct InstructionInfo {
     pub operand_description: String,
     pub source_line: u32,
     pub source_column: u32,
+    pub end_ip_for_line: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -345,24 +345,25 @@ pub fn build_cfg(info: &BytecodeInfo, source: &str) -> ControlFlowGraph {
                 }
             }
             
-            let mut node_type = "process".to_string();
-            if has_bare_return {
-                node_type = "bare_return".to_string();
+            let mut node_type = if has_bare_return {
+                "bare_return"
             } else if has_return {
-                node_type = "return".to_string();
+                "return"
             } else if has_terminal {
-                node_type = "terminal".to_string();
+                "terminal"
             } else if has_for_iter {
-                node_type = "preparation".to_string();
+                "preparation"
             } else if has_condition {
-                node_type = "condition".to_string();
+                "condition"
             } else if has_input {
-                node_type = "input".to_string();
+                "input"
             } else if has_for_init {
-                node_type = "preparation".to_string();
+                "preparation"
             } else if has_call {
-                node_type = "predefined_process".to_string();
-            }
+                "predefined_process"
+            } else {
+                "process"
+            }.to_string();
             
             let mut source_text = String::new();
 
@@ -416,7 +417,7 @@ pub fn build_cfg(info: &BytecodeInfo, source: &str) -> ControlFlowGraph {
             }
             
             if source_text.is_empty() {
-                source_text = block_instructions.iter().map(|i| i.opcode_name.as_str()).collect::<Vec<&str>>().join(" ");
+                source_text = block_instructions.iter().map(|i| i.opcode_name.as_ref()).collect::<Vec<&str>>().join(" ");
                 if source_text.len() > 30 {
                     source_text.truncate(27);
                     source_text.push_str("...");
@@ -729,7 +730,12 @@ pub fn build_cfg(info: &BytecodeInfo, source: &str) -> ControlFlowGraph {
             }
         }
 
-        let mut name = format!("Function_{}", func.index);
+        let mut name = {
+            let mut s = String::with_capacity(16);
+            s.push_str("Function_");
+            s.push_str(&func.index.to_string());
+            s
+        };
         let function_ref = func.function_ref;
 
         /*
@@ -827,8 +833,15 @@ pub fn build_cfg(info: &BytecodeInfo, source: &str) -> ControlFlowGraph {
             }
         }
 
+        let id = {
+            let mut s = String::with_capacity(16);
+            s.push_str("subgraph_");
+            s.push_str(&func.index.to_string());
+            s
+        };
+        
         subgraphs.push(CFGSubgraph {
-            id: format!("subgraph_{}", func.index),
+            id,
             name,
             function_ref,
             nodes: func_nodes,

@@ -50,6 +50,7 @@ dependencies = [
  "colored",
  "dinocode-core",
  "dinocode-macros",
+ "dinocode-platform",
  "log",
  "paste",
  "thiserror",

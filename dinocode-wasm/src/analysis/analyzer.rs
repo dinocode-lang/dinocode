@@ -17,6 +17,7 @@ use dinocode::{
     compiler::lexer::Lexer,
     compiler::parser::Parser,
 };
+use dinocode_core::DinoError;
 use crate::analysis::cfg::build_cfg;
 
 #[wasm_bindgen]
@@ -36,14 +37,16 @@ impl BytecodeAnalyzer {
         let tokens = match Lexer::tokenize(source) {
             Ok(tokens) => tokens,
             Err(e) => {
-                return Err(JsValue::from_str(&e.to_string()));
+                let err: DinoError = e.into();
+                return Err(JsValue::from_str(&err.render(source)));
             }
         };
 
         let (mut bytecode, source_map) = match Parser::compile(tokens.iter().as_slice(), source) {
             Ok((b, sm)) => (b, sm),
             Err(e) => {
-                return Err(JsValue::from_str(&e.to_string()));
+                let err: DinoError = e.into();
+                return Err(JsValue::from_str(&err.render(source)));
             }
         };
 
