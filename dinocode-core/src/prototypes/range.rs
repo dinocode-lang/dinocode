@@ -10,10 +10,8 @@
 // ═══════════════════════════════════════════════════════════
 
 use crate::{
-    memory::{
-        MemoryManager,
-        types::object_types,
-    },
+    runtime::context::Runtime,
+    memory::types::object_types,
     types::DinoRef,
     errors::{
         Result,
@@ -47,13 +45,13 @@ impl Range {
     pub const STEP_VAL: () = ();
 
     #[raw]
-    pub fn step(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn step(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("step"));
         }
 
         let (this, step_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             (stack[args_start], stack[args_start + 1])
         };
 
@@ -62,7 +60,7 @@ impl Range {
         }
         let handle = this.get_object_id();
 
-        let step_val = step_ref.try_as_int(memory)?;
+        let step_val = step_ref.try_as_int(&mut runtime.memory)?;
         if step_val == 0 {
             return Err(RuntimeError::InvalidArgumentValue { 
                 func: "step", 
@@ -70,20 +68,20 @@ impl Range {
             }); 
         }
 
-        let _ = memory.set_object_property(handle, Self::STEP_VAL(), DinoRef::int(step_val), 0);
+        let _ = runtime.memory.set_object_property(handle, Self::STEP_VAL(), DinoRef::int(step_val), 0);
 
         Ok(this)
     }
 
     #[raw]
     #[symbol(name="in", alias)]
-    pub fn contains(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn contains(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Ok(DinoRef::FALSE);
         }
 
         let (this, other) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             (stack[args_start], stack[args_start + 1])
         };
 
@@ -93,10 +91,14 @@ impl Range {
 
         let handle_this = this.get_object_id();
 
-        if let Ok(num) = other.try_as_int(memory) {
-            let start = memory.get_property(handle_this, Self::START()).unwrap_or(DinoRef::ZERO).try_as_int(memory).unwrap_or(0);
-            let stop = memory.get_property(handle_this, Self::STOP()).unwrap_or(DinoRef::ZERO).try_as_int(memory).unwrap_or(0);
-            let step = memory.get_property(handle_this, Self::STEP_VAL()).unwrap_or(DinoRef::int(1)).try_as_int(memory).unwrap_or(1);
+        if let Ok(num) = other.try_as_int(&mut runtime.memory) {
+            let start_ref = runtime.get_property_by_id(handle_this, Self::START())?;
+            let stop_ref = runtime.get_property_by_id(handle_this, Self::STOP())?;
+            let step_ref = runtime.get_property_by_id(handle_this, Self::STEP_VAL())?;
+            
+            let start = start_ref.try_as_int(&mut runtime.memory)?;
+            let stop = stop_ref.try_as_int(&mut runtime.memory)?;
+            let step = step_ref.try_as_int(&mut runtime.memory)?;
 
             if step > 0 {
                 if num >= start && num < stop && (num - start) % step == 0 {
@@ -115,18 +117,18 @@ impl Range {
 }
 
 impl Range {
-    pub fn create_instance(memory: &mut MemoryManager, start: i64, stop: i64, step: i64) -> DinoRef {
-        let handle = memory.alloc_object_capacity(4);
-        let slot = memory.object_pool.get_slot_mut(handle);
+    pub fn create_instance(runtime: &mut Runtime, start: i64, stop: i64, step: i64) -> DinoRef {
+        let handle = runtime.memory.alloc_object_capacity(4);
+        let slot = runtime.memory.object_pool.get_slot_mut(handle);
         slot.subkind = object_types::RANGE;
 
-        let _ = memory.set_object_property(handle, Self::START(), DinoRef::int(start), 0);
-        let _ = memory.set_object_property(handle, Self::STOP(), DinoRef::int(stop), 0);
-        let _ = memory.set_object_property(handle, Self::STEP_VAL(), DinoRef::int(step), 0);
+        let _ = runtime.memory.set_object_property(handle, Self::START(), DinoRef::int(start), 0);
+        let _ = runtime.memory.set_object_property(handle, Self::STOP(), DinoRef::int(stop), 0);
+        let _ = runtime.memory.set_object_property(handle, Self::STEP_VAL(), DinoRef::int(step), 0);
 
         if let Some(stack_idx) = Self::get_bootstrap_index() {
-            let proto_ref = unsafe { memory.get_global_variable_unchecked(stack_idx) };
-            memory.object_pool.get_slot_mut(handle).proto = proto_ref;
+            let proto_ref = unsafe { runtime.memory.get_global_variable_unchecked(stack_idx) };
+            runtime.memory.object_pool.get_slot_mut(handle).proto = proto_ref;
         }
 
         DinoRef::object(handle)

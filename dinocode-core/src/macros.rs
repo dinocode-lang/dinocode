@@ -39,10 +39,10 @@ macro_rules! define_prototypes {
                     $class_path::get_bootstrap_index()
                 }
 
-                pub fn [<set_ $name _prototype>](memory: &mut crate::memory::MemoryManager, handle: u32) {
+                pub fn [<set_ $name _prototype>](runtime: &mut crate::runtime::context::Runtime, handle: u32) {
                     if let Some(proto_id) = [<get_ $name _prototype_id>]() {
                         let proto_ref = crate::types::DinoRef::class(proto_id);
-                        memory.set_proto(handle, proto_ref);
+                        runtime.memory.set_proto(handle, proto_ref);
                     }
                 }
             )*

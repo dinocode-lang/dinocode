@@ -12,11 +12,11 @@
 use std::collections::HashMap;
 use crate::{
     types::DinoRef,
-    memory::MemoryManager,
+    runtime::context::Runtime,
     errors::{RuntimeError, Result},
 };
 
-pub type NativeFnWrapper = fn(&mut MemoryManager, usize, usize) -> Result<DinoRef>;
+pub type NativeFnWrapper = fn(&mut Runtime, usize, usize) -> Result<DinoRef>;
 
 pub struct NativeFunctionRegistry {
     functions: Vec<NativeFnWrapper>,
@@ -175,7 +175,7 @@ pub fn free_info() {
 }
 
 pub fn call_native_function(
-    memory: &mut MemoryManager,
+    runtime: &mut Runtime,
     function_id: u32,
     args_start: usize,
     args_count: usize
@@ -183,7 +183,7 @@ pub fn call_native_function(
     let registry = get_native_registry();
 
     if let Some(function) = registry.get_by_id(function_id) {
-        function(memory, args_start, args_count)
+        function(runtime, args_start, args_count)
     } else {
         let function_name = registry
             .get_name_by_id(function_id)

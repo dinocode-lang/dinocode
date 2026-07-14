@@ -35,4 +35,5 @@ pub enum ParseErrorType {
     UndefinedVariable { name: String, suggestion: Option<String> },
     UnknownType { name: String, suggestion: Option<String> },
     MatchCorrespondenceError { expected_values: usize, actual_values: usize },
+    MissingTokenValue,
 }

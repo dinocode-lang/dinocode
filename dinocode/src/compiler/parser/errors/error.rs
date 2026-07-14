@@ -133,6 +133,9 @@ impl From<ParseError> for DinoError<'static> {
                     dino = dino.add_info_owned(info, FormatterColor::Default);
                 }
             }
+            ParseErrorType::MissingTokenValue => {
+                dino = dino.add_message("token has no value", FormatterColor::Default);
+            }
             ParseErrorType::Custom(msg) => {
                 dino = dino.add_message_owned(msg, FormatterColor::Default);
             }

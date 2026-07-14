@@ -219,7 +219,10 @@ impl Parser {
             return Err(ParseError::from_token(ParseErrorType::ExpectedIdentifier("type identifier after 'as'"), next_token));
         }
 
-        let type_identifier = next_token.value.as_identifier().unwrap_or("".to_string());
+        let type_identifier = next_token.value.as_identifier().ok_or_else(|| ParseError::from_token(
+            ParseErrorType::MissingTokenValue,
+            next_token
+        ))?;
         
         match ctx.type_resolver.resolve_type(&type_identifier) {
             Some(type_index) => {

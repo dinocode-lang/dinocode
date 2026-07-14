@@ -1,4 +1,5 @@
 pub mod memory;
+pub mod runtime;
 pub mod types;
 pub mod native;
 pub mod prototypes;

@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_core::{
+    runtime::context::Runtime,
     types::{DinoRef, value_type, opcode, Symbol},
     utils::opcode::opcode_symbol,
     errors::{RuntimeError, Result},
@@ -21,7 +22,6 @@ use super::{
         try_magic_method, strings_equal, strings_compare
     }
 };
-use crate::interpreter::core::Runtime;
 
 #[inline]
 pub fn execute_binary_operator(

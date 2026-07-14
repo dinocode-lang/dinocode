@@ -110,7 +110,10 @@ impl Parser {
         counter: &mut Counter,
         ctx: &mut ParserContext
     ) -> Result<(bool, bool), ParseError> {
-        let identifier = token.value.as_identifier().unwrap_or("".to_string());
+        let identifier = token.value.as_identifier().ok_or_else(|| ParseError::from_token(
+            ParseErrorType::MissingTokenValue,
+            token
+        ))?;
         
         let mut is_call = false;
         let is_dollar_start = matches!(token.typ, TokenType::DollarCall);

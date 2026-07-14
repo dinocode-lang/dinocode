@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 use crate::{
-    memory::MemoryManager,
+    runtime::context::Runtime,
     types::DinoRef,
     errors::{
         Result,
@@ -37,10 +37,10 @@ pub struct String;
 #[dinomethods]
 impl String {
     #[raw]
-    pub fn intern(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn intern(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -49,24 +49,24 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index() as usize;
-        let hash = memory.ensure_const_hash(this);
+        let hash = runtime.memory.ensure_const_hash(this);
         
-        if let Some(existing) = memory.get_interned_string_by_hash(hash) {
+        if let Some(existing) = runtime.memory.get_interned_string_by_hash(hash) {
             return Ok(existing);
         }
 
-        memory.set_interned(handle);
-        memory.intern_string_by_hash(hash, this);
+        runtime.memory.set_interned(handle);
+        runtime.memory.intern_string_by_hash(hash, this);
         
         Ok(this)
     }
 
     #[raw]
     #[getter]
-    pub fn hash(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn hash(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -74,16 +74,16 @@ impl String {
         let this = stack[args_start];
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let hash_val = memory.ensure_const_hash(this);
+        let hash_val = runtime.memory.ensure_const_hash(this);
         Ok(DinoRef::float(hash_val as f64))
     }
 
     #[raw]
     #[getter]
-    pub fn len(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn len(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -93,15 +93,15 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
-        let len = memory.get_const_len(handle);
+        let len = runtime.memory.get_const_len(handle);
         Ok(DinoRef::int(len as i64))
     }
     
     #[raw]
-    pub fn is_empty(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn is_empty(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -111,16 +111,16 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
-        let len = memory.get_const_len(handle);
+        let len = runtime.memory.get_const_len(handle);
         Ok(DinoRef::bool(len == 0))
     }
     
     #[raw]
-    pub fn char_at(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn char_at(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("char_at")); }
         
         let (this, idx_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -129,18 +129,19 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let idx = idx_ref.try_as_int(memory)?;
+        let idx = idx_ref.try_as_int(runtime.memory)?;
         
         if idx < 0 { return Ok(DinoRef::NONE); }
         
         let handle = this.decode_index();
-        let bytes = memory.get_const_bytes(handle);
+        let bytes = runtime.memory.get_const_bytes(handle);
         
         let mut char_count = 0;
         let mut byte_pos = 0;
         
         while byte_pos < bytes.len() && char_count < idx as usize {
-            let s_slice = std::str::from_utf8(&bytes[byte_pos..]).unwrap_or("");
+            let s_slice = std::str::from_utf8(&bytes[byte_pos..])
+                .map_err(|_| RuntimeError::InvalidUTF8)?;
             if let Some(ch) = s_slice.chars().next() {
                 char_count += 1;
                 byte_pos += ch.len_utf8();
@@ -153,21 +154,22 @@ impl String {
             return Ok(DinoRef::NONE);
         }
         
-        let s_slice = std::str::from_utf8(&bytes[byte_pos..]).unwrap_or("");
+        let s_slice = std::str::from_utf8(&bytes[byte_pos..])
+            .map_err(|_| RuntimeError::InvalidUTF8)?;
         if let Some(ch) = s_slice.chars().next() {
             let char_str = ch.to_string();
-            Ok(memory.alloc_string(&char_str))
+            Ok(runtime.memory.alloc_string(&char_str))
         } else {
             Ok(DinoRef::NONE)
         }
     }
     
     #[raw]
-    pub fn concat(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn concat(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("concat")); }
         
         let (this, other) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -176,22 +178,22 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let other_str = other.try_as_string(memory)?;
+        let other_str = other.try_as_string(runtime.memory)?;
         
         let this_handle = this.decode_index();
-        let this_str = memory.get_string(this_handle);
+        let this_str = runtime.memory.get_string(this_handle);
         
         let result = format!("{}{}", this_str, other_str);
-        Ok(memory.alloc_string(&result))
+        Ok(runtime.memory.alloc_string(&result))
     }
     
     #[raw]
     #[symbol(name="in", alias)]
-    pub fn contains(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn contains(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("contains")); }
         
         let (this, substr) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -200,20 +202,20 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let substr_str = substr.try_as_string(memory)?;
+        let substr_str = substr.try_as_string(runtime.memory)?;
         
         let this_handle = this.decode_index();
-        let this_str = memory.get_string(this_handle);
+        let this_str = runtime.memory.get_string(this_handle);
         
         Ok(DinoRef::bool(this_str.contains(&substr_str)))
     }
     
     #[raw]
-    pub fn starts_with(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn starts_with(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("starts_with")); }
         
         let (this, prefix) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -222,20 +224,20 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let prefix_str = prefix.try_as_string(memory)?;
+        let prefix_str = prefix.try_as_string(runtime.memory)?;
         
         let this_handle = this.decode_index();
-        let this_str = memory.get_string(this_handle);
+        let this_str = runtime.memory.get_string(this_handle);
         
         Ok(DinoRef::bool(this_str.starts_with(&prefix_str)))
     }
     
     #[raw]
-    pub fn ends_with(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn ends_with(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("ends_with")); }
         
         let (this, suffix) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -244,20 +246,20 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let suffix_str = suffix.try_as_string(memory)?;
+        let suffix_str = suffix.try_as_string(runtime.memory)?;
         
         let this_handle = this.decode_index();
-        let this_str = memory.get_string(this_handle);
+        let this_str = runtime.memory.get_string(this_handle);
         
         Ok(DinoRef::bool(this_str.ends_with(&suffix_str)))
     }
     
     #[raw]
-    pub fn to_uppercase(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn to_uppercase(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
         let this = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -267,17 +269,17 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         let upper = content.to_uppercase();
-        Ok(memory.alloc_string(&upper))
+        Ok(runtime.memory.alloc_string(&upper))
     }
     
     #[raw]
-    pub fn to_lowercase(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn to_lowercase(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
         let this = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -287,17 +289,17 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let handle = this.decode_index();
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         let lower = content.to_lowercase();
-        Ok(memory.alloc_string(&lower))
+        Ok(runtime.memory.alloc_string(&lower))
     }
     
     #[raw]
-    pub fn trim(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn trim(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
         let (this, chars_arg) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -308,25 +310,25 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let trimmed = if let Some(arg) = chars_arg {
-            let chars_to_trim = arg.try_as_string(memory)?;
+            let chars_to_trim = arg.try_as_string(runtime.memory)?;
             let handle = this.decode_index();
-            let content = memory.get_string(handle);
+            let content = runtime.memory.get_string(handle);
             content.trim_matches(|c: char| chars_to_trim.contains(c)).to_string()
         } else {
             let handle = this.decode_index();
-            let content = memory.get_string(handle);
+            let content = runtime.memory.get_string(handle);
             content.trim().to_string()
         };
         
-        Ok(memory.alloc_string(&trimmed))
+        Ok(runtime.memory.alloc_string(&trimmed))
     }
     
     #[raw]
-    pub fn repeat(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn repeat(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("repeat")); }
         
         let (this, count_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -335,7 +337,7 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let count = count_ref.try_as_int(memory)?;
+        let count = count_ref.try_as_int(runtime.memory)?;
         
         if count < 0 { 
             return Err(RuntimeError::InvalidArgumentValue { 
@@ -345,18 +347,18 @@ impl String {
         }
         
         let handle = this.decode_index();
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         
         let result = content.repeat(count as usize);
-        Ok(memory.alloc_string(&result))
+        Ok(runtime.memory.alloc_string(&result))
     }
     
     #[raw]
-    pub fn split(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn split(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
         let (this, delimiter_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -367,9 +369,9 @@ impl String {
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
         let parts: Vec<std::string::String> = if let Some(del_ref) = delimiter_ref {
-            let delimiter = del_ref.try_as_string(memory)?;
+            let delimiter = del_ref.try_as_string(runtime.memory)?;
             let handle = this.decode_index();
-            let content = memory.get_string(handle);
+            let content = runtime.memory.get_string(handle);
             if delimiter.is_empty() {
                 content.chars().map(|c| c.to_string()).collect()
             } else {
@@ -377,23 +379,23 @@ impl String {
             }
         } else {
             let handle = this.decode_index();
-            let content = memory.get_string(handle);
+            let content = runtime.memory.get_string(handle);
             content.split_whitespace().map(|s| s.to_string()).collect()
         };
         
         let dinoref_parts: Vec<DinoRef> = parts.iter().map(|part| {
-            memory.alloc_string(part)
+            runtime.memory.alloc_string(part)
         }).collect();
         
-        Ok(Array::create_from_slice(memory, &dinoref_parts))
+        Ok(Array::create_from_slice(runtime, &dinoref_parts))
     }
     
     #[raw]
-    pub fn replace(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn replace(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 3 { return Err(RuntimeError::MissingArgument("replace")); }
         
         let (this, from_ref, to_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 2 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -402,22 +404,22 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let from_str = from_ref.try_as_string(memory)?;
-        let to_str = to_ref.try_as_string(memory)?;
+        let from_str = from_ref.try_as_string(runtime.memory)?;
+        let to_str = to_ref.try_as_string(runtime.memory)?;
         
         let handle = this.decode_index();
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         
         let result = content.replace(&from_str, &to_str);
-        Ok(memory.alloc_string(&result))
+        Ok(runtime.memory.alloc_string(&result))
     }
     
     #[raw]
-    pub fn substr(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn substr(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("substring")); }
         
         let (this, start_ref, end_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -427,11 +429,11 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let start = start_ref.try_as_int(memory)?;
+        let start = start_ref.try_as_int(runtime.memory)?;
         if start < 0 { return Ok(DinoRef::NONE); }
         
         let handle = this.decode_index();
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         
         let chars: Vec<char> = content.chars().collect();
         let start_usize = start as usize;
@@ -439,7 +441,7 @@ impl String {
         if start_usize >= chars.len() { return Ok(DinoRef::NONE); }
         
         let end_usize = if let Some(e_ref) = end_ref {
-            let end = e_ref.try_as_int(memory)?;
+            let end = e_ref.try_as_int(runtime.memory)?;
             if end < 0 { return Ok(DinoRef::NONE); }
             std::cmp::min(end as usize, chars.len())
         } else {
@@ -449,15 +451,15 @@ impl String {
         if start_usize >= end_usize { return Ok(DinoRef::NONE); }
         
         let result: std::string::String = chars[start_usize..end_usize].iter().collect::<std::string::String>();
-        Ok(memory.alloc_string(&result))
+        Ok(runtime.memory.alloc_string(&result))
     }
     
     #[raw]
-    pub fn index_of(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn index_of(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("index_of")); }
         
         let (this, search_ref, start_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -467,12 +469,12 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let search_str = search_ref.try_as_string(memory)?;
+        let search_str = search_ref.try_as_string(runtime.memory)?;
         
         let start_pos = if let Some(s_ref) = start_ref {
-            let start = s_ref.try_as_int(memory)?;
+            let start = s_ref.try_as_int(runtime.memory)?;
             let handle = this.decode_index();
-            let content = memory.get_string(handle);
+            let content = runtime.memory.get_string(handle);
             if start < 0 { return Ok(DinoRef::int(-1)); }
             std::cmp::min(start as usize, content.len())
         } else {
@@ -480,7 +482,7 @@ impl String {
         };
         
         let handle = this.decode_index();
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         
         let substr = &content[start_pos..];
         if let Some(pos) = substr.find(&search_str) {
@@ -491,11 +493,11 @@ impl String {
     }
     
     #[raw]
-    pub fn last_index_of(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn last_index_of(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("last_index_of")); }
         
         let (this, search_ref, end_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -505,22 +507,22 @@ impl String {
         
         if !this.is_string() { return Err(RuntimeError::ExpectedInstance("string")); }
         
-        let search_str = search_ref.try_as_string(memory)?;
+        let search_str = search_ref.try_as_string(runtime.memory)?;
         
         let end_pos = if let Some(e_ref) = end_ref {
-            let end = e_ref.try_as_int(memory)?;
+            let end = e_ref.try_as_int(runtime.memory)?;
             let handle = this.decode_index();
-            let content = memory.get_string(handle);
+            let content = runtime.memory.get_string(handle);
             if end < 0 { return Ok(DinoRef::int(-1)); }
             std::cmp::min(end as usize, content.len())
         } else {
             let handle = this.decode_index();
-            let content = memory.get_string(handle);
+            let content = runtime.memory.get_string(handle);
             content.len()
         };
         
         let handle = this.decode_index();
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         
         let substr = &content[..end_pos];
         if let Some(pos) = substr.rfind(&search_str) {
@@ -531,11 +533,11 @@ impl String {
     }
     
     #[raw]
-    pub fn pad_left(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn pad_left(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("pad_left")); }
         
         let (this, width_ref, pad_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -547,7 +549,7 @@ impl String {
         
         let handle = this.decode_index();
         
-        let width = width_ref.try_as_int(memory)?;
+        let width = width_ref.try_as_int(runtime.memory)?;
         if width < 0 { 
             return Err(RuntimeError::InvalidArgumentValue { 
                 func: "pad_left", 
@@ -556,31 +558,31 @@ impl String {
         }
         
         let pad_char = if let Some(p) = pad_ref {
-            let pad_str = p.try_as_string(memory)?;
+            let pad_str = p.try_as_string(runtime.memory)?;
             pad_str.chars().next().unwrap_or(' ')
         } else {
             ' '
         };
         
         let target_len = width as usize;
-        let content_len = memory.get_const_len(handle);
+        let content_len = runtime.memory.get_const_len(handle);
         
         if content_len >= target_len {
             return Ok(DinoRef::string(handle));
         }
         
         let padding = target_len - content_len;
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         let result = format!("{}{}", pad_char.to_string().repeat(padding), content);
-        Ok(memory.alloc_string(&result))
+        Ok(runtime.memory.alloc_string(&result))
     }
     
     #[raw]
-    pub fn pad_right(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn pad_right(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("pad_right")); }
         
         let (this, width_ref, pad_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -592,7 +594,7 @@ impl String {
         
         let handle = this.decode_index();
         
-        let width = width_ref.try_as_int(memory)?;
+        let width = width_ref.try_as_int(runtime.memory)?;
         if width < 0 { 
             return Err(RuntimeError::InvalidArgumentValue { 
                 func: "pad_right", 
@@ -601,14 +603,14 @@ impl String {
         }
         
         let pad_char = if let Some(p) = pad_ref {
-            let pad_str = p.try_as_string(memory)?;
+            let pad_str = p.try_as_string(runtime.memory)?;
             pad_str.chars().next().unwrap_or(' ')
         } else {
             ' '
         };
         
         let target_len = width as usize;
-        let content_len = memory.get_const_len(handle);
+        let content_len = runtime.memory.get_const_len(handle);
         
         if content_len >= target_len {
             // Return the original string by allocating a new handle for it
@@ -616,8 +618,8 @@ impl String {
         }
         
         let padding = target_len - content_len;
-        let content = memory.get_string(handle);
+        let content = runtime.memory.get_string(handle);
         let result = format!("{}{}", content, pad_char.to_string().repeat(padding));
-        Ok(memory.alloc_string(&result))
+        Ok(runtime.memory.alloc_string(&result))
     }
 }

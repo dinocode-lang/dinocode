@@ -213,8 +213,8 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                             
                             arg_processing.push(quote! {
                                 let mut self_arg = {
-                                    let arg_val = memory.stack()[args_start + #idx];
-                                    <#self_ty as crate::native::FromDinoRef>::from_dinoref(arg_val, memory)?
+                                    let arg_val = runtime.memory.stack()[args_start + #idx];
+                                    <#self_ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                                 };
                             });
                         },
@@ -227,8 +227,8 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                                 
                                 arg_processing.push(quote! {
                                     let #name = {
-                                        let arg_val = memory.stack()[args_start + #idx];
-                                        <#ty as crate::native::FromDinoRef>::from_dinoref(arg_val, memory)?
+                                        let arg_val = runtime.memory.stack()[args_start + #idx];
+                                        <#ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                                     };
                                 });
                             }
@@ -254,7 +254,7 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 let expected_lit = syn::LitStr::new(&expected_count.to_string(), proc_macro2::Span::call_site());
                 
                 let wrapper_fn = quote! {
-                    let wrapper = move |memory: &mut crate::memory::MemoryManager,
+                    let wrapper = move |runtime: &mut crate::runtime::context::Runtime,
                                        args_start: usize,
                                        args_count: usize|
                           -> crate::errors::Result<crate::types::DinoRef> {
@@ -268,13 +268,13 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                         
                         #(#arg_processing)*
                         #call_stmt
-                        ToDinoRef::to_dinoref(result, memory)
+                        ToDinoRef::to_dinoref(result, runtime.memory)
                     };
                 };
 
                 let alias_wrapper = if keep_method_name {
                     quote! {
-                        let wrapper_alias = move |memory: &mut crate::memory::MemoryManager,
+                        let wrapper_alias = move |runtime: &mut crate::runtime::context::Runtime,
                                            args_start: usize,
                                            args_count: usize|
                               -> crate::errors::Result<crate::types::DinoRef> {
@@ -288,7 +288,7 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                             
                             #(#arg_processing)*
                             #call_stmt
-                            ToDinoRef::to_dinoref(result, memory)
+                            ToDinoRef::to_dinoref(result, runtime.memory)
                         };
                     }
                 } else { quote! {} };
@@ -405,8 +405,8 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                         
                         arg_processing.push(quote! {
                             let mut self_arg = {
-                                let arg_val = memory.stack()[args_start + #idx];
-                                <#self_ty as crate::native::FromDinoRef>::from_dinoref(arg_val, memory)?
+                                let arg_val = runtime.memory.stack()[args_start + #idx];
+                                <#self_ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                             };
                         });
                     },
@@ -419,8 +419,8 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                             
                             arg_processing.push(quote! {
                                 let #name = {
-                                    let arg_val = memory.stack()[args_start + #idx];
-                                    <#ty as crate::native::FromDinoRef>::from_dinoref(arg_val, memory)?
+                                    let arg_val = runtime.memory.stack()[args_start + #idx];
+                                    <#ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                                 };
                             });
                         }
@@ -465,7 +465,7 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
             }
 
             let wrapper_fn = quote! {
-                let wrapper = move |memory: &mut crate::memory::MemoryManager,
+                let wrapper = move |runtime: &mut crate::runtime::context::Runtime,
                                    args_start: usize,
                                    args_count: usize|
                       -> crate::errors::Result<crate::types::DinoRef> {
@@ -479,13 +479,13 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                     
                     #(#arg_processing)*
                     #call_stmt
-                    ToDinoRef::to_dinoref(result, memory)
+                    ToDinoRef::to_dinoref(result, runtime.memory)
                 };
             };
 
             let alias_wrapper = if keep_method_name {
                 quote! {
-                    let wrapper_alias = move |memory: &mut crate::memory::MemoryManager,
+                    let wrapper_alias = move |runtime: &mut crate::runtime::context::Runtime,
                                        args_start: usize,
                                        args_count: usize|
                           -> crate::errors::Result<crate::types::DinoRef> {
@@ -499,7 +499,7 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                         
                         #(#arg_processing)*
                         #call_stmt
-                        ToDinoRef::to_dinoref(result, memory)
+                        ToDinoRef::to_dinoref(result, runtime.memory)
                     };
                 }
             } else { quote! {} };

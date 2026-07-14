@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 use crate::{
-    memory::MemoryManager,
+    runtime::context::Runtime,
     types::DinoRef,
     errors::{Result, RuntimeError},
 };
@@ -31,253 +31,253 @@ pub struct Math;
 #[dinomethods]
 impl Math {
     #[raw]
-    pub fn abs(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn abs(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("abs"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.abs()))
     }
 
     #[raw]
-    pub fn sqrt(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn sqrt(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("sqrt"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.sqrt()))
     }
 
     #[raw]
-    pub fn sin(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn sin(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("sin"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.sin()))
     }
 
     #[raw]
-    pub fn cos(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn cos(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("cos"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.cos()))
     }
 
     #[raw]
-    pub fn tan(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn tan(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("tan"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.tan()))
     }
 
     #[raw]
-    pub fn asin(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn asin(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("asin"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.asin()))
     }
 
     #[raw]
-    pub fn acos(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn acos(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("acos"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.acos()))
     }
 
     #[raw]
-    pub fn atan(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn atan(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("atan"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.atan()))
     }
 
     #[raw]
-    pub fn atan2(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn atan2(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("atan2"));
         }
-        let arg1 = memory.stack().get(args_start + 1).copied()
+        let arg1 = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let arg2 = memory.stack().get(args_start + 2).copied()
+        let arg2 = runtime.memory.stack().get(args_start + 2).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let y = arg1.try_as_float(memory).unwrap_or(0.0);
-        let x = arg2.try_as_float(memory).unwrap_or(0.0);
+        let y = arg1.try_as_float(&mut runtime.memory)?;
+        let x = arg2.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(y.atan2(x)))
     }
 
     #[raw]
-    pub fn floor(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn floor(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("floor"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.floor()))
     }
 
     #[raw]
-    pub fn ceil(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn ceil(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("ceil"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.ceil()))
     }
 
     #[raw]
-    pub fn round(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn round(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("round"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.round()))
     }
 
     #[raw]
-    pub fn exp(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn exp(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("exp"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.exp()))
     }
 
     #[raw]
-    pub fn log(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn log(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("log"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.ln()))
     }
 
     #[raw]
-    pub fn log10(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn log10(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("log10"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.log10()))
     }
 
     #[raw]
-    pub fn log2(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn log2(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("log2"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.log2()))
     }
 
     #[raw]
-    pub fn pow(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn pow(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("pow"));
         }
-        let arg1 = memory.stack().get(args_start + 1).copied()
+        let arg1 = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let arg2 = memory.stack().get(args_start + 2).copied()
+        let arg2 = runtime.memory.stack().get(args_start + 2).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let base = arg1.try_as_float(memory).unwrap_or(0.0);
-        let exp = arg2.try_as_float(memory).unwrap_or(0.0);
+        let base = arg1.try_as_float(&mut runtime.memory)?;
+        let exp = arg2.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(base.powf(exp)))
     }
 
     #[raw]
-    pub fn max(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn max(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("max"));
         }
-        let arg1 = memory.stack().get(args_start + 1).copied()
+        let arg1 = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let arg2 = memory.stack().get(args_start + 2).copied()
+        let arg2 = runtime.memory.stack().get(args_start + 2).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg1.try_as_float(memory).unwrap_or(0.0);
-        let y = arg2.try_as_float(memory).unwrap_or(0.0);
+        let x = arg1.try_as_float(&mut runtime.memory)?;
+        let y = arg2.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.max(y)))
     }
 
     #[raw]
-    pub fn min(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn min(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("min"));
         }
-        let arg1 = memory.stack().get(args_start + 1).copied()
+        let arg1 = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let arg2 = memory.stack().get(args_start + 2).copied()
+        let arg2 = runtime.memory.stack().get(args_start + 2).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg1.try_as_float(memory).unwrap_or(0.0);
-        let y = arg2.try_as_float(memory).unwrap_or(0.0);
+        let x = arg1.try_as_float(&mut runtime.memory)?;
+        let y = arg2.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.min(y)))
     }
 
     #[raw]
-    pub fn cbrt(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn cbrt(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("cbrt"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg.try_as_float(memory).unwrap_or(0.0);
+        let x = arg.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.cbrt()))
     }
 
     #[raw]
-    pub fn hypot(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn hypot(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("hypot"));
         }
-        let arg1 = memory.stack().get(args_start + 1).copied()
+        let arg1 = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let arg2 = memory.stack().get(args_start + 2).copied()
+        let arg2 = runtime.memory.stack().get(args_start + 2).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
-        let x = arg1.try_as_float(memory).unwrap_or(0.0);
-        let y = arg2.try_as_float(memory).unwrap_or(0.0);
+        let x = arg1.try_as_float(&mut runtime.memory)?;
+        let y = arg2.try_as_float(&mut runtime.memory)?;
         Ok(DinoRef::float(x.hypot(y)))
     }
 
     #[raw]
-    pub fn random(_memory: &mut MemoryManager, _args_start: usize, _args_count: usize) -> Result<DinoRef> {
+    pub fn random(_runtime: &mut Runtime, _args_start: usize, _args_count: usize) -> Result<DinoRef> {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
         use dinocode_platform::time::SystemTime;

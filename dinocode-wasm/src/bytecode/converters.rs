@@ -116,7 +116,7 @@ impl InstructionInfo {
                 if (operand as usize) < bytecode.const_pool.len() {
                     format!("#{} {:?}", operand, bytecode.const_pool[operand as usize])
                 } else {
-                    s.push("#".chars().next().unwrap());
+                    s.push('#');
                     s.push_str(&operand.to_string());
                     s.push_str(" (out of range)");
                     s
@@ -125,13 +125,13 @@ impl InstructionInfo {
             GET_LOCAL | SET_LOCAL => {
                 s.push_str("local[");
                 s.push_str(&operand.to_string());
-                s.push("]".chars().next().unwrap());
+                s.push("]");
                 s
             }
             GET_GLOBAL | SET_GLOBAL => {
                 s.push_str("global[");
                 s.push_str(&operand.to_string());
-                s.push("]".chars().next().unwrap());
+                s.push("]");
                 s
             }
             JUMP | JUMP_IF | JUMP_IF_NOT => {

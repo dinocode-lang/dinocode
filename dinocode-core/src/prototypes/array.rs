@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 use crate::{
-    memory::MemoryManager,
+    runtime::context::Runtime,
     types::{
         DinoRef,
         value_type,
@@ -39,12 +39,12 @@ pub struct Array;
 #[dinomethods]
 impl Array {
     #[raw]
-    pub fn push(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn push(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("push"));
         }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start + 1 >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -57,18 +57,18 @@ impl Array {
         }
         
         let handle = this.decode_index();
-        let len = memory.get_array_len(handle);
+        let len = runtime.memory.get_array_len(handle);
         
-        memory.set_array_element(handle, len, value)?;
+        runtime.memory.set_array_element(handle, len, value)?;
         
         Ok(DinoRef::int((len + 1) as i64))
     }
     
     #[raw]
-    pub fn pop(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn pop(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -78,16 +78,16 @@ impl Array {
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
-        let val = memory.array_pop(handle);
+        let val = runtime.memory.array_pop(handle);
         Ok(val)
     }
     
     #[raw]
-    pub fn get(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn get(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { return Err(RuntimeError::MissingArgument("get")); }
         
         let (this, idx_ref) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 1 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -96,22 +96,22 @@ impl Array {
         
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
-        let idx = idx_ref.try_as_int(memory)?;
+        let idx = idx_ref.try_as_int(&mut runtime.memory)?;
         
         if idx < 0 { return Ok(DinoRef::NONE); }
         
         let handle = this.decode_index();
-        let val = memory.get_array_element(handle, idx as u32);
+        let val = runtime.memory.get_array_element(handle, idx as u32);
         
         Ok(val)
     }
     
     #[raw]
-    pub fn set(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn set(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 3 { return Err(RuntimeError::MissingArgument("set")); }
         
         let (this, idx_ref, val) = {
-            let stack = memory.stack();
+            let stack = runtime.memory.stack();
             if args_start + 2 >= stack.len() { 
                 return Err(RuntimeError::StackUnderflow); 
             }
@@ -120,21 +120,21 @@ impl Array {
         
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
-        let idx = idx_ref.try_as_int(memory)?;
+        let idx = idx_ref.try_as_int(&mut runtime.memory)?;
         
         if idx < 0 { return Err(RuntimeError::IndexOutOfBounds); }
 
         let handle = this.decode_index();
-        memory.set_array_element(handle, idx as u32, val)?;
+        runtime.memory.set_array_element(handle, idx as u32, val)?;
         Ok(val)
     }
     
     #[raw]
     #[getter]
-    pub fn len(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn len(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -144,15 +144,15 @@ impl Array {
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
-        let len = memory.get_array_len(handle);
+        let len = runtime.memory.get_array_len(handle);
         Ok(DinoRef::int(len as i64))
     }
     
     #[raw]
-    pub fn clear(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn clear(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -162,7 +162,7 @@ impl Array {
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
-        let slot = memory.object_pool.get_slot_mut(handle);
+        let slot = runtime.memory.object_pool.get_slot_mut(handle);
         if slot.kind != value_type::ARRAY { 
             return Err(RuntimeError::ExpectedInstance("array")); 
         }
@@ -173,10 +173,10 @@ impl Array {
     }
     
     #[raw]
-    pub fn is_empty(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn is_empty(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -186,15 +186,15 @@ impl Array {
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
-        let len = memory.get_array_len(handle);
+        let len = runtime.memory.get_array_len(handle);
         Ok(DinoRef::bool(len == 0))
     }
     
     #[raw]
-    pub fn first(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn first(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -204,21 +204,21 @@ impl Array {
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
-        let len = memory.get_array_len(handle);
+        let len = runtime.memory.get_array_len(handle);
         
         if len == 0 {
             return Ok(DinoRef::NONE);
         }
         
-        let val = memory.get_array_element(handle, 0);
+        let val = runtime.memory.get_array_element(handle, 0);
         Ok(val)
     }
     
     #[raw]
-    pub fn last(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn last(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 1 { return Err(RuntimeError::StackUnderflow); }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -228,24 +228,24 @@ impl Array {
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
-        let len = memory.get_array_len(handle);
+        let len = runtime.memory.get_array_len(handle);
         
         if len == 0 {
             return Ok(DinoRef::NONE);
         }
         
-        let val = memory.get_array_element(handle, len - 1);
+        let val = runtime.memory.get_array_element(handle, len - 1);
         Ok(val)
     }
     
     #[raw]
     #[symbol(name="in", alias)]
-    pub fn contains(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn contains(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 { 
             return Err(RuntimeError::MissingArgument("contains")); 
         }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         if args_start + 1 >= stack.len() { 
             return Err(RuntimeError::StackUnderflow); 
         }
@@ -256,14 +256,14 @@ impl Array {
         if !this.is_array() { return Err(RuntimeError::ExpectedInstance("array")); }
         
         let handle = this.decode_index();
-        let len = memory.get_array_len(handle);
+        let len = runtime.memory.get_array_len(handle);
         
         if len == 0 {
             return Ok(DinoRef::bool(false));
         }
         
         for i in 0..len {
-            let element = memory.get_array_element(handle, i);
+            let element = runtime.memory.get_array_element(handle, i);
             
             if element == value {
                 return Ok(DinoRef::TRUE);
@@ -275,13 +275,13 @@ impl Array {
 }
 
 impl Array {
-    pub fn create_instance(memory: &mut MemoryManager, args_start: usize, count: usize) -> DinoRef {
+    pub fn create_instance(runtime: &mut Runtime, args_start: usize, count: usize) -> DinoRef {
         let cap = (count as u32).max(1);
-        let handle = memory.alloc_array_capacity(cap);
+        let handle = runtime.memory.alloc_array_capacity(cap);
 
-        let elements: Vec<DinoRef> = memory.stack()[args_start..args_start + count].to_vec();
+        let elements: Vec<DinoRef> = runtime.memory.stack()[args_start..args_start + count].to_vec();
 
-        let slot = memory.object_pool.get_slot_mut(handle);
+        let slot = runtime.memory.object_pool.get_slot_mut(handle);
         let array = unsafe { &mut slot.data.array };
 
         unsafe {
@@ -294,11 +294,11 @@ impl Array {
         DinoRef::array(handle)
     }
 
-    pub fn create_from_slice(memory: &mut MemoryManager, elements: &[DinoRef]) -> DinoRef {
+    pub fn create_from_slice(runtime: &mut Runtime, elements: &[DinoRef]) -> DinoRef {
         let cap = elements.len() as u32;
-        let handle = memory.alloc_array_capacity(cap.max(1));
+        let handle = runtime.memory.alloc_array_capacity(cap.max(1));
 
-        let slot = memory.object_pool.get_slot_mut(handle);
+        let slot = runtime.memory.object_pool.get_slot_mut(handle);
         let array = unsafe { &mut slot.data.array };
 
         unsafe {

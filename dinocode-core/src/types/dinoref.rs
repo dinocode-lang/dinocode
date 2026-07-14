@@ -169,6 +169,11 @@ impl DinoRef {
         TypeConverter::to_display_string(self, memory)
     }
 
+    #[inline(always)]
+    pub fn to_key_string(self, memory: &MemoryManager) -> Result<String, RuntimeError> {
+        TypeConverter::to_key_string(self, memory)
+    }
+
     // Getters
     #[inline(always)]
     pub fn get_function_id(self) -> u32 {

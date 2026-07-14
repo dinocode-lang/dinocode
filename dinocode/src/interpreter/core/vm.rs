@@ -23,12 +23,12 @@ use dinocode_core::{
     utils::TypeConverter,
     errors::RuntimeError,
     builtins::io,
+    runtime::context::Runtime,
 };
 use crate::{
     compiler::parser::types::Bytecode,
     interpreter::{
         core::execution::utils::binary_ops,
-        core::Runtime,
         errors::{VMError, VmResult},
     },
 };
@@ -108,7 +108,7 @@ impl VirtualMachine {
 
     #[inline]
     pub fn run_with_args(&mut self, main_args: &[String]) -> VmResult<()> {
-        let len = self.bytecode.len();
+        let mut len = self.bytecode.len();
         
         self.run_from(0, len)?;
 
@@ -123,7 +123,10 @@ impl VirtualMachine {
                     .map(|arg| self.memory.alloc_string(arg))
                     .collect();
                 
-                let array_ref = Array::create_from_slice(&mut self.memory, &dinoref_args);
+                let array_ref = {
+                    let mut runtime = Runtime::new(&mut self.memory, &self.functions, &mut len);
+                    Array::create_from_slice(&mut runtime, &dinoref_args)
+                };
                 self.memory.stack_push(array_ref);
             }
 
@@ -146,7 +149,7 @@ impl VirtualMachine {
         
         macro_rules! vm_err {
             ($err:expr) => {
-                Err(VMError { source: $err.into(), ip, traces: self.get_call_stack_ips(ip) })
+                Err(VMError { source: $err, ip, traces: self.get_call_stack_ips(ip) })
             };
         }
 
@@ -248,7 +251,10 @@ impl VirtualMachine {
                     }
 
                     let start = self.memory.stack_depth() - count;
-                    let array_ref = Array::create_instance(&mut self.memory, start, count);
+                    let array_ref = {
+                        let mut runtime = Runtime::new(&mut self.memory, &self.functions, &mut ip);
+                        Array::create_instance(&mut runtime, start, count)
+                    };
 
                     self.memory.stack_pop_n(count);
                     self.memory.stack_push(array_ref);
@@ -374,9 +380,10 @@ impl VirtualMachine {
                             opcode = opcode::FOR_ITER_RANGE;
                             let handle = iterable.get_object_id();
                             if self.memory.has_object_type(handle, object_types::RANGE) {
-                                index = self.memory.get_property(handle, Range::START()).unwrap_or(DinoRef::ZERO);
-                                count = self.memory.get_property(handle, Range::STOP()).unwrap_or(DinoRef::ZERO);
-                                step  = self.memory.get_property(handle, Range::STEP_VAL()).unwrap_or(DinoRef::ZERO);
+                                let mut runtime = Runtime::new(&mut self.memory, &self.functions, &mut ip);
+                                index = try_vm!(runtime.get_property_by_id(handle, Range::START()));
+                                count = try_vm!(runtime.get_property_by_id(handle, Range::STOP()));
+                                step  = try_vm!(runtime.get_property_by_id(handle, Range::STEP_VAL()));
                                 target = DinoRef::NONE;
                             } else {
                                 return vm_err!(RuntimeError::NotIterable(None));
@@ -463,7 +470,8 @@ impl VirtualMachine {
                         let bytes = self.memory.get_const_bytes(target.decode_index());
                         
                         if idx_val < bytes.len() {
-                            let s_slice = std::str::from_utf8(&bytes[idx_val..]).unwrap_or("");
+                            let s_slice = try_vm!(std::str::from_utf8(&bytes[idx_val..])
+                                .map_err(|_| RuntimeError::InvalidUTF8));
                             if let Some(ch) = s_slice.chars().next() {
                                 let char_len = ch.len_utf8();
                                 
@@ -531,7 +539,10 @@ impl VirtualMachine {
                     }
 
                     let start = self.memory.stack_depth() - count;
-                    let object_ref = Object::create_instance(&mut self.memory, start, count);
+                    let object_ref = {
+                        let mut runtime = Runtime::new(&mut self.memory, &self.functions, &mut ip);
+                        Object::create_instance(&mut runtime, start, count)
+                    };
 
                     self.memory.stack_pop_n(count);
                     self.memory.stack_push(object_ref);
@@ -550,7 +561,10 @@ impl VirtualMachine {
 
                     let start = parent_pos + 1;
                     let prop_count = method_count * 2;
-                    let object_ref = Object::create_instance(&mut self.memory, start, prop_count);
+                    let object_ref = {
+                        let mut runtime = Runtime::new(&mut self.memory, &self.functions, &mut ip);
+                        Object::create_instance(&mut runtime, start, prop_count)
+                    };
                     let offset = object_ref.get_object_id();
 
                     self.memory.set_proto(offset, parent);
@@ -572,7 +586,10 @@ impl VirtualMachine {
                         end_int = end_int.saturating_add(1);
                     }
                     
-                    let range_ref = Range::create_instance(&mut self.memory, start_int, end_int, 1);
+                    let range_ref = {
+                        let mut runtime = Runtime::new(&mut self.memory, &self.functions, &mut ip);
+                        Range::create_instance(&mut runtime, start_int, end_int, 1)
+                    };
                     
                     self.memory.stack_pop_n(2);
                     self.memory.stack_push(range_ref);
@@ -756,7 +773,10 @@ impl VirtualMachine {
                     let stack_depth = self.memory.stack_depth();
                     let args_start = stack_depth - 1;
                     
-                    let result = try_vm!(io::input(&mut self.memory, args_start, 1));
+                    let result = {
+                        let mut runtime = Runtime::new(&mut self.memory, &self.functions, &mut ip);
+                        try_vm!(io::input(&mut runtime, args_start, 1))
+                    };
                     self.memory.stack_pop_n(2); // Expected as binary operation
                     self.memory.stack_push(result);
                 },
