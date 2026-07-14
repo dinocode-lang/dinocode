@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 use crate::{
-    memory::MemoryManager,
+    runtime::context::Runtime,
     types::{
         DinoRef,
         value_type,
@@ -39,11 +39,11 @@ pub struct Type;
 impl Type {
     #[raw]
     #[symbol(name="call")]
-    pub fn call(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn call(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("type"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
         
         Ok(DinoRef::int(arg.decode_type() as i64))
@@ -80,11 +80,11 @@ impl Type {
     pub const SYMBOL: DinoRef = DinoRef::int(value_type::SYMBOL as i64);
 
     #[raw]
-    pub fn name(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn name(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("name"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
         
         let vtype = arg.decode_type();
@@ -108,11 +108,11 @@ impl Type {
     }
 
     #[raw]
-    pub fn is_primitive(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn is_primitive(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("is_primitive"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
         
         let vtype = arg.decode_type();
@@ -130,12 +130,12 @@ impl Type {
     }
 
     #[raw]
-    pub fn instance_of(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn instance_of(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count < 2 {
             return Err(RuntimeError::MissingArgument("instance_of"));
         }
         
-        let stack = memory.stack();
+        let stack = runtime.memory.stack();
         let instance = stack.get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
         let class_ref = stack.get(args_start + 2).copied()
@@ -153,7 +153,7 @@ impl Type {
         let mut current_handle = instance.get_object_id();
         
         loop {
-            let slot = memory.object_pool.get_slot(current_handle);
+            let slot = runtime.memory.object_pool.get_slot(current_handle);
             let proto = slot.proto;
             
             if proto.is_none() {
@@ -176,11 +176,11 @@ impl Type {
     }
 
     #[raw]
-    pub fn id(memory: &mut MemoryManager, args_start: usize, args_count: usize) -> Result<DinoRef> {
+    pub fn id(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
         if args_count == 0 {
             return Err(RuntimeError::MissingArgument("id"));
         }
-        let arg = memory.stack().get(args_start + 1).copied()
+        let arg = runtime.memory.stack().get(args_start + 1).copied()
             .ok_or(RuntimeError::StackUnderflow)?;
         Ok(DinoRef::int(arg.payload() as i64))
     }

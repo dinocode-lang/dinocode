@@ -14,12 +14,13 @@ use crate::{
         types::CallFrame,
         heap::pool::allocator::ObjectPool,
     },
-    types::DinoRef,
+    types::{DinoRef, UserFunction},
     utils::StringInterner,
     native::{
         get_native_registry,
         call_native_function,
     },
+    runtime::context::Runtime,
 };
 
 #[derive(Debug)]
@@ -82,14 +83,19 @@ impl MemoryManager {
     pub fn bootstrap(&mut self) {
         let registry = get_native_registry();
         let bootstrap_list = registry.get_bootstrap_list();
-                
+        
+        // Native class constructors don't need these
+        let functions: Vec<UserFunction> = Vec::new();
+        let mut ip: usize = 0;
+        let mut runtime = Runtime::new(self, &functions, &mut ip);
+        
         for &function_id in bootstrap_list {            
-            let result = match call_native_function(self, function_id, 0, 0) {
+            let result = match call_native_function(&mut runtime, function_id, 0, 0) {
                 Ok(class_ref) => {
                     #[cfg(feature = "logging")]
                     {
                         let name = registry.get_name_by_id(function_id).unwrap_or("<unknown>");
-                        log::debug!("      Loaded class: {} (ID: {}) -> stack[{}]", name, function_id, self.stack_depth());
+                        log::debug!("      Loaded class: {} (ID: {}) -> stack[{}]", name, function_id, runtime.memory.stack_depth());
                     }
                     class_ref
                 }
@@ -103,7 +109,7 @@ impl MemoryManager {
                 }
             };
             
-            self.stack_push(result);
+            runtime.memory.stack_push(result);
         }
         
         self.set_globals();

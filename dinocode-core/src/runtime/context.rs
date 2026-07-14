@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 //  DinoCode – Language and Interpreter
 //  
-//  File:       src/interpreter/core/types/context.rs
+//  File:       src/runtime/context.rs
 //  Desc:       Runtime context for execution
 //  
 //  Author:     Ismael Quiroz
@@ -9,7 +9,7 @@
 //  License:    Apache License 2.0 (See 'LICENSE' file for full terms)
 // ═══════════════════════════════════════════════════════════
 
-use dinocode_core::{
+use crate::{
     memory::{
         MemoryManager,
         types::PropertyFlags,
@@ -44,7 +44,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
             value_type::FUNCTION => {
                 if function_ref.is_native_fn() {
                     let fid = function_ref.get_function_id();
-                    let res = call_native_function(self.memory, fid, args_start, argc)?;
+                    let res = call_native_function(self, fid, args_start, argc)?;
                     
                     self.memory.move_sp(function_pos);
                     self.memory.stack_push(res);
@@ -72,7 +72,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                 if function_ref.is_class() {
                     let class_id = function_ref.get_object_id();
                     
-                    let instance = Object::create_from_slice(self.memory, &[]);
+                    let instance = Object::create_from_slice(self, &[]);
                     self.memory.set_proto(instance.get_object_id(), function_ref);
                     
                     if let Some(new_method) = self.memory.get_property(class_id, Symbol::NEW) {
@@ -91,7 +91,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                             }
                         } else if new_method.is_native_fn() {
                             let fid = new_method.get_function_id();
-                            let res = call_native_function(self.memory, fid, new_args_start, new_argc)?;
+                            let res = call_native_function(self, fid, new_args_start, new_argc)?;
                             self.memory.move_sp(function_pos);
                             self.memory.stack_push(res);
                             self.memory.stack_push(instance);
@@ -120,7 +120,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                             }
                         } else if call_method.is_native_fn() {
                             let fid = call_method.get_function_id();
-                            let res = call_native_function(self.memory, fid, call_args_start, call_argc)?;
+                            let res = call_native_function(self, fid, call_args_start, call_argc)?;
                             self.memory.move_sp(function_pos);
                             self.memory.stack_push(res);
                             return Ok(());
@@ -141,7 +141,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
     pub fn call_function(&mut self, function_ref: DinoRef, args_start: usize, argc: usize) -> Result<DinoRef> {
         if function_ref.is_native_fn() {
             let native_id = function_ref.get_function_id();
-            call_native_function(self.memory, native_id, args_start, argc)
+            call_native_function(self, native_id, args_start, argc)
         } else if function_ref.is_user_function() {
             let function_id = function_ref.get_function_id();
             if let Some(function) = self.functions.get(function_id as usize) {
@@ -190,11 +190,6 @@ impl<'a, 'b> Runtime<'a, 'b> {
         Ok(None)
     }
 
-    fn get_property_name_string(&mut self, property_name: DinoRef) -> String {
-        property_name.try_as_string(self.memory)
-            .unwrap_or_else(|_| property_name.to_string())
-    }
-
     pub fn get_property_by_id(&mut self, object_id: u32, property_name: DinoRef) -> Result<DinoRef> {
         if let Some((value, flags)) = self.memory.get_property_details(object_id, property_name) {
             let flags = PropertyFlags::from(flags);
@@ -204,7 +199,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                 Ok(value)
             }
         } else {
-            let name_str = self.get_property_name_string(property_name);
+            let name_str = property_name.to_key_string(self.memory)?;
             Err(RuntimeError::PropertyNotFound(name_str))
         }
     }
@@ -216,7 +211,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                 if proto.is_object() {
                     self.get_property_by_id(proto.get_object_id(), property_name)
                 } else {
-                    let name_str = self.get_property_name_string(property_name);
+                    let name_str = property_name.to_key_string(self.memory)?;
                     Err(RuntimeError::PropertyNotFound(name_str))
                 }
             }
@@ -245,11 +240,11 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     if let Some(res) = self.try_set_property_via_setter(proto_id, property_name, value)? {
                         Ok(res)
                     } else {
-                        let name_str = self.get_property_name_string(property_name);
+                        let name_str = property_name.to_key_string(self.memory)?;
                         Err(RuntimeError::PropertyNotFound(name_str))
                     }
                 } else {
-                    let name_str = self.get_property_name_string(property_name);
+                    let name_str = property_name.to_key_string(self.memory)?;
                     Err(RuntimeError::PropertyNotFound(name_str))
                 }
             }
@@ -356,7 +351,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                                 Ok(value)
                             }
                         } else {
-                            let name_str = self.get_property_name_string(property_name);
+                            let name_str = property_name.to_key_string(self.memory)?;
                             Err(RuntimeError::PropertyNotFound(name_str))
                         }
                     } else {
@@ -383,7 +378,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                                 Ok(value)
                             }
                         } else {
-                            let name_str = self.get_property_name_string(property_name);
+                            let name_str = property_name.to_key_string(self.memory)?;
                             Err(RuntimeError::PropertyNotFound(name_str))
                         }
                     } else {
@@ -410,7 +405,7 @@ impl<'a, 'b> Runtime<'a, 'b> {
                             Ok(value)
                         }
                     } else {
-                        let name_str = self.get_property_name_string(property_name);
+                        let name_str = property_name.to_key_string(self.memory)?;
                         Err(RuntimeError::PropertyNotFound(name_str))
                     }
                 } else {

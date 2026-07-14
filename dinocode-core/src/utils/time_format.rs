@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_platform::time::{SystemTime, UNIX_EPOCH, Duration};
+use std::fmt::Write;
 
 pub struct DinoTime {
     pub year: i64,
@@ -60,12 +61,47 @@ impl DinoTime {
     }
 
     pub fn format(&self, pattern: &str) -> String {
-        pattern
-            .replace("%Y", &format!("{:04}", self.year))
-            .replace("%m", &format!("{:02}", self.month))
-            .replace("%d", &format!("{:02}", self.day))
-            .replace("%H", &format!("{:02}", self.hour))
-            .replace("%M", &format!("{:02}", self.minute))
-            .replace("%S", &format!("{:02}", self.second))
+        let mut result = String::with_capacity(pattern.len() * 2);
+        let mut chars = pattern.chars();
+        
+        while let Some(c) = chars.next() {
+            if c == '%' {
+                if let Some(next_c) = chars.next() {
+                    match next_c {
+                        'Y' => {
+                            let _ = write!(result, "{:04}", self.year);
+                        }
+                        'm' => {
+                            let _ = write!(result, "{:02}", self.month);
+                        }
+                        'd' => {
+                            let _ = write!(result, "{:02}", self.day);
+                        }
+                        'H' => {
+                            let _ = write!(result, "{:02}", self.hour);
+                        }
+                        'M' => {
+                            let _ = write!(result, "{:02}", self.minute);
+                        }
+                        'S' => {
+                            let _ = write!(result, "{:02}", self.second);
+                        }
+                        '%' => {
+                            result.push('%');
+                        }
+                        _ => {
+                            result.push(c);
+                            result.push(next_c);
+                        }
+                    }
+                } else {
+                    result.push(c);
+                }
+            } else {
+                result.push(c);
+            }
+        }
+        
+        result
     }
 }

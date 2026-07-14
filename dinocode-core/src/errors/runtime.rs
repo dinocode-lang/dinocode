@@ -81,6 +81,8 @@ pub enum RuntimeError {
     InternalError(&'static str),
     #[error("Unknown opcode: 0x{0:02X}")]
     UnknownOpCode(u8),
+    #[error("Invalid UTF-8 sequence")]
+    InvalidUTF8,
 }
 
 pub type Result<T> = std::result::Result<T, RuntimeError>;
@@ -286,6 +288,10 @@ impl RuntimeError {
                 DinoError::new(line, column)
                     .add_message("unknown opcode: 0x", FormatterColor::Default)
                     .add_message_owned(opcode_str, FormatterColor::WhiteBold)
+            }
+            RuntimeError::InvalidUTF8 => {
+                DinoError::new(line, column)
+                    .add_message("invalid UTF-8 sequence", FormatterColor::Default)
             }
         }
     }

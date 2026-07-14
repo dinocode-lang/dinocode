@@ -50,36 +50,36 @@ pub fn dinoclass(attr: TokenStream, item: TokenStream) -> TokenStream {
         
         impl #struct_name {
             pub fn create_class_prototype(
-                memory: &mut crate::memory::MemoryManager,
+                runtime: &mut crate::runtime::context::Runtime,
                 _args_start: usize,
                 _args_count: usize
             ) -> crate::errors::Result<crate::types::DinoRef> {
-                let handle = memory.alloc_object_capacity(8);
+                let handle = runtime.memory.alloc_object_capacity(8);
                 
                 paste::paste! {
                     if let Some(methods) = [<_DINOCLASS_METHODS_ #struct_name>].get() {
                         for &(method_name_raw, id, prop_flags) in methods {
-                            let key = memory.alloc_const_string(method_name_raw);
+                            let key = runtime.memory.alloc_const_string(method_name_raw);
                             let val = crate::types::DinoRef::native_fn(id);
-                            let _ = memory.set_object_property(handle, key, val, prop_flags);
+                            let _ = runtime.memory.set_object_property(handle, key, val, prop_flags);
                         }
                     }
                     if let Some(symbols) = [<_DINOCLASS_SYMBOLS_ #struct_name>].get() {
                         for &(sym_key, id, prop_flags) in symbols {
                             let val = crate::types::DinoRef::native_fn(id);
-                            let _ = memory.set_object_property(handle, sym_key, val, prop_flags);
+                            let _ = runtime.memory.set_object_property(handle, sym_key, val, prop_flags);
                         }
                     }
                     if let Some(keys) = [<_DINOCLASS_KEYS_ #struct_name>].get() {
                         for &(key_name_raw, setter) in keys {
-                            let key = memory.alloc_const_string(key_name_raw);
+                            let key = runtime.memory.alloc_const_string(key_name_raw);
                             setter(key);
                         }
                     }
                     if let Some(props) = [<_DINOCLASS_PROPS_ #struct_name>].get() {
                         for &(prop_name_raw, val, prop_flags) in props {
-                            let key = memory.alloc_const_string(prop_name_raw);
-                            let _ = memory.set_object_property(handle, key, val, prop_flags);
+                            let key = runtime.memory.alloc_const_string(prop_name_raw);
+                            let _ = runtime.memory.set_object_property(handle, key, val, prop_flags);
                         }
                     }
                 }

@@ -85,12 +85,12 @@ pub fn dinof(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 fn [<_dinof_init_ #fn_name>]() {
                     use crate::native::ToDinoRef;
                     
-                    let wrapper = move |memory: &mut crate::memory::MemoryManager,
+                    let wrapper = move |runtime: &mut crate::runtime::context::Runtime,
                                        _args_start: usize,
                                        _args_count: usize|
                           -> crate::errors::Result<crate::types::DinoRef> {
                         let result = #fn_name();
-                        ToDinoRef::to_dinoref(result, memory)
+                        ToDinoRef::to_dinoref(result, runtime.memory)
                     };
 
                     let mut fn_name_str = stringify!(#fn_name);
@@ -123,7 +123,7 @@ pub fn dinof(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 fn [<_dinof_init_ #fn_name>]() {
                     use crate::native::{FromDinoRef, ToDinoRef};
                     
-                    let wrapper = move |memory: &mut crate::memory::MemoryManager,
+                    let wrapper = move |runtime: &mut crate::runtime::context::Runtime,
                                        args_start: usize,
                                        args_count: usize|
                           -> crate::errors::Result<crate::types::DinoRef> {
@@ -137,17 +137,17 @@ pub fn dinof(_attr: TokenStream, item: TokenStream) -> TokenStream {
                         
                         #(
                             let #param_names = {
-                                let arg_val = memory.stack()[args_start + #indices];
+                                let arg_val = runtime.memory.stack()[args_start + #indices];
                                 <#param_types as FromDinoRef>::from_dinoref(
                                     arg_val,
-                                    memory
+                                    runtime.memory
                                 )?
                             };
                         )*
                         
                         let result = #fn_name(#(#param_names),*);
                         
-                        ToDinoRef::to_dinoref(result, memory)
+                        ToDinoRef::to_dinoref(result, runtime.memory)
                     };
                     
                     let mut fn_name_str = stringify!(#fn_name);

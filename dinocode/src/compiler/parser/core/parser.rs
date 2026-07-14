@@ -117,7 +117,10 @@ impl Parser {
 
                 TT::Identifier => {
                     if ctx.is_object_depth(depth) && counter.is_even() {
-                        let identifier = token.value.as_identifier().unwrap_or("".to_string());
+                        let identifier = token.value.as_identifier().ok_or_else(|| ParseError::from_token(
+                            ParseErrorType::MissingTokenValue,
+                            token
+                        ))?;
                         let const_idx = ctx.value_pool.get_or_create_string(&identifier, &mut ctx.memory_manager);
                         ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
                     } else {
@@ -325,7 +328,10 @@ impl Parser {
                 TT::For => {
                     let var_token = tokens.get(i + 1);
                     let var_name = match var_token {
-                        Some(t) if matches!(t.typ, TT::Identifier) => t.value.as_identifier().unwrap_or_default(),
+                        Some(t) if matches!(t.typ, TT::Identifier) => t.value.as_identifier().ok_or_else(|| ParseError::from_token(
+                            ParseErrorType::MissingTokenValue,
+                            t
+                        ))?,
                         _ => return Err(ParseError::new(
                             ParseErrorType::ExpectedIdentifier("identifier after 'for'"),
                             var_token.and_then(|t| t.line).unwrap_or(token.line.unwrap_or(1)),
@@ -454,7 +460,10 @@ impl Parser {
                         return Err(ParseError::from_token(ParseErrorType::ExpectedIdentifier("function name"), next_token));
                     }
 
-                    let func_name = next_token.value.as_identifier().unwrap_or_default();
+                    let func_name = next_token.value.as_identifier().ok_or_else(|| ParseError::from_token(
+                        ParseErrorType::MissingTokenValue,
+                        next_token
+                    ))?;
                     let is_main = func_name == "main";
                     let is_global = depth == 0;
                     
@@ -580,7 +589,10 @@ impl Parser {
                                 let exit_jump_idx = ctx.instructions.len();
                                 ctx.emit(Instruction::new_raw(opcode::JUMP_IF_NOT, 0).0, Some(&top));
                                 
-                                let var_name = top.value.as_str().unwrap_or("").to_string();
+                                let var_name = top.value.as_str().ok_or_else(|| ParseError::from_token(
+                                    ParseErrorType::MissingTokenValue,
+                                    &top
+                                ))?.to_string();
                                 ctx.value_pool.get_or_create_var_name(&var_name);
                                 
                                 if let Some((assign_opcode, var_idx)) = ctx.value_pool.get_var_assign_opcode(&var_name) {

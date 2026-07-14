@@ -10,10 +10,10 @@
 // ═══════════════════════════════════════════════════════════
 
 use dinocode_core::{
+    runtime::context::Runtime,
     types::DinoRef,
     errors::Result,
 };
-use crate::interpreter::core::Runtime;
 use std::cmp::Ordering;
 
 #[inline(always)]
