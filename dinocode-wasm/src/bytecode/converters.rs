@@ -125,13 +125,13 @@ impl InstructionInfo {
             GET_LOCAL | SET_LOCAL => {
                 s.push_str("local[");
                 s.push_str(&operand.to_string());
-                s.push("]");
+                s.push(']');
                 s
             }
             GET_GLOBAL | SET_GLOBAL => {
                 s.push_str("global[");
                 s.push_str(&operand.to_string());
-                s.push("]");
+                s.push(']');
                 s
             }
             JUMP | JUMP_IF | JUMP_IF_NOT => {

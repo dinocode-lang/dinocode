@@ -9,6 +9,7 @@
 //  License:    Apache License 2.0 (See 'LICENSE' file for full terms)
 // ═══════════════════════════════════════════════════════════
 
+use std::borrow::Cow;
 use crate::types::DinoRef;
 use super::error::{
     NumericParseError,
@@ -23,14 +24,38 @@ pub const fn is_valid_int(v: i64) -> bool {
     v >= DinoRef::INT_MIN && v <= DinoRef::INT_MAX
 }
 
+#[inline]
+fn is_whitespace(c: u8) -> bool {
+    matches!(c, b' ' | b'\t' | b'\n' | b'\r')
+}
+
+#[inline]
 pub fn trim_whitespace(bytes: &[u8]) -> &[u8] {
-    let start = bytes.iter().position(|&c| c != b' ' && c != b'\t').unwrap_or(bytes.len());
-    let end = bytes.iter().rposition(|&c| c != b' ' && c != b'\t').map_or(0, |p| p + 1);
-    if start >= end {
-        &[]
+    let start = match bytes.iter().position(|&c| !is_whitespace(c)) {
+        Some(pos) => pos,
+        None => return &[],
+    };
+    let end = bytes[start..].iter().rposition(|&c| !is_whitespace(c)).unwrap() + 1;
+
+    &bytes[start..start + end]
+}
+
+#[inline]
+pub fn filter(bytes: &[u8], ch: u8) -> Cow<'_, [u8]> {
+    if let Some(pos) = bytes.iter().position(|&c| c == ch) {
+        let mut filtered = Vec::with_capacity(bytes.len() - 1);
+        filtered.extend_from_slice(&bytes[..pos]);
+        filtered.extend(bytes[pos..].iter().filter(|&&c| c != ch));
+        Cow::Owned(filtered)
     } else {
-        &bytes[start..end]
+        Cow::Borrowed(bytes)
     }
+}
+
+#[inline]
+pub fn clean_number(bytes: &[u8]) -> Cow<'_, [u8]> {
+    let trimmed = trim_whitespace(bytes);
+    filter(trimmed, b'_')
 }
 
 #[inline(always)]
@@ -139,7 +164,11 @@ pub fn parse_bigint_digits_bytes(digits: &[u8], base: u32, is_negative: bool) ->
             8  => b >= b'0' && b <= b'7',
             10 => b.is_ascii_digit(),
             16 => b.is_ascii_hexdigit(),
-            _  => return Err(NumericParseError::new("unsupported base".to_string(), None, None)),
+            _  => return Err(NumericParseError::new(
+                format!("invalid base '{}'", base),
+                None,
+                Some("must be 2, 8, 10, or 16".to_string()),
+            )),
         };
         if !valid {
             return Err(NumericParseError::new("invalid integer format".to_string(), None, None));

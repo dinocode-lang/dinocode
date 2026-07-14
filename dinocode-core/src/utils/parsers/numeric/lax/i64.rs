@@ -19,7 +19,7 @@ use crate::utils::parsers::numeric::{
         error_octal,
     },
     utils::{
-        trim_whitespace,
+        clean_number,
         is_valid_int,
         parse_i64_hex,
         parse_i64_bin,
@@ -30,20 +30,20 @@ use crate::utils::parsers::numeric::{
 
 impl ParseNumericLax for i64 {
     fn parse_lax(input: impl AsRef<[u8]>, base: Option<u32>) -> Result<Self, NumericParseError> {
-        let bytes = input.as_ref();
-        let bytes = trim_whitespace(bytes);
+        let raw = input.as_ref();
+        let bytes = clean_number(raw);
         
         if bytes.is_empty() {
-            return Err(error_i64(bytes));
+            return Err(error_i64(bytes.as_ref()));
         }
 
         if let Some(explicit_base) = base {
-            return parse_i64_with_base(bytes, explicit_base);
+            return parse_i64_with_base(&bytes, explicit_base);
         }
 
         let (is_negative, content, is_hex, is_bin, is_oct) = {
             let is_neg = bytes[0] == b'-';
-            let cont = if is_neg || bytes[0] == b'+' { &bytes[1..] } else { bytes };
+            let cont = if is_neg || bytes[0] == b'+' { &bytes[1..] } else { bytes.as_ref() };
             
             let prefix_check = &cont[..cont.len().min(2)];
             let hex = prefix_check.len() == 2 && prefix_check[0] == b'0' && prefix_check[1] == b'x';
@@ -74,22 +74,18 @@ impl ParseNumericLax for i64 {
         if is_valid {
             Ok(val)
         } else if is_hex {
-            Err(error_hex(bytes))
+            Err(error_hex(bytes.as_ref()))
         } else if is_bin {
-            Err(error_bin(bytes))
+            Err(error_bin(bytes.as_ref()))
         } else if is_oct {
-            Err(error_octal(bytes))
+            Err(error_octal(bytes.as_ref()))
         } else {
-            Err(error_i64(bytes))
+            Err(error_i64(bytes.as_ref()))
         }
     }
 }
 
 fn parse_i64_with_base(bytes: &[u8], base: u32) -> Result<i64, NumericParseError> {
-    if bytes.is_empty() {
-        return Err(error_i64(bytes));
-    }
-
     let (is_negative, content) = {
         let is_neg = bytes[0] == b'-';
         let cont = if is_neg || bytes[0] == b'+' { &bytes[1..] } else { bytes };
@@ -102,9 +98,9 @@ fn parse_i64_with_base(bytes: &[u8], base: u32) -> Result<i64, NumericParseError
         10 => parse_i64_decimal(content)?,
         16 => parse_i64_hex(content)?,
         _ => return Err(NumericParseError::new(
-            format!("invalid base: {} (must be 2, 8, 10, or 16)", base),
+            format!("invalid base '{}'", base),
             None,
-            None,
+            Some("must be 2, 8, 10, or 16".to_string()),
         )),
     };
 
@@ -113,6 +109,6 @@ fn parse_i64_with_base(bytes: &[u8], base: u32) -> Result<i64, NumericParseError
     if is_valid_int(fv) {
         Ok(fv)
     } else {
-        Err(error_i64(bytes))
+        Err(error_i64(&bytes))
     }
 }
