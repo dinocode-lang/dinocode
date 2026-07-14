@@ -15,7 +15,7 @@ use crate::utils::{
         parse::ParseNumericLax,
         error::NumericParseError,
         utils::{
-            trim_whitespace,
+            clean_number,
             parse_bigint_digits_bytes,
         },
     },
@@ -24,7 +24,7 @@ use crate::utils::{
 impl ParseNumericLax for BigInt<'static> {
     fn parse_lax(input: impl AsRef<[u8]>, base: Option<u32>) -> Result<Self, NumericParseError> {
         let raw = input.as_ref();
-        let bytes = trim_whitespace(raw);
+        let bytes = clean_number(raw);
 
         if bytes.is_empty() {
             return Err(NumericParseError::new("cannot convert empty string to number".into(), None, None));
@@ -35,7 +35,7 @@ impl ParseNumericLax for BigInt<'static> {
         } else if bytes[0] == b'+' {
             (false, &bytes[1..])
         } else {
-            (false, bytes)
+            (false, bytes.as_ref())
         };
 
         if content.is_empty() {

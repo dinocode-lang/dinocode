@@ -19,19 +19,16 @@ use crate::utils::parsers::numeric::{
         error_i64
     },
     types::number::Number,
-    utils::{
-        trim_whitespace,
-        is_valid_int
-    },
+    utils::clean_number,
 };
 
 impl ParseNumericLax for Number {
     fn parse_lax(input: impl AsRef<[u8]>, base: Option<u32>) -> Result<Self, NumericParseError> {
-        let bytes = input.as_ref();
-        let bytes = trim_whitespace(bytes);
+        let raw = input.as_ref();
+        let bytes = clean_number(raw);
         
         if bytes.is_empty() {
-            return Err(error_i64(bytes));
+            return Err(error_i64(bytes.as_ref()));
         }
 
         let limit = bytes.len().min(40);
@@ -46,14 +43,9 @@ impl ParseNumericLax for Number {
         let is_float = digits_len > 14 || numeric.iter().any(|&b| b == b'.' || b == b'e' || b == b'E');
 
         if is_float {
-            parse_lax::<f64>(bytes, base).map(Number::Float)
+            parse_lax::<f64>(bytes.as_ref(), base).map(Number::Float)
         } else {
-            let val = parse_lax::<i64>(bytes, base)?;
-            if is_valid_int(val) {
-                Ok(Number::Int(val))
-            } else {
-                Err(error_i64(bytes))
-            }
+            parse_lax::<i64>(bytes.as_ref(), base).map(Number::Int)
         }
     }
 }

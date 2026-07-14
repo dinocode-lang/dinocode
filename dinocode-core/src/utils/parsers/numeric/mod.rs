@@ -22,6 +22,8 @@ pub use parse::{
 pub use utils::{
     is_valid_int,
     trim_whitespace,
+    filter,
+    clean_number,
     parse_i64_hex,
     parse_i64_bin,
     parse_i64_decimal,
