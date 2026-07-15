@@ -49,6 +49,12 @@ impl Symbol {
     #[symbol_id]
     pub const IN: DinoRef = ();
     
+    #[symbol_id]
+    pub const FN: DinoRef = ();
+    
+    #[symbol_id]
+    pub const ARGS: DinoRef = ();
+    
     pub fn from_name(name: &str) -> Option<DinoRef> {
         match name {
             "new" => Some(Self::NEW),
@@ -66,28 +72,32 @@ impl Symbol {
             ">" => Some(Self::GT),
             ">=" => Some(Self::GE),
             "in" => Some(Self::IN),
+            "fn" => Some(Self::FN),
+            "args" => Some(Self::ARGS),
             _ => None
         }
     }
 
     pub fn to_name(dinoref: DinoRef) -> String {
         match dinoref {
-            Self::NEW => "new".to_string(),
-            Self::CALL => "call".to_string(),
-            Self::ADD => "+".to_string(),
-            Self::SUB => "-".to_string(),
-            Self::MUL => "*".to_string(),
-            Self::DIV => "/".to_string(),
-            Self::MOD => "%".to_string(),
-            Self::POW => "**".to_string(),
-            Self::EQ => "==".to_string(),
-            Self::NE => "!=".to_string(),
-            Self::LT => "<".to_string(),
-            Self::LE => "<=".to_string(),
-            Self::GT => ">".to_string(),
-            Self::GE => ">=".to_string(),
-            Self::IN => "in".to_string(),
-            _ => format!("[Symbol:{}]", dinoref.as_symbol())
-        }
+            Self::NEW => "new",
+            Self::CALL => "call",
+            Self::ADD => "+",
+            Self::SUB => "-",
+            Self::MUL => "*",
+            Self::DIV => "/",
+            Self::MOD => "%",
+            Self::POW => "**",
+            Self::EQ => "==",
+            Self::NE => "!=",
+            Self::LT => "<",
+            Self::LE => "<=",
+            Self::GT => ">",
+            Self::GE => ">=",
+            Self::IN => "in",
+            Self::FN => "fn",
+            Self::ARGS => "args",
+            _ => "unknown"
+        }.to_string()
     }
 }

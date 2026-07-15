@@ -21,6 +21,7 @@ use crate::{
         string::String as StringProto,
         array::Array as ProtoArray,
         object::Object,
+        function::Function as FunctionProto,
     },
 };
 
@@ -120,9 +121,12 @@ impl<'a, 'b> Runtime<'a, 'b> {
                             }
                         } else if call_method.is_native_fn() {
                             let fid = call_method.get_function_id();
+                            let sp_before = self.memory.stack_depth();
                             let res = call_native_function(self, fid, call_args_start, call_argc)?;
-                            self.memory.move_sp(function_pos);
-                            self.memory.stack_push(res);
+                            if self.memory.stack_depth() == sp_before {
+                                self.memory.move_sp(function_pos);
+                                self.memory.stack_push(res);
+                            }
                             return Ok(());
                         }
                     } else {
@@ -225,6 +229,15 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     self.get_property_by_id(proto_id, property_name)
                 } else {
                     Err(RuntimeError::InternalError("String prototype bootstrap not available"))
+                }
+            }
+            value_type::FUNCTION => {
+                if let Some(stack_idx) = FunctionProto::get_bootstrap_index() {
+                    let proto_ref = unsafe { self.memory.get_global_variable_unchecked(stack_idx) };
+                    let proto_id = proto_ref.get_object_id();
+                    self.get_property_by_id(proto_id, property_name)
+                } else {
+                    Err(RuntimeError::InternalError("Function prototype bootstrap not available"))
                 }
             }
             _ => Err(RuntimeError::MemberAccessNotObject)
@@ -386,6 +399,33 @@ impl<'a, 'b> Runtime<'a, 'b> {
                     }
                 } else {
                     Err(RuntimeError::InternalError("Array prototype not initialized"))
+                }
+            },
+            value_type::FUNCTION => {
+                if let Some(stack_idx) = FunctionProto::get_bootstrap_index() {
+                    let proto = unsafe { self.memory.get_global_variable_unchecked(stack_idx) };
+                    
+                    if proto.is_object() {
+                        let proto_id = proto.get_object_id();
+                        
+                        if let Some((value, flags)) = self.memory.get_property_details(proto_id, property_name) {
+                            let flags = PropertyFlags::from(flags);
+                            
+                            if flags.is_getter() {
+                                let args_start = self.memory.stack_depth() - 2;
+                                self.call_function(value, args_start, 1)
+                            } else {
+                                Ok(value)
+                            }
+                        } else {
+                            let name_str = property_name.to_key_string(self.memory)?;
+                            Err(RuntimeError::PropertyNotFound(name_str))
+                        }
+                    } else {
+                        Err(RuntimeError::InternalError("Function prototype not found"))
+                    }
+                } else {
+                    Err(RuntimeError::InternalError("Function prototype not initialized"))
                 }
             },
             value_type::OBJECT => {

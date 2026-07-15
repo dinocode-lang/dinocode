@@ -5,6 +5,7 @@ pub mod range;
 pub mod string;
 pub mod r#type;
 pub mod math;
+pub mod function;
 
 crate::define_prototypes! {
     array => crate::prototypes::array::Array,
@@ -13,6 +14,7 @@ crate::define_prototypes! {
     range => crate::prototypes::range::Range,
     string => crate::prototypes::string::String,
     r#type => crate::prototypes::r#type::Type,
+    function => crate::prototypes::function::Function,
 }
 
 pub fn init_all() {
@@ -23,4 +25,5 @@ pub fn init_all() {
     string::init_string();
     r#type::init_type();
     math::init_math();
+    function::init_function();
 }

@@ -197,7 +197,7 @@ impl RuntimeError {
                 DinoError::new(line, column)
                     .add_message("'", FormatterColor::Default)
                     .add_message(func, FormatterColor::WhiteBold)
-                    .add_info("()' requires at least one argument", FormatterColor::Default)
+                    .add_message("' requires at least one argument", FormatterColor::Default)
             }
             RuntimeError::WrongArgType { func, expected } => {
                 DinoError::new(line, column)

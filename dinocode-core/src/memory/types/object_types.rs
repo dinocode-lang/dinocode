@@ -12,3 +12,4 @@
 pub const DEFAULT: u16 = 0;
 pub const RANGE: u16   = 1;
 pub const TIME: u16    = 2;
+pub const BOUND_FN: u16 = 3;
