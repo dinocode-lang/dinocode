@@ -409,13 +409,14 @@ impl ObjectView {
     pub fn call(&self, args_start: usize, args_count: usize, runtime: &mut Runtime) -> Result<DinoRef> {
         let args_start = args_start - 1;
         let args_count = args_count + 1;
-        let symbol = if self.is_class {
+        let (symbol, result) = if self.is_class {
             let raw_ref = self.as_class_ref();
             let instance = ObjectView::new_from_slice(raw_ref, &[], PROP_NORMAL, &mut runtime.memory)?;
-            unsafe { runtime.memory.stack.set_unchecked(args_start, instance.as_ref()); }
-            Symbol::NEW
+            let instance_ref = instance.as_ref();
+            unsafe { runtime.memory.stack.set_unchecked(args_start, instance_ref); }
+            (Symbol::NEW, instance_ref)
         } else {
-            Symbol::CALL
+            (Symbol::CALL, DinoRef::NONE)
         };
 
         if let Ok(method_ref) = self.get(symbol, &mut runtime.memory) {
@@ -423,7 +424,7 @@ impl ObjectView {
             method.virtual_call(args_start, args_count, runtime)
         } else {
             runtime.memory.stack.move_sp(args_start);
-            unsafe { runtime.memory.stack.push_unchecked(DinoRef::NONE); }
+            unsafe { runtime.memory.stack.push_unchecked(result); }
             Ok(DinoRef::NONE)
         }
     }
