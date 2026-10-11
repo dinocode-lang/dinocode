@@ -136,10 +136,6 @@ impl Parser {
                     Self::resolve_identifier(token, tokens, i, depth, main, &mut counter, &mut ctx)?;
                 }
 
-                TT::NativeAccess => {
-                    Self::resolve_identifier(token, tokens, i, depth, main, &mut counter, &mut ctx)?;
-                }
-
                 TT::Comma => {
                     Self::pop_to_any_delim(&mut ctx)?;
                     counter.add();

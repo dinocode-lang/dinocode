@@ -327,12 +327,7 @@ impl Parser {
                                 ctx.emit(Instruction::simple_raw(opcode::GET_MEMBER_PREP).0, Some(&prev));
                             }
                         }
-                    } else if matches!(prev.typ, TT::NativeAccess) {
-                        // Native properties are read-only
-                        return Err(ParseError::from_token(
-                            ParseErrorType::NativePropertyAssignment,
-                            &token
-                        ));
+
                     } else if matches!(prev.typ, TT::Identifier) {
                         // Assignment to variable
                         op_token.value = prev.value.clone();
@@ -398,13 +393,6 @@ impl Parser {
         if op == Operator::Or {
             Self::handle_or_operator(token, depth, ctx)?;
             return Ok(());
-        }
-
-        if op == Operator::Backdot {
-            return Err(ParseError::from_token(
-                ParseErrorType::UnsupportedBackdotOperator,
-                token
-            ));
         }
 
         Self::resolve_assign(op, token, tokens, *i, ctx, source)?;

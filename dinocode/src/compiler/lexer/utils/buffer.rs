@@ -293,13 +293,8 @@ pub fn push_ident(
         _ => {
             let was_leading = ctx.is_leading;
             let token = if info.has_dot_access() {
-                let is_native_access = info.is_native_access;
                 info.reset_dot_access();
-                if is_native_access {
-                    Token::native_access(ident, Some((info.from_line, info.from_column, ident.len())))
-                } else {
-                    Token::dot_access(ident, Some((info.from_line, info.from_column, ident.len())))
-                }
+                Token::dot_access(ident, Some((info.from_line, info.from_column, ident.len())))
             } else {
                 Token::identifier(ident, Some((info.from_line, info.from_column, ident.len())))
             };
@@ -412,8 +407,7 @@ pub fn process_op(
                     is_breaker = !ctx.is_unary;
                 }
 
-                Operator::Dot | Operator::Backdot => {
-                    info.is_native_access = op == Operator::Backdot;
+                Operator::Dot => {
 
                     if ctx.is_artificial_unary() {
                         /*

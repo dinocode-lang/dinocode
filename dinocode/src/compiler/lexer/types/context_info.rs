@@ -26,7 +26,6 @@ pub struct LexerContextInfo {
     pub expect_dollar_call: bool,
     pub expect_dot_access: bool,
     pub maybe_dot_access: bool,
-    pub is_native_access: bool,
 }
 
 impl LexerContextInfo {
@@ -45,7 +44,6 @@ impl LexerContextInfo {
             expect_dollar_call: false,
             expect_dot_access: false,
             maybe_dot_access: false,
-            is_native_access: false,
         }
     }
 
@@ -63,7 +61,6 @@ impl LexerContextInfo {
     pub fn reset_dot_access(&mut self) {
         self.expect_dot_access = false;
         self.maybe_dot_access = false;
-        self.is_native_access = false;
     }
 
     #[inline(always)]

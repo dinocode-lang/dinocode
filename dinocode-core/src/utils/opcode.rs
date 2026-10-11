@@ -81,8 +81,7 @@ pub fn opcode_name(op: u8) -> &'static str {
         STR_BUILD => "STR_BUILD",
         MAKE_CLASS => "MAKE_CLASS",
         MAKE_RANGE => "MAKE_RANGE",
-        GET_NATIVE_MEMBER => "GET_NATIVE_MEMBER",
-        GET_NATIVE_METHOD => "GET_NATIVE_METHOD",
+        GET_MEMBER_BOUND => "GET_MEMBER_BOUND",
         
         GET_INDEX => "GET_INDEX",
         GET_INDEX_PREP => "GET_INDEX_PREP",

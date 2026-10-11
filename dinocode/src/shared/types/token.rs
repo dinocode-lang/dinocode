@@ -90,14 +90,6 @@ impl Token {
         )
     }
 
-    pub fn native_access<T: Into<String>>(val: T, pos: Option<(u32, u32, usize)>) -> Self {
-        Self::new(
-            TokenType::NativeAccess,
-            TokenValue::String(val.into()),
-            pos,
-        )
-    }
-
     pub fn dollar_call<T: Into<String>>(val: T, pos: Option<(u32, u32, usize)>) -> Self {
         Self::new(
             TokenType::DollarCall,

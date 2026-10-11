@@ -35,7 +35,6 @@ pub enum TokenType {
 
     Redirect,
     DotAccess,
-    NativeAccess,
     DollarCall,
 
     Indent,

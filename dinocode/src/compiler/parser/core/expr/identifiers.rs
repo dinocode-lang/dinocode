@@ -117,8 +117,7 @@ impl Parser {
         
         let mut is_call = false;
         let is_dollar_start = matches!(token.typ, TokenType::DollarCall);
-        let is_object_access = matches!(token.typ, TT::DotAccess | TT::NativeAccess);
-
+        let is_object_access = matches!(token.typ, TT::DotAccess);
         let is_dollar = is_dollar_start
             || (!ctx.func_frames.is_empty()
                 && ctx.func_frames.last().unwrap().is_dollar
@@ -127,7 +126,7 @@ impl Parser {
         // Look at next token to determine context
         let next = tokens.get(i + 1);
         let next_is_assign = next.map_or(false, |t| Operators::is_assign_token(t.typ));
-
+        let is_last = !matches!(next.map(|t| t.typ).unwrap_or(TT::End), TT::LBracket | TT::DotAccess);
         if is_dollar_start {
             if next.map_or(false, |t| matches!(t.typ, TT::Op(_))) {
                 return Err(ParseError::from_token(ParseErrorType::UnexpectedToken("unexpected operator in dollar call"), token));
@@ -148,7 +147,7 @@ impl Parser {
             let is_implicit_call = !is_explicit_call 
                 && (main || is_dollar || (ctx.func_frames.is_empty() && ctx.op_stack.is_empty()))
                 && !next.map_or(false, |t| matches!(t.typ, TT::Op(_)))
-                && !matches!(next.map(|t| t.typ).unwrap_or(TT::End), TT::LBracket | TT::LBrace | TT::DotAccess | TT::NativeAccess);
+                && !matches!(next.map(|t| t.typ).unwrap_or(TT::End), TT::LBracket | TT::LBrace | TT::DotAccess);
             
             is_call = is_explicit_call || is_implicit_call;
             
@@ -169,20 +168,10 @@ impl Parser {
                 }
 
                 if is_object_access {
-                    if matches!(token.typ, TT::NativeAccess) {
-                        // Native access
-                        if is_call {
-                            ctx.emit(Instruction::simple_raw(opcode::GET_NATIVE_METHOD).0, Some(token));
-                        } else {
-                            ctx.emit(Instruction::simple_raw(opcode::GET_NATIVE_MEMBER).0, Some(token));
-                        }
+                    if is_call {
+                        ctx.emit(Instruction::simple_raw(opcode::GET_METHOD).0, Some(token));
                     } else {
-                        // Regular access
-                        if is_call {
-                            ctx.emit(Instruction::simple_raw(opcode::GET_METHOD).0, Some(token));
-                        } else {
-                            ctx.emit(Instruction::simple_raw(opcode::GET_MEMBER).0, Some(token));
-                        }
+                        ctx.emit(Instruction::simple_raw(if is_last { opcode::GET_MEMBER_BOUND } else { opcode::GET_MEMBER }).0, Some(token));
                     }
                 } else {
                     Self::load_function(ctx, &identifier, token)?;
@@ -193,13 +182,7 @@ impl Parser {
                 }
             } else {
                 if is_object_access {
-                    if matches!(token.typ, TT::NativeAccess) {
-                        // Native access
-                        ctx.emit(Instruction::simple_raw(opcode::GET_NATIVE_MEMBER).0, Some(token));
-                    } else {
-                        // Regular access
-                        ctx.emit(Instruction::simple_raw(opcode::GET_MEMBER).0, Some(token));
-                    }
+                    ctx.emit(Instruction::simple_raw(if is_last { opcode::GET_MEMBER_BOUND } else { opcode::GET_MEMBER }).0, Some(token));
                 } else {
                     Self::load_variable(ctx, &identifier, token)?;
                 }

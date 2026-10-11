@@ -81,9 +81,6 @@ impl From<ParseError> for DinoError<'static> {
             ParseErrorType::NativePropertyAssignment => {
                 dino = dino.add_message("cannot assign to a native property", FormatterColor::Default);
             }
-            ParseErrorType::UnsupportedBackdotOperator => {
-                dino = dino.add_message("unsupported backdot operator in this context", FormatterColor::Default);
-            }
             ParseErrorType::MultipleMainFunction => {
                 dino = dino.add_message("multiple 'main' functions defined", FormatterColor::Default)
                     .add_note("only one 'main' function is allowed per program", FormatterColor::Default);

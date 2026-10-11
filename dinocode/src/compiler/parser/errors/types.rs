@@ -27,7 +27,6 @@ pub enum ParseErrorType {
 
     MultipleReturnValues,
     NativePropertyAssignment,
-    UnsupportedBackdotOperator,
     MultipleMainFunction,
     PrefixIncrementDecrementNotSupported,
     EmptyMatchComparison,

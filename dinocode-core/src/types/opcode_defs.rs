@@ -78,8 +78,7 @@ pub mod opcode {
     pub const STR_BUILD: u8 = 0x77;
     pub const MAKE_CLASS: u8 = 0x78;
     pub const MAKE_RANGE: u8 = 0x79;
-    pub const GET_NATIVE_MEMBER: u8 = 0x7A;
-    pub const GET_NATIVE_METHOD: u8 = 0x7B;
+    pub const GET_MEMBER_BOUND: u8 = 0x7A;
     
     pub const GET_INDEX: u8 = 0x7C;
     pub const GET_INDEX_PREP: u8 = 0x7D;

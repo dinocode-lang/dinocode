@@ -58,7 +58,6 @@ impl Operators {
             "."   => Ok(Operator::Dot),
             ":"   => Ok(Operator::Colon),
             "?"   => Ok(Operator::Question),
-            ".\\"   => Ok(Operator::Backdot),
 
             "::" => Ok(Operator::BiColon),
 
