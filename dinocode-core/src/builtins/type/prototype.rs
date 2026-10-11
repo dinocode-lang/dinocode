@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════
 //  DinoCode – Language and Interpreter
 //  
-//  File:       src/prototypes/type.rs
-//  Desc:       Type prototype - type checking and comparison
+//  File:       src/builtins/type/prototype.rs
+//  Desc:       Type prototype
 //  
 //  Author:     Ismael Quiroz
 //  Copyright: (C) 2025-2026 Ismael Quiroz (@BlassGO)
@@ -37,17 +37,6 @@ pub struct Type;
 
 #[dinomethods]
 impl Type {
-    #[raw]
-    #[symbol(name="call")]
-    pub fn call(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count == 0 {
-            return Err(RuntimeError::MissingArgument("type"));
-        }
-        let arg = runtime.memory.stack().get(args_start + 1).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
-        
-        Ok(DinoRef::int(arg.decode_type() as i64))
-    }
 
     #[prop(key)]
     pub const INT: DinoRef = DinoRef::int(value_type::INT as i64);
@@ -81,11 +70,10 @@ impl Type {
 
     #[raw]
     pub fn name(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count == 0 {
-            return Err(RuntimeError::MissingArgument("name"));
+        if args_count < 2 {
+            return Err(RuntimeError::MissingArgument { func: "name", expected: 1, got: args_count - 1 });
         }
-        let arg = runtime.memory.stack().get(args_start + 1).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
+        let arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 1) };
         
         let vtype = arg.decode_type();
         let key_ref = match vtype {
@@ -109,11 +97,10 @@ impl Type {
 
     #[raw]
     pub fn is_primitive(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count == 0 {
-            return Err(RuntimeError::MissingArgument("is_primitive"));
+        if args_count < 2 {
+            return Err(RuntimeError::MissingArgument { func: "is_primitive", expected: 1, got: args_count - 1 });
         }
-        let arg = runtime.memory.stack().get(args_start + 1).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
+        let arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 1) };
         
         let vtype = arg.decode_type();
         let is_primitive = matches!(vtype, 
@@ -131,15 +118,16 @@ impl Type {
 
     #[raw]
     pub fn instance_of(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count < 2 {
-            return Err(RuntimeError::MissingArgument("instance_of"));
+        if args_count < 3 {
+            return Err(RuntimeError::MissingArgument { func: "instance_of", expected: 2, got: args_count - 1 });
         }
         
-        let stack = runtime.memory.stack();
-        let instance = stack.get(args_start + 1).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
-        let class_ref = stack.get(args_start + 2).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
+        let (instance, class_ref) = unsafe {
+            (
+                runtime.memory.stack.get_unchecked(args_start + 1),
+                runtime.memory.stack.get_unchecked(args_start + 2)
+            )
+        };
         
         if !class_ref.is_class() {
             return Ok(DinoRef::FALSE);
@@ -177,11 +165,21 @@ impl Type {
 
     #[raw]
     pub fn id(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
-        if args_count == 0 {
-            return Err(RuntimeError::MissingArgument("id"));
+        if args_count < 2 {
+            return Err(RuntimeError::MissingArgument { func: "id", expected: 1, got: args_count - 1 });
         }
-        let arg = runtime.memory.stack().get(args_start + 1).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
+        let arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 1) };
         Ok(DinoRef::int(arg.payload() as i64))
+    }
+
+    #[raw]
+    #[symbol(name="call")]
+    pub fn call(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
+        if args_count < 2 {
+            return Err(RuntimeError::MissingArgument { func: "type", expected: 1, got: args_count - 1 });
+        }
+        let arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 1) };
+        
+        Ok(DinoRef::int(arg.decode_type() as i64))
     }
 }

@@ -10,40 +10,6 @@
 // ═══════════════════════════════════════════════════════════
 
 use crate::types::DinoRef;
-use std::sync::atomic::{AtomicU64, Ordering};
-use dinocode_platform::time::{SystemTime, UNIX_EPOCH};
-use dinocode_platform::process;
-
-static HASH_SEED: AtomicU64 = AtomicU64::new(0);
-
-#[inline(always)]
-pub fn get_hash_seed() -> u64 {
-    let seed = HASH_SEED.load(Ordering::Relaxed);
-    if seed == 0 {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos() as u64;
-        let pid = process::id() as u64;
-
-        let stack_ptr = &seed as *const _ as u64;
-
-        let mut final_seed = (now ^ (pid << 32))
-            .wrapping_add(stack_ptr)
-            .wrapping_add(0x9e3779b97f4a7c15);
-
-        final_seed ^= final_seed >> 33;
-        final_seed = final_seed.wrapping_mul(0xff51afd7ed558ccd);
-        final_seed ^= final_seed >> 33;
-
-        match HASH_SEED.compare_exchange(0, final_seed, Ordering::SeqCst, Ordering::Relaxed) {
-            Ok(_) => final_seed,
-            Err(val) => val,
-        }
-    } else {
-        seed
-    }
-}
 
 #[derive(Debug)]
 pub struct StringInterner {
@@ -91,32 +57,6 @@ impl StringInterner {
         }
     }
 
-    #[inline(always)]
-    pub fn compute_hash(bytes: &[u8]) -> u64 {
-        let mut hash = get_hash_seed();
-        let mut i = 0;
-        
-        while i + 8 <= bytes.len() {
-            let chunk = u64::from_le_bytes([
-                bytes[i], bytes[i+1], bytes[i+2], bytes[i+3],
-                bytes[i+4], bytes[i+5], bytes[i+6], bytes[i+7]
-            ]);
-            hash = hash.wrapping_mul(33).wrapping_add(chunk);
-            i += 8;
-        }
-        
-        while i < bytes.len() {
-            hash = hash.wrapping_mul(33).wrapping_add(bytes[i] as u64);
-            i += 1;
-        }
-        
-        hash ^= hash >> 33;
-        hash = hash.wrapping_mul(0xff51afd7ed558ccd);
-        hash ^= hash >> 33;
-        hash = hash.wrapping_mul(0xc4ceb9fe1a85ec53);
-        hash ^ (hash >> 33)
-    }
-
     pub fn insert(&mut self, hash: u64, dinoref: DinoRef, string_len: usize, arena: &[u8]) -> bool {
         if self.count * 8 >= self.slots.len() * 7 {
             self.resize();
@@ -141,8 +81,8 @@ impl StringInterner {
 
             let entry = &self.entries[index as usize];
             if entry.string_hash == hash && entry.string_len == string_len {
-                let new_offset = dinoref.decode_index() as usize;
-                let ex_offset = entry.dinoref.decode_index() as usize;
+                let new_offset = dinoref.as_index();
+                let ex_offset = entry.dinoref.as_index();
                 let new_bytes = &arena[new_offset + 24..new_offset + 24 + string_len.min(arena.len().saturating_sub(new_offset + 24))];
                 let ex_bytes  = &arena[ex_offset  + 24..ex_offset  + 24 + string_len.min(arena.len().saturating_sub(ex_offset  + 24))];
                 

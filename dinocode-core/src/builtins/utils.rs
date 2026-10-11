@@ -35,28 +35,21 @@ pub fn panic(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Res
     }
 
     let (message, help, info) = {
-        let msg_arg = runtime.memory.stack().get(args_start).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
+        let msg_arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
         let msg = msg_arg.try_as_string(&mut runtime.memory)?;
-
         let help = if args_count >= 2 {
-            let help_arg = runtime.memory.stack().get(args_start + 1).copied()
-                .ok_or(RuntimeError::StackUnderflow)?;
+            let help_arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 1) };
             Some(help_arg.try_as_string(&mut runtime.memory)?)
         } else {
             None
         };
-
         let info = if args_count >= 3 {
-            let info_arg = runtime.memory.stack().get(args_start + 2).copied()
-                .ok_or(RuntimeError::StackUnderflow)?;
+            let info_arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 2) };
             Some(info_arg.try_as_string(&mut runtime.memory)?)
         } else {
             None
         };
-
         (msg, help, info)
     };
-
     Err(RuntimeError::Panic { message, help, info })
 }

@@ -13,9 +13,10 @@ use crate::{
     memory::{
         types::CallFrame,
         heap::pool::allocator::ObjectPool,
+        stack::Stack,
+        heap::arena::Arena,
     },
-    types::{DinoRef, UserFunction},
-    utils::StringInterner,
+    types::UserFunction,
     native::{
         get_native_registry,
         call_native_function,
@@ -25,18 +26,11 @@ use crate::{
 
 #[derive(Debug)]
 pub struct MemoryManager {
-    pub(crate) arena: Vec<u8>,
+    pub arena: Arena,
     pub(crate) object_pool: ObjectPool,
-    pub(crate) string_interner: StringInterner,
-    pub(crate) globals_start: usize,
-    
-    pub(crate) stack_ptr: *mut DinoRef,
-    pub(crate) stack_sp: *mut DinoRef,
-    pub(crate) stack_capacity: usize,
-    pub(crate) stack_start_ptr: *mut DinoRef,
+    pub stack: Stack,
     
     pub(crate) call_stack: Vec<CallFrame>,
-    pub(crate) bp: usize,
     pub(crate) recursion_depth: usize,
     pub(crate) max_recursion_depth: usize,
         
@@ -48,24 +42,12 @@ pub struct MemoryManager {
 
 impl MemoryManager {
     pub fn new() -> Self {
-        let stack_size = 8192;
-        let layout = std::alloc::Layout::array::<DinoRef>(stack_size)
-            .expect("Stack capacity overflow");
-        let stack_ptr = unsafe { std::alloc::alloc(layout) } as *mut DinoRef;
-        
         let mut manager = Self {
-            arena: Vec::with_capacity(1024 * 1024),
+            arena: Arena::new(),
             object_pool: ObjectPool::new(8192),
-            string_interner: StringInterner::new(),
-            globals_start: 0,
-            
-            stack_ptr,
-            stack_sp: stack_ptr,
-            stack_capacity: stack_size,
-            stack_start_ptr: stack_ptr,
+            stack: Stack::new(8192),
             
             call_stack: Vec::with_capacity(1024),
-            bp: 0,
             recursion_depth: 0,
             max_recursion_depth: 1000,
                         
@@ -95,7 +77,7 @@ impl MemoryManager {
                     #[cfg(feature = "logging")]
                     {
                         let name = registry.get_name_by_id(function_id).unwrap_or("<unknown>");
-                        log::debug!("      Loaded class: {} (ID: {}) -> stack[{}]", name, function_id, runtime.memory.stack_depth());
+                        log::debug!("      Loaded class: {} (ID: {}) -> stack[{}]", name, function_id, runtime.memory.stack.depth());
                     }
                     class_ref
                 }
@@ -109,10 +91,10 @@ impl MemoryManager {
                 }
             };
             
-            runtime.memory.stack_push(result);
+            runtime.memory.stack.push(result);
         }
         
-        self.set_globals();
+        self.arena.set_globals();
         
         #[cfg(feature = "logging")]
         log::info!("Bootstrap complete. {} items loaded into global stack.", bootstrap_list.len());
@@ -121,10 +103,5 @@ impl MemoryManager {
 
 impl Drop for MemoryManager {
     fn drop(&mut self) {
-        if self.stack_capacity > 0 {
-            let layout = std::alloc::Layout::array::<DinoRef>(self.stack_capacity)
-                .expect("Stack capacity overflow");
-            unsafe { std::alloc::dealloc(self.stack_ptr as *mut u8, layout); }
-        }
     }
 }

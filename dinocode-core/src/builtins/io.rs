@@ -17,6 +17,7 @@ use crate::{
         Result,
         RuntimeError,
     },
+    builtins::string::view::StringView
 };
 use dinocode_platform::io;
 
@@ -27,13 +28,12 @@ crate::register_module! {
 
 #[dinof(raw)]
 pub fn print(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
-    let stack_slice = &runtime.memory.stack()[args_start..args_start + args_count];
-    
     if args_count == 1 {
-        let arg = stack_slice[0];
+        let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
         let string_value = arg.to_display_string(&runtime.memory)?;
         io::println(&string_value);
     } else {
+        let stack_slice = unsafe { runtime.memory.stack.get_slice_unchecked(args_start, args_count) };
         for &arg in stack_slice {
             let string_value = arg.to_display_string(&runtime.memory)?;
             io::print(&string_value);
@@ -47,16 +47,14 @@ pub fn print(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Res
 #[dinof(raw)]
 pub fn input(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     let prompt = if args_count > 0 {
-        let arg = runtime.memory.stack()[args_start];
+        let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
         arg.to_display_string(&runtime.memory)?
     } else {
         String::new()
     };
-
     let input = io::input(&prompt)
         .map_err(|e| RuntimeError::ReadInputFailed(e))?;
-
     let trimmed_input = input.trim_end_matches(['\r', '\n']);
-
-    Ok(runtime.memory.alloc_string(trimmed_input))
+    let string = StringView::new(trimmed_input, &mut runtime.memory);
+    Ok(string.as_ref())
 }

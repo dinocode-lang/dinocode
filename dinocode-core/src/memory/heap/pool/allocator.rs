@@ -12,10 +12,7 @@
 use std::alloc::{alloc, dealloc, Layout};
 use super::bitmap::Bitmap;
 use crate::{
-    memory::types::{
-        pool_types::{NativeArray, NativeObject, ObjectEntry, PoolSlot},
-        object_types,
-    },
+    memory::types::pool_types::{ObjectEntry, PoolSlot},
     types::{
         DinoRef,
         dinoref::value_type,
@@ -91,18 +88,6 @@ impl ObjectPool {
     #[inline(always)]
     pub fn get_slot_mut(&mut self, index: u32) -> &mut PoolSlot {
         unsafe { &mut *self.slots.add(index as usize) }
-    }
-    
-    pub fn set_array(&mut self, index: u32, array: NativeArray) {
-        let slot = self.get_slot_mut(index);
-        slot.subkind = object_types::DEFAULT;
-        slot.data.array = array;
-    }
-    
-    pub fn set_object(&mut self, index: u32, object: NativeObject) {
-        let slot = self.get_slot_mut(index);
-        slot.subkind = object_types::DEFAULT;
-        slot.data.object = object;
     }
     
     pub fn free_slot(&mut self, index: u32) {

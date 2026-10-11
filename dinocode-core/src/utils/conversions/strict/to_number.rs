@@ -14,7 +14,6 @@ use crate::{
     errors::RuntimeError,
     types::{DinoRef, value_type},
     utils::{
-        bigint::BigInt,
         parsers::numeric::{
             parse,
             Number,
@@ -33,19 +32,17 @@ impl TypeConverter {
                 Ok(value.as_finite_float()? as i64)
             }
             value_type::BIGINT => {
-                let offset = value.decode_index();
-                let bytes = memory.get_const_bytes(offset);
-                let bigint = BigInt::from_slice(bytes);
+                let bigint = value.as_bigint_unchecked().get(memory);
                 bigint.to_i64()
                     .map_err(|e| RuntimeError::NumericParse(e))
                     .and_then(|i| {
                         if is_valid_int(i) { Ok(i) }
-                        else { Err(RuntimeError::NumericParse(error_i64(&bytes))) }
+                        else { Err(RuntimeError::NumericParse(error_i64(bigint.as_bytes()))) }
                     })
             }
             value_type::STRING => {
-                let offset = value.decode_index();
-                let bytes = memory.get_const_bytes(offset);
+                let offset = value.as_index();
+                let bytes = memory.arena.get_bytes(offset);
                 parse::<i64>(bytes).map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::BOOL => Ok(
@@ -72,15 +69,13 @@ impl TypeConverter {
             value_type::INT => Ok(value.as_int() as f64),
             value_type::FLOAT => value.as_finite_float(),
             value_type::BIGINT => {
-                let offset = value.decode_index();
-                let bytes = memory.get_const_bytes(offset);
-                let bigint = BigInt::from_slice(bytes);
+                let bigint = value.as_bigint_unchecked().get(memory);
                 bigint.to_f64()
                     .map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::STRING => {
-                let offset = value.decode_index();
-                let bytes = memory.get_const_bytes(offset);
+                let offset = value.as_index();
+                let bytes = memory.arena.get_bytes(offset);
                 parse::<f64>(bytes).map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::BOOL => Ok(
@@ -110,16 +105,14 @@ impl TypeConverter {
             value_type::INT => Ok(value),
             value_type::FLOAT => Ok(value),
             value_type::BIGINT => {
-                let offset = value.decode_index();
-                let bytes = memory.get_const_bytes(offset);
-                let bigint = BigInt::from_slice(bytes);
+                let bigint = value.as_bigint_unchecked().get(memory);
                 bigint.to_f64()
                     .map(|f| DinoRef::float(f))
                     .map_err(|e| RuntimeError::NumericParse(e))
             }
             value_type::STRING => {
-                let offset = value.decode_index();
-                let bytes = memory.get_const_bytes(offset);
+                let offset = value.as_index();
+                let bytes = memory.arena.get_bytes(offset);
 
                 match parse::<Number>(bytes) {
                     Ok(Number::Int(i)) => Ok(DinoRef::int(i)),

@@ -17,4 +17,5 @@ pub struct CallFrame {
     pub args_start: usize,
     pub args_count: usize,
     pub return_count: u32,
+    pub fn_slot: u8,
 }

@@ -131,6 +131,7 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
             if is_setter { flags |= 0x08; }
 
             let prop_flags: u8 = if is_getter { 0x01 } else { 0 } | if is_setter { 0x02 } else { 0 };
+            let prop_flags = prop_flags | 0x04; // PROP_PROTOTYPE
             
             let mut push_logic = quote! {};
             if is_symbol {
@@ -213,7 +214,7 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                             
                             arg_processing.push(quote! {
                                 let mut self_arg = {
-                                    let arg_val = runtime.memory.stack()[args_start + #idx];
+                                    let arg_val = unsafe { runtime.memory.stack.get_unchecked(args_start + #idx) };
                                     <#self_ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                                 };
                             });
@@ -227,7 +228,7 @@ pub fn dinomethods(_attr: TokenStream, item: TokenStream) -> TokenStream {
                                 
                                 arg_processing.push(quote! {
                                     let #name = {
-                                        let arg_val = runtime.memory.stack()[args_start + #idx];
+                                        let arg_val = unsafe { runtime.memory.stack.get_unchecked(args_start + #idx) };
                                         <#ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                                     };
                                 });
@@ -405,7 +406,7 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                         
                         arg_processing.push(quote! {
                             let mut self_arg = {
-                                let arg_val = runtime.memory.stack()[args_start + #idx];
+                                let arg_val = unsafe { runtime.memory.stack.get_unchecked(args_start + #idx) };
                                 <#self_ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                             };
                         });
@@ -419,7 +420,7 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                             
                             arg_processing.push(quote! {
                                 let #name = {
-                                    let arg_val = runtime.memory.stack()[args_start + #idx];
+                                    let arg_val = unsafe { runtime.memory.stack.get_unchecked(args_start + #idx) };
                                     <#ty as crate::native::FromDinoRef>::from_dinoref(arg_val, runtime.memory)?
                                 };
                             });
@@ -441,11 +442,11 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
             if is_symbol {
                 push_logic.extend(quote! {
                     let sym_val = crate::types::Symbol::from_name(#sym_name_str).unwrap_or_else(|| panic!("Invalid symbol name: {}", #sym_name_str));
-                    _symbols.push((sym_val, _id, 0u8));
+                    _symbols.push((sym_val, _id, 0x04)); // PROP_PROTOTYPE
                 });
             } else {
                 push_logic.extend(quote! {
-                    _methods.push((#method_key, _id, 0u8));
+                    _methods.push((#method_key, _id, 0x04)); // PROP_PROTOTYPE
                 });
             }
 
@@ -459,7 +460,7 @@ pub fn dinomethod(_attr: TokenStream, item: TokenStream) -> TokenStream {
                             wrapper_alias,
                             1
                         );
-                        _methods.push((#method_key_alias, _id, 0u8));
+                        _methods.push((#method_key_alias, _id, 0x04)); // PROP_PROTOTYPE
                     }
                 });
             }

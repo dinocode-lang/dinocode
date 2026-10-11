@@ -12,7 +12,7 @@
 use crate::memory::MemoryManager;
 impl MemoryManager {
     #[inline(always)]
-    pub(crate) fn record_arena_alloc(&mut self, bytes: usize) -> bool {
+    pub fn record_arena_alloc(&mut self, bytes: usize) -> bool {
         self.arena_bytes_since_gc += bytes;
         
         if self.should_trigger_gc() {
@@ -24,7 +24,7 @@ impl MemoryManager {
     }
     
     #[inline(always)]
-    pub(crate) fn record_pool_alloc(&mut self) -> bool {
+    pub fn record_pool_alloc(&mut self) -> bool {
         self.pool_allocs_since_gc += 1;
         
         if self.should_trigger_gc() {

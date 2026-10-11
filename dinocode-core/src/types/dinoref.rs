@@ -14,6 +14,13 @@ use crate::{
     utils::TypeConverter,
     errors::RuntimeError,
     types::Symbol,
+    builtins::{
+        string::view::StringView,
+        array::view::ArrayView,
+        object::view::ObjectView,
+        function::view::FunctionView,
+        bigint::view::BigIntView,
+    },
 };
 
 #[repr(transparent)]
@@ -83,11 +90,11 @@ impl DinoRef {
         }
     }
     #[inline(always)] pub const fn int(value: i64) -> Self { Self(INT_BASE_RANGE | (value as u64 & PAYLOAD_48_MASK)) }
-    #[inline(always)] pub const fn bigint(offset: u32) -> Self { Self(TAG_BIGINT | (offset as u64)) }
+    #[inline(always)] pub const fn bigint(offset: usize) -> Self { Self(TAG_BIGINT | (offset as u64)) }
     #[inline(always)] pub const fn bool(value: bool) -> Self { Self(TAG_BOOL | if value { 1 } else { 0 }) }
     #[inline(always)] pub const fn none() -> Self { Self(TAG_NONE) }
     #[inline(always)] pub const fn symbol(id: u32) -> Self { Self(TAG_SYMBOL | (id as u64)) }
-    #[inline(always)] pub const fn string(offset: u32) -> Self { Self(TAG_STRING | (offset as u64)) }
+    #[inline(always)] pub const fn string(offset: usize) -> Self { Self(TAG_STRING | (offset as u64)) }
     #[inline(always)] pub const fn array(offset: u32) -> Self { Self(TAG_ARRAY | (offset as u64)) }
     #[inline(always)] pub const fn object(offset: u32) -> Self { Self(TAG_OBJECT | ((offset as u64) << 1)) }
     #[inline(always)] pub const fn class(offset: u32) -> Self { Self(TAG_OBJECT | ((offset as u64) << 1) | OBJECT_CLASS_FLAG) }
@@ -117,9 +124,18 @@ impl DinoRef {
     // Convert
     #[inline(always)] pub fn as_float(self) -> f64 { f64::from_bits(self.0) }
     #[inline(always)] pub fn as_int(self) -> i64 {((self.0 << 16) as i64) >> 16}
-    #[inline(always)] pub fn as_bigint(self) -> u32 { (self.0 & PAYLOAD_32_MASK) as u32 }
     #[inline(always)] pub fn as_bool(self) -> bool { (self.0 & 1) != 0 }
-    #[inline(always)] pub fn as_symbol(self) -> u32 { (self.0 & PAYLOAD_32_MASK) as u32 }
+    #[inline(always)] pub fn as_bigint(self) -> Result<BigIntView, RuntimeError> { BigIntView::from_ref(self) }
+    #[inline(always)] pub fn as_bigint_unchecked(self) -> BigIntView { BigIntView::from_ref_unchecked(self) }
+    #[inline(always)] pub fn as_string(self) -> Result<StringView, RuntimeError> { StringView::from_ref(self) }
+    #[inline(always)] pub fn as_string_unchecked(self) -> StringView { StringView::from_ref_unchecked(self) }
+    #[inline(always)] pub fn as_array(self) -> Result<ArrayView, RuntimeError> { ArrayView::from_ref(self) }
+    #[inline(always)] pub fn as_array_unchecked(self) -> ArrayView { ArrayView::from_ref_unchecked(self) }
+    #[inline(always)] pub fn as_object(self) -> Result<ObjectView, RuntimeError> { ObjectView::from_ref(self) }
+    #[inline(always)] pub fn as_object_unchecked(self) -> ObjectView { ObjectView::from_ref_unchecked(self) }
+    #[inline(always)] pub fn as_function(self) -> Result<FunctionView, RuntimeError> { FunctionView::from_ref(self) }
+    #[inline(always)] pub fn as_function_unchecked(self) -> FunctionView { FunctionView::from_ref_unchecked(self) }
+    #[inline(always)] pub fn as_index(self) -> usize { (self.0 & PAYLOAD_32_MASK) as usize }
 
     #[inline(always)]
     pub fn as_finite_float(self) -> Result<f64, RuntimeError> {
@@ -153,7 +169,9 @@ impl DinoRef {
     #[inline(always)]
     pub fn try_as_string(self, memory: &mut MemoryManager) -> Result<String, RuntimeError> {
         let vtype = self.decode_type();
-        if vtype == value_type::STRING { return Ok(memory.get_string(self.decode_index()).to_string()); }
+        if vtype == value_type::STRING { 
+            return Ok(self.as_string_unchecked().get(memory).to_string()); 
+        }
         TypeConverter::to_primitive_string(self, vtype, memory)
     }
 

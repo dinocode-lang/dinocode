@@ -22,23 +22,20 @@ impl TypeConverter {
             value_type::INT => Ok(value.as_int() != 0),
             value_type::FLOAT => Ok(value.as_non_nan_float()? != 0.0),
             value_type::BIGINT => {
-                let bigint = memory.get_bigint(value.as_bigint());
+                let bigint = value.as_bigint_unchecked().get(memory);
                 Ok(!bigint.is_zero())
             }
             value_type::STRING => {
-                let offset = value.decode_index();
-                Ok(memory.get_const_len(offset) > 0)
+                Ok(value.as_string_unchecked().len(memory) > 0)
             }
             value_type::BOOL => Ok(value.as_bool()),
             value_type::NONE => Ok(false),
             value_type::SYMBOL => Ok(true),
             value_type::ARRAY => {
-                let id = value.decode_index();
-                Ok(memory.get_array_len(id) > 0)
+                Ok(value.as_array_unchecked().len(memory) > 0)
             }
             value_type::OBJECT => {
-                let id = value.get_object_id();
-                Ok(memory.get_object_len(id) > 0)
+                Ok(value.as_object_unchecked().len(memory) > 0)
             }
             _ => Err(RuntimeError::CannotConvert {
                 from: value.type_name(),

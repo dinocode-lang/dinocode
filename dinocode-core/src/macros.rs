@@ -29,23 +29,3 @@ macro_rules! register_module {
         }
     }
 }
-
-#[macro_export]
-macro_rules! define_prototypes {
-    ($($name:ident => $class_path:path),* $(,)?) => {
-        paste::paste! {
-            $(
-                pub fn [<get_ $name _prototype_id>]() -> Option<u32> {
-                    $class_path::get_bootstrap_index()
-                }
-
-                pub fn [<set_ $name _prototype>](runtime: &mut crate::runtime::context::Runtime, handle: u32) {
-                    if let Some(proto_id) = [<get_ $name _prototype_id>]() {
-                        let proto_ref = crate::types::DinoRef::class(proto_id);
-                        runtime.memory.set_proto(handle, proto_ref);
-                    }
-                }
-            )*
-        }
-    };
-}

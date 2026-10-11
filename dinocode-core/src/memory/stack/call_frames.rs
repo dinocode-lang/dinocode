@@ -34,6 +34,7 @@ impl MemoryManager {
         function: &UserFunction,
         args_start: usize,
         argc: usize,
+        fn_slot: u8,
     ) -> Result<()> {
         if self.recursion_depth >= self.max_recursion_depth {
             return Err(RuntimeError::RecursionLimitExceeded);
@@ -43,31 +44,40 @@ impl MemoryManager {
 
         let frame = CallFrame {
             return_address,
-            old_bp: self.bp,
+            old_bp: self.stack.bp,
             function_id,
             args_start,
             args_count: actual_args,
             return_count: function.return_count,
+            fn_slot,
         };
 
         self.call_stack.push(frame);
         self.recursion_depth += 1;
         
-        self.bp = args_start;
+        self.stack.bp = args_start;
         
-        let new_sp = self.bp + actual_args + function.local_count as usize;
-        if new_sp > self.stack_capacity {
-            self.stack_grow(new_sp.next_power_of_two());
+        let new_sp = self.stack.bp + actual_args + function.local_count as usize;
+        if new_sp > self.stack.capacity {
+            self.stack.grow(new_sp.next_power_of_two());
         }
         
-        let current_depth = self.stack_depth();
-        for i in (self.bp + actual_args)..new_sp {
-            if i >= current_depth {
-                unsafe { std::ptr::write(self.stack_ptr.add(i), DinoRef::NONE); }
+        let current_depth = self.stack.depth();
+        let locals_start = self.stack.bp + actual_args;
+        
+        if new_sp > current_depth {
+            let write_start = current_depth.max(locals_start);
+            let count = new_sp - write_start;
+            
+            unsafe {
+                let ptr = self.stack.ptr.add(write_start);
+                for i in 0..count {
+                    std::ptr::write(ptr.add(i), DinoRef::NONE);
+                }
             }
         }
         
-        unsafe { self.stack_sp = self.stack_ptr.add(new_sp); }
+        unsafe { self.stack.sp = self.stack.ptr.add(new_sp); }
 
         Ok(())
     }
@@ -79,10 +89,10 @@ impl MemoryManager {
                 self.recursion_depth -= 1;
             }
             
-            self.bp = frame.old_bp;
-            unsafe { self.stack_sp = self.stack_ptr.add(frame.args_start - 1); }
+            self.stack.bp = frame.old_bp;
+            unsafe { self.stack.sp = self.stack.ptr.add(frame.args_start - frame.fn_slot as usize); }
 
-            self.stack_push(DinoRef::NONE);
+            self.stack.push(DinoRef::NONE);
         
             Some(frame.return_address)
         } else {
@@ -97,13 +107,13 @@ impl MemoryManager {
                 self.recursion_depth -= 1;
             }
             
-            let return_value = self.stack_pop().unwrap_or(DinoRef::NONE);
+            let return_value = self.stack.pop().unwrap_or(DinoRef::NONE);
 
-            self.bp = frame.old_bp;
+            self.stack.bp = frame.old_bp;
             
-            unsafe { self.stack_sp = self.stack_ptr.add(frame.args_start - 1); }
+            unsafe { self.stack.sp = self.stack.ptr.add(frame.args_start - frame.fn_slot as usize); }
             
-            self.stack_push(return_value);
+            self.stack.push(return_value);
             
             Some(frame.return_address)
         } else {
@@ -118,13 +128,13 @@ impl MemoryManager {
                 self.recursion_depth -= 1;
             }
             
-            let self_value = unsafe { self.get_local_variable_unchecked(0) };
+            let self_value = unsafe { self.stack.get_local_unchecked(0) };
 
-            self.bp = frame.old_bp;
+            self.stack.bp = frame.old_bp;
             
-            unsafe { self.stack_sp = self.stack_ptr.add(frame.args_start - 1); }
+            unsafe { self.stack.sp = self.stack.ptr.add(frame.args_start - frame.fn_slot as usize); }
             
-            self.stack_push(self_value);
+            self.stack.push(self_value);
             
             Some(frame.return_address)
         } else {

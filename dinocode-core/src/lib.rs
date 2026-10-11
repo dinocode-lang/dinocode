@@ -2,7 +2,7 @@ pub mod memory;
 pub mod runtime;
 pub mod types;
 pub mod native;
-pub mod prototypes;
+
 pub mod errors;
 pub mod utils;
 pub mod builtins;
@@ -27,5 +27,4 @@ pub fn init() {
     }
 
     crate::builtins::init_all();
-    crate::prototypes::init_all();
 }

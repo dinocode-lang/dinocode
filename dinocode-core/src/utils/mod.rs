@@ -8,6 +8,7 @@ pub mod parsers;
 pub mod dinojson;
 pub mod source_map;
 pub mod time_format;
+pub mod hash;
 
 pub use interning::StringInterner;
 pub use conversions::TypeConverter;

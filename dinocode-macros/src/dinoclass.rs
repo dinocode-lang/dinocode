@@ -25,8 +25,7 @@ pub fn dinoclass(attr: TokenStream, item: TokenStream) -> TokenStream {
         
         paste::paste! {
             #[allow(non_upper_case_globals)]
-            static mut [<_DINOCLASS_BOOTSTRAP_IDX_ #struct_name>]: Option<u32> = None;
-
+            static mut [<_DINOCLASS_BOOTSTRAP_IDX_ #struct_name>]: u32 = u32::MAX;
             #[allow(non_upper_case_globals)]
             static [<_DINOCLASS_METHODS_ #struct_name>]: std::sync::OnceLock<
                 Vec<(&'static str, u32, u8)>
@@ -54,32 +53,34 @@ pub fn dinoclass(attr: TokenStream, item: TokenStream) -> TokenStream {
                 _args_start: usize,
                 _args_count: usize
             ) -> crate::errors::Result<crate::types::DinoRef> {
-                let handle = runtime.memory.alloc_object_capacity(8);
-                
+                use crate::builtins::object::{Object, view::ObjectView};
+                use crate::memory::types::property_flags::PROP_PROTOTYPE;
+                let proto = Object::as_ref(&mut runtime.memory);
+                let class = ObjectView::new_from_slice(proto, &[], PROP_PROTOTYPE, &mut runtime.memory)?;
                 paste::paste! {
                     if let Some(methods) = [<_DINOCLASS_METHODS_ #struct_name>].get() {
                         for &(method_name_raw, id, prop_flags) in methods {
-                            let key = runtime.memory.alloc_const_string(method_name_raw);
+                            let key = crate::builtins::string::view::StringView::new_const(method_name_raw, &mut runtime.memory).as_ref();
                             let val = crate::types::DinoRef::native_fn(id);
-                            let _ = runtime.memory.set_object_property(handle, key, val, prop_flags);
+                            class.set(key, val, prop_flags, &mut runtime.memory)?;
                         }
                     }
                     if let Some(symbols) = [<_DINOCLASS_SYMBOLS_ #struct_name>].get() {
                         for &(sym_key, id, prop_flags) in symbols {
                             let val = crate::types::DinoRef::native_fn(id);
-                            let _ = runtime.memory.set_object_property(handle, sym_key, val, prop_flags);
+                            class.set(sym_key, val, prop_flags, &mut runtime.memory)?;
                         }
                     }
                     if let Some(keys) = [<_DINOCLASS_KEYS_ #struct_name>].get() {
                         for &(key_name_raw, setter) in keys {
-                            let key = runtime.memory.alloc_const_string(key_name_raw);
+                            let key = crate::builtins::string::view::StringView::new_const(key_name_raw, &mut runtime.memory).as_ref();
                             setter(key);
                         }
                     }
                     if let Some(props) = [<_DINOCLASS_PROPS_ #struct_name>].get() {
                         for &(prop_name_raw, val, prop_flags) in props {
-                            let key = runtime.memory.alloc_const_string(prop_name_raw);
-                            let _ = runtime.memory.set_object_property(handle, key, val, prop_flags);
+                            let key = crate::builtins::string::view::StringView::new_const(prop_name_raw, &mut runtime.memory).as_ref();
+                            class.set(key, val, prop_flags, &mut runtime.memory)?;
                         }
                     }
                 }
@@ -88,17 +89,26 @@ pub fn dinoclass(attr: TokenStream, item: TokenStream) -> TokenStream {
                 log::debug!(" DinoClass: Bootstrap complete for {}", stringify!(#struct_name));
                 
                 let class_ref = if #is_static {
-                    crate::types::DinoRef::object(handle)
+                    class.as_ref()
                 } else {
-                    crate::types::DinoRef::class(handle)
+                    class.as_class_ref()
                 };
                 Ok(class_ref)
             }
             
-            pub fn get_bootstrap_index() -> Option<u32> {
-                unsafe { 
+            pub fn get_bootstrap_index() -> u32 {
+                let idx = unsafe {
                     paste::paste! { [<_DINOCLASS_BOOTSTRAP_IDX_ #struct_name>] }
+                };
+                #[cfg(feature = "logging")]
+                if idx == u32::MAX {
+                    panic!("Bootstrap not initialized for {}", stringify!(#struct_name));
                 }
+                idx
+            }
+            pub fn as_ref(memory: &mut crate::memory::MemoryManager) -> crate::types::DinoRef {
+                let idx = Self::get_bootstrap_index();
+                unsafe { memory.stack.get_unchecked(idx as usize) }
             }
         }
 
@@ -114,7 +124,7 @@ pub fn dinoclass(attr: TokenStream, item: TokenStream) -> TokenStream {
                 );
                 
                 unsafe {
-                    [<_DINOCLASS_BOOTSTRAP_IDX_ #struct_name>] = Some(idx);
+                    [<_DINOCLASS_BOOTSTRAP_IDX_ #struct_name>] = idx;
                 }
             }
         }

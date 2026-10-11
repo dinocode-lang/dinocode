@@ -56,7 +56,7 @@ impl<'a> DinoJsonFormatter<'a> {
 
     fn format_array_into(&self, array_ref: DinoRef, indent: usize, result: &mut String) -> Result<(), RuntimeError> {
         let temp_indent = indent + 1;
-        let elements = self.get_array_elements(array_ref);
+        let elements = self.get_array_elements(array_ref)?;
         
         if elements.is_empty() {
             result.push_str("[]");
@@ -124,25 +124,25 @@ impl<'a> DinoJsonFormatter<'a> {
         " ".repeat(level * self.indent_size)
     }
 
-    fn get_array_elements(&self, array_ref: DinoRef) -> Vec<DinoRef> {
-        let array_id = array_ref.decode_index();
-        let array_len = self.memory.get_array_len(array_id);
+    fn get_array_elements(&self, array_ref: DinoRef) -> Result<Vec<DinoRef>, RuntimeError> {
+        let array_view = array_ref.as_array_unchecked();
+        let array_len = array_view.len(&self.memory);
         let mut elements = Vec::with_capacity(array_len as usize);
         
         for i in 0..array_len {
-            let element = self.memory.get_array_element(array_id, i);
+            let element = array_view.get(i, &self.memory)?;
             elements.push(element);
         }
         
-        elements
+        Ok(elements)
     }
 
     fn get_object_properties(&self, object_ref: DinoRef) -> Result<Vec<(String, DinoRef, DinoRef)>, RuntimeError> {
-        let object_id = object_ref.get_object_id();
+        let object_view = object_ref.as_object_unchecked();
         let mut properties = Vec::new();
 
-        let keys = self.memory.get_object_keys(object_id);
-        let values = self.memory.get_object_values(object_id);
+        let keys = object_view.keys(self.memory);
+        let values = object_view.values(self.memory);
         for (key_ref, value) in keys.iter().zip(values.iter()) {
             let key_str = TypeConverter::to_key_string(*key_ref, self.memory)?;
             properties.push((key_str, *value, *key_ref));

@@ -12,6 +12,7 @@
 pub const PROP_NORMAL: u8 = 0x00;
 pub const PROP_GETTER: u8 = 0x01;
 pub const PROP_SETTER: u8 = 0x02;
+pub const PROP_PROTOTYPE: u8 = 0x04;
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,6 +57,11 @@ impl PropertyFlags {
     #[inline(always)]
     pub fn is_normal(&self) -> bool {
         self.0 == PROP_NORMAL
+    }
+
+    #[inline(always)]
+    pub fn is_from_prototype(&self) -> bool {
+        self.0 & PROP_PROTOTYPE != 0
     }
     
     #[inline(always)]

@@ -28,14 +28,12 @@ crate::register_module! {
 #[dinof(raw)]
 pub fn int(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::MissingArgument("int"));
+        return Err(RuntimeError::MissingArgument { func: "int", expected: 1, got: args_count });
     }
-    let arg = runtime.memory.stack().get(args_start).copied()
-        .ok_or(RuntimeError::StackUnderflow)?;
+    let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
     
     let base = if args_count > 1 {
-        let base_arg = runtime.memory.stack().get(args_start + 1).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
+        let base_arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 1) };
         Some(base_arg.try_as_int(&mut runtime.memory)? as u32)
     } else {
         None
@@ -47,35 +45,30 @@ pub fn int(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Resul
 #[dinof(raw)]
 pub fn float(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::MissingArgument("float"));
+        return Err(RuntimeError::MissingArgument { func: "float", expected: 1, got: args_count });
     }
-    let arg = runtime.memory.stack().get(args_start).copied()
-        .ok_or(RuntimeError::StackUnderflow)?;
+    let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
     TypeConverter::to_float_lax(arg, &mut runtime.memory)
 }
 
 #[dinof(raw)]
 pub fn number(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::MissingArgument("number"));
+        return Err(RuntimeError::MissingArgument { func: "number", expected: 1, got: args_count });
     }
-    let arg = runtime.memory.stack().get(args_start).copied()
-        .ok_or(RuntimeError::StackUnderflow)?;
+    let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
     TypeConverter::to_number_lax(arg, &mut runtime.memory)
 }
-
 
 #[dinof(raw)]
 pub fn bigint(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::MissingArgument("bigint"));
+        return Err(RuntimeError::MissingArgument { func: "bigint", expected: 1, got: args_count });
     }
-    let arg = runtime.memory.stack().get(args_start).copied()
-        .ok_or(RuntimeError::StackUnderflow)?;
+    let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
     
     let base = if args_count > 1 {
-        let base_arg = runtime.memory.stack().get(args_start + 1).copied()
-            .ok_or(RuntimeError::StackUnderflow)?;
+        let base_arg = unsafe { runtime.memory.stack.get_unchecked(args_start + 1) };
         Some(base_arg.try_as_int(&mut runtime.memory)? as u32)
     } else {
         None
@@ -87,29 +80,26 @@ pub fn bigint(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Re
 #[dinof(raw)]
 pub fn bool(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::MissingArgument("bool"));
+        return Err(RuntimeError::MissingArgument { func: "bool", expected: 1, got: args_count });
     }
-    let arg = runtime.memory.stack().get(args_start).copied()
-        .ok_or(RuntimeError::StackUnderflow)?;
+    let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
     TypeConverter::to_bool(arg, &mut runtime.memory)
 }
 
 #[dinof(raw)]
 pub fn str(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::MissingArgument("str"));
+        return Err(RuntimeError::MissingArgument { func: "str", expected: 1, got: args_count });
     }
-    let arg = runtime.memory.stack().get(args_start).copied()
-        .ok_or(RuntimeError::StackUnderflow)?;
+    let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
     TypeConverter::to_string(arg, &mut runtime.memory)
 }
 
 #[dinof(raw)]
 pub fn id(runtime: &mut Runtime, args_start: usize, args_count: usize) -> Result<DinoRef> {
     if args_count == 0 {
-        return Err(RuntimeError::MissingArgument("id"));
+        return Err(RuntimeError::MissingArgument { func: "id", expected: 1, got: args_count });
     }
-    let arg = runtime.memory.stack().get(args_start).copied()
-        .ok_or(RuntimeError::StackUnderflow)?;
+    let arg = unsafe { runtime.memory.stack.get_unchecked(args_start) };
     Ok(DinoRef::int(arg.payload() as i64))
 }

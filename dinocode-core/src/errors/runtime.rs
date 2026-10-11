@@ -15,12 +15,14 @@ use crate::{
     formatter::{DinoError, FormatterColor},
 };
 
+pub type Result<T> = std::result::Result<T, RuntimeError>;
+
 #[derive(Error, Debug, Clone, PartialEq)]
 pub enum RuntimeError {
     #[error("Invalid binary operation: {op} cannot be applied to {left} and {right}")]
     InvalidBinaryOperation { left: &'static str, op: &'static str, right: &'static str },
-    #[error("Missing argument for '{0}'")]
-    MissingArgument(&'static str),
+    #[error("Missing argument for '{func}': expected at least {expected} argument(s), got {got}")]
+    MissingArgument { func: &'static str, expected: usize, got: usize },
     #[error("Wrong argument type for '{func}': expected {expected}")]
     WrongArgType { func: &'static str, expected: &'static str },
     #[error("Wrong argument count for '{func}': expected {expected}")]
@@ -43,6 +45,8 @@ pub enum RuntimeError {
     IndexOutOfBounds,
     #[error("Array index must be numeric")]
     ArrayIndexNotNumeric,
+    #[error("Cannot assign to immutable '{0}'")]
+    Immutable(&'static str),
     #[error("Member access requires an object or array")]
     MemberAccessNotObject,
     #[error("Value is not iterable: {0:?}")]
@@ -84,8 +88,6 @@ pub enum RuntimeError {
     #[error("Invalid UTF-8 sequence")]
     InvalidUTF8,
 }
-
-pub type Result<T> = std::result::Result<T, RuntimeError>;
 
 impl RuntimeError {
     pub fn to_dino_error(&self, line: u32, column: u32) -> DinoError<'static> {
@@ -176,6 +178,13 @@ impl RuntimeError {
                     .add_message("index out of bounds", FormatterColor::Default)
                     .add_note("check that the index is within the valid range for the collection", FormatterColor::Default)
             }
+            RuntimeError::Immutable(type_name) => {
+                DinoError::new(line, column)
+                    .add_message("cannot assign to immutable '", FormatterColor::Default)
+                    .add_message(type_name, FormatterColor::WhiteBold)
+                    .add_message("'", FormatterColor::Default)
+                    .add_note("this type is immutable and cannot be modified", FormatterColor::Default)
+            }
             RuntimeError::NativeFunctionNotFound(name) => {
                 DinoError::new(line, column)
                     .add_message("native function not found: ", FormatterColor::Default)
@@ -193,11 +202,17 @@ impl RuntimeError {
                     .add_message("failed to read input", FormatterColor::Default)
                     .add_info_owned(err.clone(), FormatterColor::Default)
             }
-            RuntimeError::MissingArgument(func) => {
+            RuntimeError::MissingArgument { func, expected, got } => {
+                let arg = if *expected == 1 { "argument" } else { "arguments" };
                 DinoError::new(line, column)
                     .add_message("'", FormatterColor::Default)
                     .add_message(func, FormatterColor::WhiteBold)
-                    .add_message("' requires at least one argument", FormatterColor::Default)
+                    .add_message("' requires at least ", FormatterColor::Default)
+                    .add_message_owned(expected.to_string(), FormatterColor::WhiteBold)
+                    .add_message(" ", FormatterColor::Default)
+                    .add_message(arg, FormatterColor::Default)
+                    .add_message(", got ", FormatterColor::Default)
+                    .add_message_owned(got.to_string(), FormatterColor::WhiteBold)
             }
             RuntimeError::WrongArgType { func, expected } => {
                 DinoError::new(line, column)

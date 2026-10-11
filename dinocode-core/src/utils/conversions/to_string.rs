@@ -14,6 +14,7 @@ use crate::{
     errors::RuntimeError,
     utils::dinojson,
     types::{DinoRef, value_type, Symbol},
+    builtins::string::view::StringView
 };
 use super::TypeConverter;
 
@@ -22,8 +23,8 @@ impl TypeConverter {
         match vtype {
             value_type::INT => Ok(value.as_int().to_string()),
             value_type::FLOAT => Ok(value.as_float().to_string()),
-            value_type::BIGINT => Ok(memory.get_bigint(value.decode_index()).to_string()),
-            value_type::STRING => Ok(memory.get_string(value.decode_index()).to_string()),
+            value_type::BIGINT => Ok(value.as_bigint_unchecked().get(memory).to_string()),
+            value_type::STRING => Ok(value.as_string_unchecked().get(memory).to_string()),
             value_type::BOOL => Ok(value.as_bool().to_string()),
             value_type::NONE => Ok("none".to_string()),
             value_type::SYMBOL => Ok(Symbol::to_name(value)),
@@ -40,15 +41,15 @@ impl TypeConverter {
         let vtype = value.decode_type();
         if vtype == value_type::STRING { return Ok(value); }
         let s = Self::to_primitive_string(value, vtype, memory)?;
-        Ok(memory.alloc_string(&s))
+        Ok(StringView::new(&s, memory).as_ref())
     }
 
     pub fn to_display_string(value: DinoRef, memory: &MemoryManager) -> Result<String, RuntimeError> {
         match value.decode_type() {
             value_type::INT => Ok(value.as_int().to_string()),
             value_type::FLOAT => Ok(value.as_float().to_string()),
-            value_type::BIGINT => Ok(memory.get_bigint(value.as_bigint()).to_string()),
-            value_type::STRING => Ok(memory.get_string(value.decode_index()).to_string()),
+            value_type::BIGINT => Ok(value.as_bigint_unchecked().get(memory).to_string()),
+            value_type::STRING => Ok(value.as_string_unchecked().get(memory).to_string()),
             value_type::BOOL => Ok(value.as_bool().to_string()),
             value_type::NONE => Ok("none".to_string()),
             value_type::SYMBOL => Ok(Symbol::to_name(value)),
@@ -75,8 +76,8 @@ impl TypeConverter {
         match value.decode_type() {
             value_type::INT => Ok(value.as_int().to_string()),
             value_type::FLOAT => Ok(value.as_float().to_string()),
-            value_type::BIGINT => Ok(memory.get_bigint(value.as_bigint()).to_string()),
-            value_type::STRING => Ok(memory.get_string(value.decode_index()).to_string()),
+            value_type::BIGINT => Ok(value.as_bigint_unchecked().get(memory).to_string()),
+            value_type::STRING => Ok(value.as_string_unchecked().get(memory).to_string()),
             value_type::BOOL => Ok(value.as_bool().to_string()),
             value_type::NONE => Ok("none".to_string()),
             value_type::SYMBOL => Ok(Symbol::to_name(value)),

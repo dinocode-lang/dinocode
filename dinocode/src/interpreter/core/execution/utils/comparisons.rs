@@ -19,7 +19,7 @@ use dinocode_core::{
 macro_rules! string_cmp_number {
     ($string:expr, $numeric:expr, $memory:expr, $empty_result:expr, $int_cmp:expr, $float_cmp:expr) => {
         {
-            let bytes = $memory.get_const_bytes($string.decode_index());
+            let bytes = $memory.arena.get_bytes($string.as_index());
             if bytes.is_empty() {
                 return Ok($empty_result);
             }

@@ -9,6 +9,7 @@
 //  License:    Apache License 2.0 (See 'LICENSE' file for full terms)
 // ═══════════════════════════════════════════════════════════
 use crate::{
+    builtins::string::view::StringView,
     memory::MemoryManager,
     types::{DinoRef, dinoref::value_type, Symbol},
     errors::{Result, RuntimeError},
@@ -72,7 +73,7 @@ impl FromDinoRef for bool {
 impl FromDinoRef for String {
     fn from_dinoref(arg: DinoRef, memory: &MemoryManager) -> Result<Self> {
         match arg.decode_type() {
-            value_type::STRING => Ok(memory.get_string(arg.decode_index()).to_string()),
+            value_type::STRING => Ok(arg.as_string_unchecked().get(memory).to_string()),
             value_type::INT => Ok(arg.as_int().to_string()),
             value_type::FLOAT => Ok(arg.as_float().to_string()),
             value_type::BOOL => Ok(if arg.as_bool() { "true" } else { "false" }.to_string()),
@@ -109,13 +110,13 @@ impl ToDinoRef for bool {
 
 impl ToDinoRef for &str {
     fn to_dinoref(self, memory: &mut MemoryManager) -> Result<DinoRef> {
-        Ok(memory.alloc_string(self))
+        Ok(StringView::new(self, memory).as_ref())
     }
 }
 
 impl ToDinoRef for String {
     fn to_dinoref(self, memory: &mut MemoryManager) -> Result<DinoRef> {
-        Ok(memory.alloc_string(&self))
+        Ok(StringView::new(&self, memory).as_ref())
     }
 }
 

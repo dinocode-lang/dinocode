@@ -15,6 +15,10 @@ use crate::{
     memory::MemoryManager,
     types::{DinoRef, opcode, UserFunction},
     native::{get_native_registry, registry::get_bootstrap_global_index},
+    builtins::{
+        string::view::StringView,
+        bigint::view::BigIntView,
+    },
     utils::{
         bigint::BigInt,
         parsers::numeric::{parse_lax, NumericParseError},
@@ -76,14 +80,8 @@ impl ValuePool {
     }
 
     pub fn get_or_create_string(&mut self, value: &str, memory_manager: &mut MemoryManager) -> u32 {
-        if let Some(dinoref) = memory_manager.get_interned_string(value) {
-            self.add_to_const_pool(dinoref)
-        } else {
-            let dinoref = memory_manager.alloc_const_string(value);
-            
-            let _ = memory_manager.intern_string(value, dinoref);
-            self.add_to_const_pool(dinoref)
-        }
+        let dinoref = StringView::new_const(value, memory_manager).as_ref();
+        self.add_to_const_pool(dinoref)
     }
 
     pub fn get_or_create_float(&mut self, value: f64, _memory_manager: &mut MemoryManager) -> u32 {
@@ -112,7 +110,7 @@ impl ValuePool {
             Ok(self.add_to_const_pool(dinoref))
         } else {
             let bigint = parse_lax::<BigInt>(value.as_bytes(), None)?;
-            let dinoref = memory_manager.alloc_bigint(&bigint);
+            let dinoref = BigIntView::new(&bigint, memory_manager).as_ref();
             self.bigint_to_dinoref.insert(value.to_string(), dinoref);
             Ok(self.add_to_const_pool(dinoref))
         }

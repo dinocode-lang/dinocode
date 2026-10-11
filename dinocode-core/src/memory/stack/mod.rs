@@ -1,3 +1,4 @@
-pub mod operations;
 pub mod call_frames;
-pub mod variables;
+pub mod allocator;
+
+pub use allocator::Stack;

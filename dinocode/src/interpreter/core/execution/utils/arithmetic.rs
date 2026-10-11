@@ -19,7 +19,7 @@ use dinocode_core::{
 macro_rules! string_op_number {
     ($string:expr, $numeric:expr, $memory:expr, $string_left_op:expr, $string_right_op:expr) => {
         {
-            let bytes = $memory.get_const_bytes($string.decode_index());
+            let bytes = $memory.arena.get_bytes($string.as_index());
             match parse::<Number>(bytes) {
                 Ok(Number::Int(si)) => $string_left_op(si, $numeric),
                 Ok(Number::Float(sf)) => $string_right_op(sf, $numeric),
@@ -32,8 +32,8 @@ macro_rules! string_op_number {
 macro_rules! string_op_string {
     ($a:expr, $b:expr, $memory:expr, $int_op:expr, $float_op:expr) => {
         {
-            let a_bytes = $memory.get_const_bytes($a.decode_index());
-            let b_bytes = $memory.get_const_bytes($b.decode_index());
+            let a_bytes = $memory.arena.get_bytes($a.as_index());
+            let b_bytes = $memory.arena.get_bytes($b.as_index());
             
             let a_num = parse::<Number>(a_bytes);
             let b_num = parse::<Number>(b_bytes);

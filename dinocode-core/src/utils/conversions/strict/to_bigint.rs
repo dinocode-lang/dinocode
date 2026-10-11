@@ -17,6 +17,7 @@ use crate::{
         bigint::BigInt,
         parsers::numeric::parse,
     },
+    builtins::bigint::view::BigIntView,
 };
 use super::super::TypeConverter;
 
@@ -26,21 +27,21 @@ impl TypeConverter {
             value_type::BIGINT => return Ok(value),
             value_type::INT => {
                 let bigint = BigInt::from_i64(value.as_int());
-                return Ok(memory.alloc_bigint(&bigint));
+                return Ok(BigIntView::new(&bigint, memory).as_ref());
             }
             value_type::FLOAT => {
                 let bigint = BigInt::from_f64(value.as_finite_float()?);
-                return Ok(memory.alloc_bigint(&bigint));
+                return Ok(BigIntView::new(&bigint, memory).as_ref());
             }
             value_type::STRING => {
-                let offset = value.decode_index();
-                let s = memory.get_string(offset);
-                let bigint = parse::<BigInt>(s.as_bytes()).map_err(|e| RuntimeError::NumericParse(e))?;
-                return Ok(memory.alloc_bigint(&bigint));
+                let offset = value.as_index();
+                let bytes = memory.arena.get_bytes(offset);
+                let bigint = parse::<BigInt>(bytes).map_err(|e| RuntimeError::NumericParse(e))?;
+                return Ok(BigIntView::new(&bigint, memory).as_ref());
             }
             value_type::BOOL => {
                 let bigint = if value.as_bool() { BigInt::ONE } else { BigInt::ZERO };
-                return Ok(memory.alloc_bigint(&bigint));
+                return Ok(BigIntView::new(&bigint, memory).as_ref());
             }
             _ => {}
         }
