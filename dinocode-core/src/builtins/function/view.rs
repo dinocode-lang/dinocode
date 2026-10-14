@@ -65,7 +65,15 @@ impl FunctionView {
             return Ok(res);
         } else if let Some(func) = runtime.functions.get(self.id as usize) {
             let start_ip = func.start_ip;
-            runtime.memory.push_call_frame((*runtime.ip + 1) as u32, self.id, func, args_start, args_count, 1)?;
+            runtime.memory.call_stack.push(
+                (*runtime.ip + 1) as u32,
+                self.id,
+                func,
+                args_start,
+                args_count,
+                1,
+                &mut runtime.memory.stack,
+            )?;
             *runtime.ip = start_ip as usize - 1;
         } else {
             Err(RuntimeError::FunctionNotFound)?
@@ -85,7 +93,15 @@ impl FunctionView {
             return Ok(res);
         } else if let Some(func) = runtime.functions.get(self.id as usize) {
             let start_ip = func.start_ip;
-            runtime.memory.push_call_frame((*runtime.ip + 1) as u32, self.id, func, args_start, args_count, 0)?;
+            runtime.memory.call_stack.push(
+                (*runtime.ip + 1) as u32,
+                self.id,
+                func,
+                args_start,
+                args_count,
+                0,
+                &mut runtime.memory.stack,
+            )?;
             *runtime.ip = start_ip as usize - 1;
         } else {
             Err(RuntimeError::FunctionNotFound)?

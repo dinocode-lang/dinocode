@@ -11,9 +11,11 @@
 
 use crate::{
     memory::{
-        types::CallFrame,
         heap::pool::allocator::ObjectPool,
-        stack::Stack,
+        stack::{
+            Stack,
+            call_frames::CallStack,
+        },
         heap::arena::Arena,
     },
     types::UserFunction,
@@ -29,10 +31,7 @@ pub struct MemoryManager {
     pub arena: Arena,
     pub(crate) object_pool: ObjectPool,
     pub stack: Stack,
-    
-    pub(crate) call_stack: Vec<CallFrame>,
-    pub(crate) recursion_depth: usize,
-    pub(crate) max_recursion_depth: usize,
+    pub call_stack: CallStack,
         
     pub(crate) arena_bytes_since_gc: usize,
     pub(crate) pool_allocs_since_gc: usize,
@@ -46,10 +45,7 @@ impl MemoryManager {
             arena: Arena::new(),
             object_pool: ObjectPool::new(8192),
             stack: Stack::new(8192),
-            
-            call_stack: Vec::with_capacity(1024),
-            recursion_depth: 0,
-            max_recursion_depth: 1000,
+            call_stack: CallStack::new(1024, 1000),
                         
             arena_bytes_since_gc: 0,
             pool_allocs_since_gc: 0,

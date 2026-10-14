@@ -10,8 +10,8 @@
 // ═══════════════════════════════════════════════════════════
 use crate::{
     memory::{
-        MemoryManager,
         types::CallFrame,
+        stack::Stack,
     },
     types::{
         DinoRef,
@@ -19,15 +19,56 @@ use crate::{
     },
     errors::{RuntimeError, Result},
 };
+use std::alloc::{alloc, dealloc, Layout};
 
-impl MemoryManager {
-    #[inline(always)]
-    pub fn call_stack(&self) -> &Vec<CallFrame> {
-        &self.call_stack
+#[derive(Debug)]
+pub struct CallStack {
+    ptr: *mut CallFrame,
+    sp: *mut CallFrame,
+    capacity: usize,
+    max_recursion_depth: usize,
+}
+
+impl CallStack {
+    pub fn new(capacity: usize, max_recursion_depth: usize) -> Self {
+        let layout = Layout::array::<CallFrame>(capacity)
+            .expect("CallStack capacity overflow");
+        let ptr = unsafe { alloc(layout) } as *mut CallFrame;
+
+        Self {
+            ptr,
+            sp: ptr,
+            capacity,
+            max_recursion_depth,
+        }
     }
     
     #[inline(always)]
-    pub fn push_call_frame(
+    pub fn len(&self) -> usize {
+        unsafe { self.sp.offset_from(self.ptr) as usize }
+    }
+    
+    pub fn get_unchecked(&self, index: usize) -> CallFrame {
+        unsafe { std::ptr::read(self.ptr.add(index)) }
+    }
+    
+    #[inline(always)]
+    pub unsafe fn push_unchecked(&mut self, frame: CallFrame) {
+        unsafe {
+            std::ptr::write(self.sp, frame);
+            self.sp = self.sp.add(1);
+        }
+    }
+    
+    #[inline(always)]
+    pub unsafe fn pop_unchecked(&mut self) -> CallFrame {
+        unsafe {
+            self.sp = self.sp.sub(1);
+            std::ptr::read(self.sp)
+        }
+    }
+    
+    pub fn push(
         &mut self,
         return_address: u32,
         function_id: u32,
@@ -35,8 +76,9 @@ impl MemoryManager {
         args_start: usize,
         argc: usize,
         fn_slot: u8,
+        stack: &mut Stack,
     ) -> Result<()> {
-        if self.recursion_depth >= self.max_recursion_depth {
+        if self.len() >= self.max_recursion_depth {
             return Err(RuntimeError::RecursionLimitExceeded);
         }
 
@@ -44,101 +86,82 @@ impl MemoryManager {
 
         let frame = CallFrame {
             return_address,
-            old_bp: self.stack.bp,
+            old_bp: stack.bp,
             function_id,
             args_start,
             args_count: actual_args,
             return_count: function.return_count,
             fn_slot,
         };
-
-        self.call_stack.push(frame);
-        self.recursion_depth += 1;
         
-        self.stack.bp = args_start;
+        unsafe { self.push_unchecked(frame); }
         
-        let new_sp = self.stack.bp + actual_args + function.local_count as usize;
-        if new_sp > self.stack.capacity {
-            self.stack.grow(new_sp.next_power_of_two());
+        stack.bp = args_start;
+        
+        let new_sp = stack.bp + actual_args + function.local_count as usize;
+        if new_sp > stack.capacity {
+            stack.grow(new_sp.next_power_of_two());
         }
         
-        let current_depth = self.stack.depth();
-        let locals_start = self.stack.bp + actual_args;
+        let current_depth = stack.depth();
+        let locals_start = stack.bp + actual_args;
         
         if new_sp > current_depth {
             let write_start = current_depth.max(locals_start);
             let count = new_sp - write_start;
             
             unsafe {
-                let ptr = self.stack.ptr.add(write_start);
+                let ptr = stack.ptr.add(write_start);
                 for i in 0..count {
                     std::ptr::write(ptr.add(i), DinoRef::NONE);
                 }
             }
         }
         
-        unsafe { self.stack.sp = self.stack.ptr.add(new_sp); }
+        unsafe { stack.sp = stack.ptr.add(new_sp); }
 
         Ok(())
     }
-
-    #[inline(always)]
-    pub fn pop_call_frame(&mut self) -> Option<u32> {
-        if let Some(frame) = self.call_stack.pop() {
-            if self.recursion_depth > 0 {
-                self.recursion_depth -= 1;
-            }
-            
-            self.stack.bp = frame.old_bp;
-            unsafe { self.stack.sp = self.stack.ptr.add(frame.args_start - frame.fn_slot as usize); }
-
-            self.stack.push(DinoRef::NONE);
-        
-            Some(frame.return_address)
-        } else {
-            None
+    
+    pub fn pop(&mut self, stack: &mut Stack) -> u32 {
+        let frame = unsafe { self.pop_unchecked() };
+        unsafe {
+            stack.bp = frame.old_bp;
+            stack.sp = stack.ptr.add(frame.args_start - frame.fn_slot as usize);
+            stack.push_unchecked(DinoRef::NONE);
         }
+        frame.return_address
     }
-
-    #[inline(always)]
-    pub fn pop_call_frame_with_ref(&mut self) -> Option<u32> {
-        if let Some(frame) = self.call_stack.pop() {
-            if self.recursion_depth > 0 {
-                self.recursion_depth -= 1;
-            }
-            
-            let return_value = self.stack.pop().unwrap_or(DinoRef::NONE);
-
-            self.stack.bp = frame.old_bp;
-            
-            unsafe { self.stack.sp = self.stack.ptr.add(frame.args_start - frame.fn_slot as usize); }
-            
-            self.stack.push(return_value);
-            
-            Some(frame.return_address)
-        } else {
-            None
+    
+    pub fn pop_with_ref(&mut self, stack: &mut Stack) -> u32 {
+        let frame = unsafe { self.pop_unchecked() };
+        unsafe {
+            let return_value = stack.pop_unchecked();
+            stack.bp = frame.old_bp;
+            stack.sp = stack.ptr.add(frame.args_start - frame.fn_slot as usize);
+            stack.push_unchecked(return_value);
         }
+        frame.return_address
     }
+    
+    pub fn pop_with_self(&mut self, stack: &mut Stack) -> u32 {
+        let frame = unsafe { self.pop_unchecked() };
+        unsafe {
+            let self_value = stack.get_local_unchecked(0);
+            stack.bp = frame.old_bp;
+            stack.sp = stack.ptr.add(frame.args_start - frame.fn_slot as usize);
+            stack.push_unchecked(self_value);
+        }
+        frame.return_address
+    }
+}
 
-    #[inline(always)]
-    pub fn pop_call_frame_with_self(&mut self) -> Option<u32> {
-        if let Some(frame) = self.call_stack.pop() {
-            if self.recursion_depth > 0 {
-                self.recursion_depth -= 1;
-            }
-            
-            let self_value = unsafe { self.stack.get_local_unchecked(0) };
-
-            self.stack.bp = frame.old_bp;
-            
-            unsafe { self.stack.sp = self.stack.ptr.add(frame.args_start - frame.fn_slot as usize); }
-            
-            self.stack.push(self_value);
-            
-            Some(frame.return_address)
-        } else {
-            None
+impl Drop for CallStack {
+    fn drop(&mut self) {
+        if self.capacity > 0 {
+            let layout = Layout::array::<CallFrame>(self.capacity)
+                .expect("CallStack capacity overflow");
+            unsafe { dealloc(self.ptr as *mut u8, layout); }
         }
     }
 }

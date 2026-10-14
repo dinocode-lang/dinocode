@@ -9,7 +9,7 @@
 //  License:    Apache License 2.0 (See 'LICENSE' file for full terms)
 // ═══════════════════════════════════════════════════════════
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct CallFrame {
     pub return_address: u32,
     pub old_bp: usize,

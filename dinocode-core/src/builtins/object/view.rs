@@ -425,7 +425,7 @@ impl ObjectView {
         } else {
             runtime.memory.stack.move_sp(args_start);
             unsafe { runtime.memory.stack.push_unchecked(result); }
-            Ok(DinoRef::NONE)
+            Ok(result)
         }
     }
 

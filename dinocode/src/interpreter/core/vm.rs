@@ -121,7 +121,7 @@ impl VirtualMachine {
 
             let args_start = self.memory.stack.depth() - param_count as usize;
             
-            self.memory.push_call_frame(len as u32, main_id, func, args_start, param_count as usize, 0)
+            self.memory.call_stack.push(len as u32, main_id, func, args_start, param_count as usize, 0, &mut self.memory.stack)
                 .map_err(|e| VMError { source: e, ip: len, traces: vm_helpers::get_call_stack_ips(&self.memory, self.main_function, len) })?;
             
             self.run_from(start_ip, len)?;
@@ -322,31 +322,22 @@ impl VirtualMachine {
                     }
                 },
                 
-                opcode::RETURN => {                                        
-                    if let Some(return_address) = self.memory.pop_call_frame() {
-                        ip = return_address as usize;
-                        continue;
-                    } else {
-                        return Ok(());
-                    }
+                opcode::RETURN => {
+                    let return_address = self.memory.call_stack.pop(&mut self.memory.stack);
+                    ip = return_address as usize;
+                    continue;
                 },
                 
                 opcode::RETURN_REF => {
-                    if let Some(return_address) = self.memory.pop_call_frame_with_ref() {
-                        ip = return_address as usize;
-                        continue;
-                    } else {
-                        return Ok(());
-                    }
+                    let return_address = self.memory.call_stack.pop_with_ref(&mut self.memory.stack);
+                    ip = return_address as usize;
+                    continue;
                 },
                 
                 opcode::RETURN_SELF => {
-                    if let Some(return_address) = self.memory.pop_call_frame_with_self() {
-                        ip = return_address as usize;
-                        continue;
-                    } else {
-                        return Ok(());
-                    }
+                    let return_address = self.memory.call_stack.pop_with_self(&mut self.memory.stack);
+                    ip = return_address as usize;
+                    continue;
                 },
 
                 opcode::MAKE_ARRAY => {

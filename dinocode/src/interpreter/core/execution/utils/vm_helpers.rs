@@ -36,9 +36,10 @@ pub fn get_call_stack_ips(memory: &MemoryManager, main_function: Option<DinoRef>
         exclude_ids.push(main_ref.get_function_id());
     }
     
-    let mut ips: Vec<usize> = memory.call_stack()
-        .iter()
+    let len = memory.call_stack.len();
+    let mut ips: Vec<usize> = (0..len)
         .rev()
+        .map(|i| memory.call_stack.get_unchecked(i))
         .filter(|frame| !exclude_ids.contains(&frame.function_id))
         .take(9)
         .map(|frame| frame.return_address as usize)
