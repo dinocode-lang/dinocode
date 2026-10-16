@@ -420,6 +420,8 @@ impl Parser {
                         ParseError::from_token(ParseErrorType::ExpectedIdentifier("class name"), name_token)
                     })?;
 
+                    ctx.value_pool.get_or_create_var_name(&class_name);
+
                     let parent_info = match (tokens.get(i + 2), tokens.get(i + 3)) {
                         (Some(comma_token), Some(parent_token)) 
                             if comma_token.typ == TT::Comma && parent_token.typ == TT::Identifier => {
