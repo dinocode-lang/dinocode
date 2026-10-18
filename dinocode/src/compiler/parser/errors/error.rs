@@ -133,6 +133,10 @@ impl From<ParseError> for DinoError<'static> {
             ParseErrorType::MissingTokenValue => {
                 dino = dino.add_message("token has no value", FormatterColor::Default);
             }
+            ParseErrorType::InvalidSymbolicName => {
+                dino = dino.add_message("invalid symbolic method name", FormatterColor::Default)
+                    .add_info("symbolic method names: +, -, *, /, %, **, ==, !=, <, <=, >, >=", FormatterColor::Default);
+            }
             ParseErrorType::Custom(msg) => {
                 dino = dino.add_message_owned(msg, FormatterColor::Default);
             }

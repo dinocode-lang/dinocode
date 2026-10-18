@@ -13,6 +13,7 @@ use dinocode_core::{
     types::{
         Instruction,
         opcode,
+        symbol::Symbol,
     },
     native::registry::is_native_function,
 };
@@ -201,5 +202,41 @@ impl Parser {
         }
         
         Ok((is_call, is_dollar))
+    }
+
+    pub fn get_fn_name(
+        i: usize,
+        tokens: &[Token],
+        current_token: &Token,
+        error_context: &'static str,
+        allow_string: bool
+    ) -> Result<(String, usize), ParseError> {
+        let token = tokens.get(i).ok_or_else(|| {
+            ParseError::from_token(ParseErrorType::ExpectedIdentifier(error_context), current_token)
+        })?;
+
+        match token.value.as_identifier() {
+            Some(name) => Ok((name, 0)),
+            None if token.typ == TT::LString && allow_string => {
+                let name = tokens.get(i + 1)
+                    .filter(|t| t.typ == TT::String)
+                    .and_then(|t| t.value.as_identifier())
+                    .ok_or_else(|| ParseError::from_token(ParseErrorType::InvalidSymbolicName, token))?;
+
+                if Symbol::from_name(&name).is_none() {
+                    return Err(ParseError::from_token(ParseErrorType::InvalidSymbolicName, token));
+                }
+
+                tokens.get(i + 2)
+                    .filter(|t| t.typ == TT::RString)
+                    .ok_or_else(|| ParseError::from_token(Self::get_delimiter_error_message(TT::LString), token))?;
+
+                Ok((name, 2))
+            }
+            _ => Err(ParseError::from_token(
+                ParseErrorType::ExpectedIdentifier(error_context),
+                token
+            ))
+        }
     }
 }

@@ -27,7 +27,25 @@ impl Symbol {
     
     #[symbol_id]
     pub const POW: DinoRef = ();
-    
+
+    #[symbol_id]
+    pub const RADD: DinoRef = ();
+
+    #[symbol_id]
+    pub const RSUB: DinoRef = ();
+
+    #[symbol_id]
+    pub const RMUL: DinoRef = ();
+
+    #[symbol_id]
+    pub const RDIV: DinoRef = ();
+
+    #[symbol_id]
+    pub const RMOD: DinoRef = ();
+
+    #[symbol_id]
+    pub const RPOW: DinoRef = ();
+
     #[symbol_id]
     pub const EQ: DinoRef = ();
     
@@ -65,6 +83,12 @@ impl Symbol {
             "/" => Some(Self::DIV),
             "%" => Some(Self::MOD),
             "**" => Some(Self::POW),
+            "r+" => Some(Self::RADD),
+            "r-" => Some(Self::RSUB),
+            "r*" => Some(Self::RMUL),
+            "r/" => Some(Self::RDIV),
+            "r%" => Some(Self::RMOD),
+            "r**" => Some(Self::RPOW),
             "==" => Some(Self::EQ),
             "!=" => Some(Self::NE),
             "<" => Some(Self::LT),
@@ -88,6 +112,12 @@ impl Symbol {
             Self::DIV => "/",
             Self::MOD => "%",
             Self::POW => "**",
+            Self::RADD => "r+",
+            Self::RSUB => "r-",
+            Self::RMUL => "r*",
+            Self::RDIV => "r/",
+            Self::RMOD => "r%",
+            Self::RPOW => "r**",
             Self::EQ => "==",
             Self::NE => "!=",
             Self::LT => "<",
