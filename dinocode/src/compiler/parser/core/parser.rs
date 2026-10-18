@@ -412,13 +412,8 @@ impl Parser {
                 }
 
                 TT::Class => {
-                    let name_token = tokens.get(i + 1).ok_or_else(|| {
-                        ParseError::from_token(ParseErrorType::ExpectedIdentifier("class name"), token)
-                    })?;
-
-                    let class_name = name_token.value.as_identifier().ok_or_else(|| {
-                        ParseError::from_token(ParseErrorType::ExpectedIdentifier("class name"), name_token)
-                    })?;
+                    let (class_name, skip) = Self::get_fn_name(i + 1, tokens, token, "class name", false)?;
+                    i += skip;
 
                     ctx.value_pool.get_or_create_var_name(&class_name);
 
@@ -436,7 +431,7 @@ impl Parser {
                         Self::resolve_prototype(&mut ctx, &parent_name, &parent_token)?;
                         i = next_i;
                     } else {
-                        ctx.emit(Instruction::simple_raw(opcode::NONE).0, Some(name_token));
+                        ctx.emit(Instruction::simple_raw(opcode::NONE).0, Some(token));
                         i += 1;
                     }
 
@@ -450,18 +445,11 @@ impl Parser {
                 }
 
                 TT::Function => {
-                    let next_token = tokens.get(i + 1).ok_or_else(|| {
-                        ParseError::from_token(ParseErrorType::ExpectedIdentifier("function name"), token)
-                    })?;
+                    let is_method = ctx.class_frames.last()
+                        .map_or(false, |frame| depth == frame.initial_depth + 1);
 
-                    if next_token.typ != TT::Identifier {
-                        return Err(ParseError::from_token(ParseErrorType::ExpectedIdentifier("function name"), next_token));
-                    }
-
-                    let func_name = next_token.value.as_identifier().ok_or_else(|| ParseError::from_token(
-                        ParseErrorType::MissingTokenValue,
-                        next_token
-                    ))?;
+                    let (func_name, skip) = Self::get_fn_name(i + 1, tokens, token, "function name", is_method)?;
+                    i += skip;
                     let is_main = func_name == "main";
                     let is_global = depth == 0;
                     
@@ -469,9 +457,6 @@ impl Parser {
                     ctx.value_pool.get_or_create_function(function_id);
                     ctx.value_pool.get_or_create_var_name(&func_name);
                     ctx.value_pool.push_scope();
-
-                    let is_method = ctx.class_frames.last()
-                        .map_or(false, |frame| depth == frame.initial_depth + 1);
 
                     let mut param_count = if is_method {
                         ctx.value_pool.get_or_create_var_name("self");
