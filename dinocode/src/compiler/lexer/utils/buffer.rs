@@ -183,7 +183,17 @@ pub fn push_bigint(
     } else {
         &source[info.from_byte..end_pos]
     };
-    tokens.push(Token::bigint(raw.to_string(), Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
+
+    let final_raw = if info.unary_minus {
+        let mut new_raw = String::with_capacity(raw.len() + 1);
+        new_raw.push('-');
+        new_raw.push_str(raw);
+        new_raw
+    } else {
+        raw.to_string()
+    };
+    
+    tokens.push(Token::bigint(final_raw, Some((info.from_line, info.from_column, end_pos - info.from_byte))), ctx);
     Ok(())
 }
 
