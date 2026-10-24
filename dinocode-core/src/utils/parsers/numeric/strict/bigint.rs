@@ -39,6 +39,6 @@ impl ParseNumeric for BigInt<'static> {
         }
 
         parse_bigint_digits_bytes(digits, 10, is_negative)
-            .map(BigInt::new)
+            .map(|(sign, mag)| BigInt::new(sign, mag))
     }
 }
