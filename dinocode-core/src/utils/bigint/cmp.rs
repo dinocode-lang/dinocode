@@ -14,7 +14,6 @@ use super::{
     bigint::BigInt,
     arithmetic::compare_unsigned,
 };
-use crate::types::opcode;
 
 impl<'a> PartialOrd for BigInt<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -24,36 +23,11 @@ impl<'a> PartialOrd for BigInt<'a> {
 
 impl<'a> Ord for BigInt<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
-        let a = self.as_bytes();
-        let b = other.as_bytes();
-
-        if a.is_empty() || b.is_empty() {
-            return Ordering::Equal;
-        }
-
-        let a_neg = a[0] == 0x01;
-        let b_neg = b[0] == 0x01;
-
-        match (a_neg, b_neg) {
-            (true, false) => Ordering::Less,
-            (false, true) => Ordering::Greater,
-            (false, false) => compare_unsigned(&a[1..], &b[1..]),
-            // reversed magnitude ordering
-            (true, true) => compare_unsigned(&b[1..], &a[1..]),
-        }
-    }
-}
-
-impl<'a> BigInt<'a> {
-    pub fn compare_op(&self, rhs: &BigInt<'_>, op: u8) -> bool {
-        match op {
-            opcode::EQ => self == rhs,
-            opcode::NE => self != rhs,
-            opcode::GT => self > rhs,
-            opcode::LT => self < rhs,
-            opcode::GE => self >= rhs,
-            opcode::LE => self <= rhs,
-            _ => false,
+        match (self.sign, other.sign) {
+            (0x01, 0x00) => Ordering::Less,
+            (0x00, 0x01) => Ordering::Greater,
+            (0x00, 0x00) => compare_unsigned(self.magnitude(), other.magnitude()),
+                       _ => compare_unsigned(other.magnitude(), self.magnitude()),
         }
     }
 }

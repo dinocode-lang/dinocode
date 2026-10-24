@@ -44,8 +44,8 @@ impl BigIntView {
     }
     
     pub fn new(val: &BigInt, memory: &mut MemoryManager) -> Self {
-        let bits = val.as_bytes();
-        let len = bits.len();
+        let mag = val.magnitude();
+        let len = 1 + mag.len(); // sign + magnitude
         let total_size = 8 + 4 + 4 + 8 + len;
 
         memory.record_arena_alloc(total_size);
@@ -74,15 +74,14 @@ impl BigIntView {
         arena.data[offset + 8..offset + 12].copy_from_slice(&len_bytes);
         
         // Zero reserved bytes
-        let zero_bytes = [0u8; 4];
-        arena.data[offset + 12..offset + 16].copy_from_slice(&zero_bytes);
+        arena.data[offset + 12..offset + 16].copy_from_slice(&[0u8; 4]);
         
         // Zero hash bytes
-        let hash_bytes = [0u8; 8];
-        arena.data[offset + 16..offset + 24].copy_from_slice(&hash_bytes);
+        arena.data[offset + 16..offset + 24].copy_from_slice(&[0u8; 8]);
         
         // Write bigint bytes
-        arena.data[offset + 24..offset + 24 + len].copy_from_slice(bits);
+        arena.data[offset + 24] = val.sign;
+        arena.data[offset + 25..offset + 25 + mag.len()].copy_from_slice(mag);
 
         Self(offset)
     }
@@ -94,6 +93,6 @@ impl BigIntView {
             memory.arena.data[offset + 8..offset + 12].try_into().unwrap()
         ) as usize;
         let bytes = &memory.arena.data[offset + 24..offset + 24 + len];
-        BigInt::from_slice(bytes)
+        BigInt::from_slice(bytes[0], &bytes[1..])
     }
 }

@@ -37,7 +37,7 @@ impl TypeConverter {
                     .map_err(|e| RuntimeError::NumericParse(e))
                     .and_then(|i| {
                         if is_valid_int(i) { Ok(i) }
-                        else { Err(RuntimeError::NumericParse(error_i64(bigint.as_bytes()))) }
+                        else { Err(RuntimeError::NumericParse(error_i64(bigint.magnitude()))) }
                     })
             }
             value_type::STRING => {

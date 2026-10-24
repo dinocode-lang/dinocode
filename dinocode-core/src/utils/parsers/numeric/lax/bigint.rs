@@ -44,7 +44,7 @@ impl ParseNumericLax for BigInt<'static> {
 
         if let Some(explicit_base) = base {
             return parse_bigint_digits_bytes(content, explicit_base, is_negative)
-                .map(BigInt::new);
+                .map(|(sign, mag)| BigInt::new(sign, mag));
         }
 
         let (resolved_base, digits) = if content.len() >= 2 && content[0] == b'0' {
@@ -77,6 +77,6 @@ impl ParseNumericLax for BigInt<'static> {
         };
 
         parse_bigint_digits_bytes(digits, resolved_base, is_negative)
-            .map(BigInt::new)
+            .map(|(sign, mag)| BigInt::new(sign, mag))
     }
 }

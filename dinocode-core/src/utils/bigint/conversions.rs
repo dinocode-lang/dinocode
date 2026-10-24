@@ -18,15 +18,12 @@ impl<'a> BigInt<'a> {
         let magnitude = value.unsigned_abs();
 
         if magnitude == 0 {
-            return BigInt::new(vec![sign, 0]);
+            return BigInt::new(sign, vec![0]);
         }
 
         let be = magnitude.to_be_bytes();
         let first_nonzero = be.iter().position(|&b| b != 0).unwrap();
-        let mut bytes = Vec::with_capacity(1 + 8 - first_nonzero);
-        bytes.push(sign);
-        bytes.extend_from_slice(&be[first_nonzero..]);
-        BigInt::new(bytes)
+        BigInt::new(sign, be[first_nonzero..].to_vec())
     }
 
     pub fn from_f64(value: f64) -> Self {
@@ -34,7 +31,7 @@ impl<'a> BigInt<'a> {
         let mut magnitude = value.abs();
 
         if magnitude == 0.0 {
-            return BigInt::new(vec![sign, 0]);
+            return BigInt::new(sign, vec![0]);
         }
 
         let mut bytes = Vec::new();
@@ -43,27 +40,20 @@ impl<'a> BigInt<'a> {
             magnitude = (magnitude / 256.0).floor();
         }
         bytes.reverse();
-
-        let mut result = Vec::with_capacity(1 + bytes.len());
-        result.push(sign);
-        result.extend(bytes);
-        BigInt::new(result)
+        BigInt::new(sign, bytes)
     }
 
     pub fn to_i64(&self) -> Result<i64, NumericParseError> {
-        let bytes = self.as_bytes();
-        if bytes.is_empty() || bytes.len() > 9 {
+        let mag = self.magnitude();
+        if mag.len() > 8 {
             return Err(NumericParseError::new("BigInt too large for integer".into(), None, None));
         }
 
-        let is_negative = bytes[0] == 0x01;
-        let value_bytes = &bytes[1..];
-
         let mut buf = [0u8; 8];
-        buf[8 - value_bytes.len()..].copy_from_slice(value_bytes);
+        buf[8 - mag.len()..].copy_from_slice(mag);
         let magnitude = u64::from_be_bytes(buf);
 
-        if is_negative {
+        if self.is_negative() {
             if magnitude > i64::MIN.unsigned_abs() {
                 return Err(NumericParseError::new("BigInt too large for integer".into(), None, None));
             }
@@ -77,26 +67,18 @@ impl<'a> BigInt<'a> {
     }
 
     pub fn to_f64(&self) -> Result<f64, NumericParseError> {
-        let bytes = self.as_bytes();
-        if bytes.is_empty() {
-            return Err(NumericParseError::new("Invalid BigInt".into(), None, None));
-        }
+        let mag = self.magnitude();
+        if mag.is_empty() { return Ok(0.0); }
 
-        let is_negative = bytes[0] == 0x01;
-        let value_bytes = &bytes[1..];
-
-        if value_bytes.is_empty() { return Ok(0.0); }
-
-        // Values beyond 128 bytes can't be represented in f64 without loss of precision
-        if value_bytes.len() > 128 {
-            return Ok(if is_negative { f64::NEG_INFINITY } else { f64::INFINITY });
+        if mag.len() > 128 {
+            return Ok(if self.is_negative() { f64::NEG_INFINITY } else { f64::INFINITY });
         }
 
         let mut result: f64 = 0.0;
-        for &byte in value_bytes {
+        for &byte in mag {
             result = result * 256.0 + (byte as f64);
         }
 
-        Ok(if is_negative { -result } else { result })
+        Ok(if self.is_negative() { -result } else { result })
     }
 }

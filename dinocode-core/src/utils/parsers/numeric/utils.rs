@@ -153,7 +153,7 @@ pub fn parse_i64_octal(bytes: &[u8]) -> Result<i64, NumericParseError> {
     Ok(result)
 }
 
-pub fn parse_bigint_digits_bytes(digits: &[u8], base: u32, is_negative: bool) -> Result<Vec<u8>, NumericParseError> {
+pub fn parse_bigint_digits_bytes(digits: &[u8], base: u32, is_negative: bool) -> Result<(u8, Vec<u8>), NumericParseError> {
     let mut working: Vec<u8> = digits.to_vec();
     let mut result: Vec<u8> = Vec::new();
 
@@ -201,6 +201,5 @@ pub fn parse_bigint_digits_bytes(digits: &[u8], base: u32, is_negative: bool) ->
 
     if result.is_empty() { result.push(0); }
     result.reverse();
-    result.insert(0, if is_negative { 0x01 } else { 0x00 });
-    Ok(result)
+    Ok((if is_negative { 0x01 } else { 0x00 }, result))
 }

@@ -29,30 +29,21 @@ impl<'a, 'b> Add<&'b BigInt<'b>> for &'a BigInt<'a> {
     type Output = BigInt<'static>;
 
     fn add(self, rhs: &'b BigInt<'b>) -> BigInt<'static> {
-        let a = self.as_bytes();
-        let b = rhs.as_bytes();
+        let a_mag = self.magnitude();
+        let b_mag = rhs.magnitude();
 
-        if a.is_empty() || b.is_empty() {
-            return BigInt::new(vec![0x00]);
-        }
-
-        let a_neg = a[0] == 0x01;
-        let b_neg = b[0] == 0x01;
-        let a_val = &a[1..];
-        let b_val = &b[1..];
-
-        match (a_neg, b_neg) {
-            (false, false) => signed(0x00, add_unsigned(a_val, b_val)),
-            (true, true)   => signed(0x01, add_unsigned(a_val, b_val)),
-            (false, true)  => match compare_unsigned(a_val, b_val) {
-                Ordering::Greater => signed(0x00, sub_unsigned(a_val, b_val)),
-                Ordering::Less    => signed(0x01, sub_unsigned(b_val, a_val)),
-                Ordering::Equal   => BigInt::new(vec![0x00, 0]),
+        match (self.is_negative(), rhs.is_negative()) {
+            (false, false) => BigInt::new(0x00, add_unsigned(a_mag, b_mag)),
+            (true,  true)  => BigInt::new(0x01, add_unsigned(a_mag, b_mag)),
+            (false, true)  => match compare_unsigned(a_mag, b_mag) {
+                Ordering::Greater => BigInt::new(0x00, sub_unsigned(a_mag, b_mag)),
+                Ordering::Less    => BigInt::new(0x01, sub_unsigned(b_mag, a_mag)),
+                Ordering::Equal   => BigInt::ZERO.into_owned(),
             },
-            (true, false) => match compare_unsigned(a_val, b_val) {
-                Ordering::Greater => signed(0x01, sub_unsigned(a_val, b_val)),
-                Ordering::Less    => signed(0x00, sub_unsigned(b_val, a_val)),
-                Ordering::Equal   => BigInt::new(vec![0x00, 0]),
+            (true, false) => match compare_unsigned(a_mag, b_mag) {
+                Ordering::Greater => BigInt::new(0x01, sub_unsigned(a_mag, b_mag)),
+                Ordering::Less    => BigInt::new(0x00, sub_unsigned(b_mag, a_mag)),
+                Ordering::Equal   => BigInt::ZERO.into_owned(),
             },
         }
     }
@@ -62,13 +53,9 @@ impl<'a, 'b> Sub<&'b BigInt<'b>> for &'a BigInt<'a> {
     type Output = BigInt<'static>;
 
     fn sub(self, rhs: &'b BigInt<'b>) -> BigInt<'static> {
-        let b = rhs.as_bytes();
-        if b.is_empty() {
-            return BigInt::new(self.as_bytes().to_vec());
-        }
-        let mut neg_b = b.to_vec();
-        neg_b[0] ^= 0x01;
-        self.add(&BigInt::new(neg_b))
+        let flipped_sign = rhs.sign ^ 0x01;
+        let neg_rhs = BigInt { sign: flipped_sign, magnitude: rhs.magnitude.clone() };
+        self.add(&neg_rhs)
     }
 }
 
@@ -76,21 +63,8 @@ impl<'a, 'b> Mul<&'b BigInt<'b>> for &'a BigInt<'a> {
     type Output = BigInt<'static>;
 
     fn mul(self, rhs: &'b BigInt<'b>) -> BigInt<'static> {
-        let a = self.as_bytes();
-        let b = rhs.as_bytes();
-
-        if a.is_empty() || b.is_empty() {
-            return BigInt::new(vec![0x00]);
-        }
-
-        let a_neg = a[0] == 0x01;
-        let b_neg = b[0] == 0x01;
-        let a_val = &a[1..];
-        let b_val = &b[1..];
-
-        let result = mul_unsigned(a_val, b_val);
-        let sign = if a_neg ^ b_neg { 0x01 } else { 0x00 };
-        signed(sign, result)
+        let sign = self.sign ^ rhs.sign;
+        BigInt::new(sign, mul_unsigned(self.magnitude(), rhs.magnitude()))
     }
 }
 
@@ -98,25 +72,8 @@ impl<'a, 'b> Div<&'b BigInt<'b>> for &'a BigInt<'a> {
     type Output = BigInt<'static>;
 
     fn div(self, rhs: &'b BigInt<'b>) -> BigInt<'static> {
-        let a = self.as_bytes();
-        let b = rhs.as_bytes();
-
-        if b.is_empty() || a.is_empty() {
-            return BigInt::new(vec![0x00]);
-        }
-
-        let b_val = &b[1..];
-        if b_val.len() == 1 && b_val[0] == 0 {
-            return BigInt::new(vec![0x00, 0]);
-        }
-
-        let a_neg = a[0] == 0x01;
-        let b_neg = b[0] == 0x01;
-        let a_val = &a[1..];
-
-        let result = div_unsigned(a_val, b_val);
-        let sign = if a_neg ^ b_neg { 0x01 } else { 0x00 };
-        signed(sign, result)
+        let sign = self.sign ^ rhs.sign;
+        BigInt::new(sign, div_unsigned(self.magnitude(), rhs.magnitude()))
     }
 }
 
@@ -124,61 +81,36 @@ impl<'a, 'b> Rem<&'b BigInt<'b>> for &'a BigInt<'a> {
     type Output = BigInt<'static>;
 
     fn rem(self, rhs: &'b BigInt<'b>) -> BigInt<'static> {
-        let a = self.as_bytes();
-        let b = rhs.as_bytes();
-
-        if b.is_empty() || a.is_empty() {
-            return BigInt::new(vec![0x00]);
-        }
-
-        let b_val = &b[1..];
-        if b_val.len() == 1 && b_val[0] == 0 {
-            return BigInt::new(vec![0x00, 0]);
-        }
-
-        let a_neg = a[0] == 0x01;
-        let a_val = &a[1..];
-
-        let result = mod_unsigned(a_val, b_val);
-        // Remainder takes the sign of the dividend
-        signed(if a_neg { 0x01 } else { 0x00 }, result)
+        BigInt::new(self.sign, mod_unsigned(self.magnitude(), rhs.magnitude()))
     }
 }
 
 impl<'a> BigInt<'a> {
     pub fn pow(&self, exp: &BigInt<'_>) -> BigInt<'static> {
         if exp.is_zero() {
-            return BigInt::new(vec![0x00, 1]);
+            return BigInt::ONE.into_owned();
         }
         if self.is_zero() {
-            return BigInt::new(vec![0x00, 0]);
+            return BigInt::ZERO.into_owned();
         }
 
-        let exp_bytes = exp.as_bytes();
-        let exp_val = &exp_bytes[1..];
-
-        // Convert exponent bytes to i64 (only for small exponents)
-        let e: i64 = if exp_val.len() <= 8 {
+        let exp_mag = exp.magnitude();
+        let e: i64 = if exp_mag.len() <= 8 {
             let mut result: i64 = 0;
-            for &byte in exp_val {
+            for &byte in exp_mag {
                 result = result * 256 + byte as i64;
             }
-            if exp_bytes[0] == 0x01 {
-                -result
-            } else {
-                result
-            }
+            if exp.is_negative() { -result } else { result }
         } else {
-            // Exponent too large
-            return BigInt::new(vec![0x00, 0]);
+            return BigInt::ZERO.into_owned();
         };
 
         if e < 0 {
-            return BigInt::new(vec![0x00, 0]);
+            return BigInt::ZERO.into_owned();
         }
 
-        let mut result = BigInt::new(vec![0x00, 1]);
-        let mut base = BigInt::new(self.as_bytes().to_vec());
+        let mut result = BigInt::ONE.into_owned();
+        let mut base   = self.clone().into_owned();
         let mut e = e as u64;
 
         while e > 0 {
@@ -191,10 +123,4 @@ impl<'a> BigInt<'a> {
 
         result
     }
-}
-
-#[inline]
-fn signed(sign: u8, mut magnitude: Vec<u8>) -> BigInt<'static> {
-    magnitude.insert(0, sign);
-    BigInt::new(magnitude)
 }
