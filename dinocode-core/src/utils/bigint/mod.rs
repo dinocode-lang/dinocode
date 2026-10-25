@@ -5,3 +5,6 @@ pub mod cmp;
 pub mod ops;
 
 pub use bigint::BigInt;
+
+#[cfg(test)]
+mod tests;
