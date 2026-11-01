@@ -559,6 +559,13 @@ pub fn push_buffer(
                 Err(_) => Err(LexError::new(LexErrorType::InvalidOperator("invalid operator"), info.from_line as u32, info.from_column as u32))
             }
         }
+        BufType::Backtick => {
+            Err(LexError::new(
+                LexErrorType::UnterminatedBacktick,
+                info.from_line as u32,
+                info.from_column as u32
+            ))
+        }
         BufType::None 
         | BufType::String 
         | BufType::FString

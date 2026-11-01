@@ -77,6 +77,10 @@ impl From<LexError> for DinoError<'static> {
                 dino = dino.add_message("literal block string cannot be empty", FormatterColor::Default)
                     .add_note("block strings must contain at least one character", FormatterColor::Default);
             }
+            LexErrorType::UnterminatedBacktick => {
+                dino = dino.add_message("unterminated backtick identifier", FormatterColor::Default)
+                    .add_note("backtick identifiers must be closed with a backtick", FormatterColor::Default);
+            }
             LexErrorType::Custom(msg) => {
                 dino = dino.add_message_owned(msg, FormatterColor::Default);
             }

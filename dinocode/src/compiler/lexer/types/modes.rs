@@ -16,4 +16,5 @@ pub enum ParseMode {
     InString,
     InFStringExpr(usize),
     InBlockString(usize),
+    InBacktick,
 }
