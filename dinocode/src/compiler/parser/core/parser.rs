@@ -13,7 +13,6 @@ use dinocode_core::{
     types::{
         opcode,
         Instruction,
-        Symbol,
     },
     utils::source_map::SourceMap,
 };
@@ -121,7 +120,7 @@ impl Parser {
                             ParseErrorType::MissingTokenValue,
                             token
                         ))?;
-                        let const_idx = ctx.value_pool.get_or_create_string(&identifier, &mut ctx.memory_manager);
+                        let const_idx = ctx.value_pool.get_or_create_key(&identifier, token.is_backtick, &mut ctx.memory_manager);
                         ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
                     } else {
                         Self::resolve_identifier(token, tokens, i, depth, main, &mut counter, &mut ctx)?;
@@ -412,8 +411,10 @@ impl Parser {
                 }
 
                 TT::Class => {
-                    let (class_name, skip) = Self::get_fn_name(i + 1, tokens, token, "class name", false)?;
-                    i += skip;
+                    let class_name = tokens.get(i + 1)
+                        .and_then(|t| t.value.as_identifier())
+                        .ok_or_else(|| ParseError::from_token(ParseErrorType::ExpectedIdentifier("class name"), token))?;
+
 
                     ctx.value_pool.get_or_create_var_name(&class_name);
 
@@ -448,8 +449,10 @@ impl Parser {
                     let is_method = ctx.class_frames.last()
                         .map_or(false, |frame| depth == frame.initial_depth + 1);
 
-                    let (func_name, skip) = Self::get_fn_name(i + 1, tokens, token, "function name", is_method)?;
-                    i += skip;
+                    let func_name = tokens.get(i + 1)
+                        .and_then(|t| t.value.as_identifier())
+                        .ok_or_else(|| ParseError::from_token(ParseErrorType::ExpectedIdentifier("function name"), token))?;
+
                     let is_main = func_name == "main";
                     let is_global = depth == 0;
                     
@@ -743,13 +746,8 @@ impl Parser {
                             .unwrap_or(false);
 
                         if in_class {
-                            if let Some(symbol_ref) = Symbol::from_name(&func_name) {
-                                let const_idx = ctx.value_pool.add_to_const_pool(symbol_ref);
-                                ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
-                            } else {
-                                let const_idx = ctx.value_pool.get_or_create_string(&func_name, &mut ctx.memory_manager);
-                                ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
-                            }
+                            let const_idx = ctx.value_pool.get_or_create_key(&func_name, true, &mut ctx.memory_manager);
+                            ctx.emit(Instruction::new_raw(opcode::LOAD_CONST, const_idx).0, Some(token));
                         }
 
                         let const_idx = ctx.value_pool.get_or_create_function(function_id);

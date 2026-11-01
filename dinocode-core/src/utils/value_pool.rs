@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use super::suggestions::suggest_best_match;
 use crate::{
     memory::MemoryManager,
-    types::{DinoRef, opcode, UserFunction},
+    types::{DinoRef, opcode, UserFunction, Symbol},
     native::{get_native_registry, registry::get_bootstrap_global_index},
     builtins::{
         string::view::StringView,
@@ -82,6 +82,15 @@ impl ValuePool {
     pub fn get_or_create_string(&mut self, value: &str, memory_manager: &mut MemoryManager) -> u32 {
         let dinoref = StringView::new_const(value, memory_manager).as_ref();
         self.add_to_const_pool(dinoref)
+    }
+
+    pub fn get_or_create_key(&mut self, name: &str, allow_symbol: bool, memory_manager: &mut MemoryManager) -> u32 {
+        if allow_symbol {
+            if let Some(symbol_ref) = Symbol::from_name(name) {
+                return self.add_to_const_pool(symbol_ref);
+            }
+        }
+        self.get_or_create_string(name, memory_manager)
     }
 
     pub fn get_or_create_float(&mut self, value: f64, _memory_manager: &mut MemoryManager) -> u32 {
