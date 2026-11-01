@@ -24,4 +24,5 @@ pub enum BufType {
     Comment,
     MultiLineComment,
     DollarCall,
+    Backtick,
 }

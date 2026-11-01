@@ -24,4 +24,5 @@ pub enum LexErrorType {
     ReservedKeywordAsIdentifier,
     UnterminatedMultilineComment,
     EmptyLiteralBlockString,
+    UnterminatedBacktick,
 }

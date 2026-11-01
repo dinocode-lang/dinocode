@@ -400,6 +400,11 @@ impl Lexer {
                                 tokens.push(Token::delim(TokenType::LString, pos_now!()), &mut ctx);
                                 string_buf.clear();
                             }
+                            b'`' => {
+                                ctx.push_mode(ParseMode::InBacktick);
+                                string_buf.clear();
+                                buf_type = BufType::Backtick;
+                            }
                             b'0'..=b'9' => { 
                                 buf_type = BufType::Number; 
                             }
@@ -428,7 +433,7 @@ impl Lexer {
                                 return Err(LexError::new(LexErrorType::UnexpectedToken("unexpected dollar call"), info.from_line as u32, info.from_column as u32));
                             }
                             if info.has_dot_access() {
-                                if buf_type != BufType::Identifier {
+                                if buf_type != BufType::Identifier && buf_type != BufType::Backtick {
                                     return Err(LexError::new(LexErrorType::UnexpectedTokenAfterDot, info.from_line as u32, info.from_column as u32));
                                 } else if info.blank {
                                     return Err(LexError::new(LexErrorType::UnexpectedBlankAfterDot, info.from_line as u32, info.from_column as u32));
@@ -583,6 +588,42 @@ impl Lexer {
                             tokens.push(Token::delim(TokenType::RString, pos!()), &mut ctx);
                             string_buf.clear();
                             ctx.pop_mode();
+                        }
+                        _ => {
+                            let bytes_consumed = push_utf8_char(&mut string_buf, bytes, i);
+                            i += bytes_consumed;
+                            column += bytes_consumed as u32;
+                            continue;
+                        }
+                    }
+                }
+
+                ParseMode::InBacktick => {
+                    match b {
+                        b'\n' => {
+                            column = 1;
+                            line += 1;
+                            string_buf.push('\n');
+                        }
+                        b'`' => {
+                            if next_is!(b'`') {
+                                string_buf.push('`');
+                                i += 2;
+                                column += 2;
+                                continue;
+                            }
+                            let was_leading = ctx.is_leading;
+                            let token = if info.has_dot_access() {
+                                info.reset_dot_access();
+                                Token::backtick_dot_access(string_buf.clone(), Some((info.from_line, info.from_column, string_buf.len())))
+                            } else {
+                                Token::backtick_ident(string_buf.clone(), Some((info.from_line, info.from_column, string_buf.len())))
+                            };
+                            tokens.push(token, &mut ctx);
+                            string_buf.clear();
+                            buf_type = BufType::None;
+                            ctx.pop_mode();
+                            if was_leading { ctx.break_next(); }
                         }
                         _ => {
                             let bytes_consumed = push_utf8_char(&mut string_buf, bytes, i);

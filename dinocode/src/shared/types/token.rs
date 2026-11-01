@@ -18,6 +18,7 @@ pub struct Token {
     pub value: TokenValue,
     pub is_unary: bool,
     pub is_breaker: bool,
+    pub is_backtick: bool,
     pub line: Option<u32>,
     pub column: Option<u32>,
     pub length: Option<usize>,
@@ -31,6 +32,7 @@ impl Token {
             value,
             is_unary: false,
             is_breaker: false,
+            is_backtick: false,
             line: Some(line),
             column: Some(column),
             length: Some(length),
@@ -98,6 +100,26 @@ impl Token {
         )
     }
     
+    pub fn backtick_ident<T: Into<String>>(val: T, pos: Option<(u32, u32, usize)>) -> Self {
+        let mut t = Self::new(
+            TokenType::Identifier,
+            TokenValue::String(val.into()),
+            pos,
+        );
+        t.is_backtick = true;
+        t
+    }
+
+    pub fn backtick_dot_access<T: Into<String>>(val: T, pos: Option<(u32, u32, usize)>) -> Self {
+        let mut t = Self::new(
+            TokenType::DotAccess,
+            TokenValue::String(val.into()),
+            pos,
+        );
+        t.is_backtick = true;
+        t
+    }
+
     pub fn redirect(pos: Option<(u32, u32, usize)>) -> Self {
         Self::delim(TokenType::Redirect, pos)
     }
